@@ -1,0 +1,16 @@
+/*
+ * Design-system stylesheet. Consumed by every app AFTER `@import "tailwindcss";`
+ *
+ *   @import "tailwindcss";
+ *   @import "@servicepro/ui/styles.css";
+ *   @source "<path-to>/packages/ui/src";
+ */
+@import '@fontsource-variable/manrope';
+/* Indic fonts are subset by unicode-range: they download only when Telugu/Hindi text renders. */
+@import '@fontsource-variable/noto-sans-telugu';
+@import '@fontsource-variable/noto-sans-devanagari';
+
+@import './tokens.css';
+@import './theme.css';
+@import './motion.css';
+@import './base.css';

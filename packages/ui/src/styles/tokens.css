@@ -1,0 +1,139 @@
+/*
+ * ServicePro design tokens.
+ *
+ * Two layers:
+ *   1. Primitive palette (--graphite-*, --petrol-*, ...) — raw values. Components never use these.
+ *   2. Semantic tokens (--primary, --surface, --success-subtle, ...) — what components use.
+ *
+ * Re-theming (a future brand refresh or dark mode) only changes layer 2.
+ * Contrast notes are against --surface (#fff) unless stated; see docs/DESIGN-SYSTEM.md §2.
+ */
+
+:root {
+  /* ── Primitive: Graphite (cool, faintly green-tinted neutrals) ───────────── */
+  --graphite-0: #ffffff;
+  --graphite-25: #f6f7f5;
+  --graphite-50: #eff1ee;
+  --graphite-100: #e4e8e5;
+  --graphite-200: #d6dbd7;
+  --graphite-300: #b9c0bb;
+  --graphite-400: #8a938e;
+  --graphite-500: #6a736f;
+  --graphite-600: #4a5450;
+  --graphite-700: #343c39;
+  --graphite-800: #222927;
+  --graphite-900: #141b19;
+  --graphite-950: #0b100f;
+
+  /* ── Primitive: Petrol (brand — a deep blue-teal, "cool air + clean signal") ── */
+  --petrol-50: #ecf5f7;
+  --petrol-100: #d2e8ed;
+  --petrol-200: #a6d1db;
+  --petrol-300: #6fb3c4;
+  --petrol-400: #3a93a8;
+  --petrol-500: #13778d;
+  --petrol-600: #0b6276;
+  --petrol-700: #0a5061;
+  --petrol-800: #0a404e;
+  --petrol-900: #08333e;
+
+  /* ── Semantic: canvas & surfaces ─────────────────────────────────────────── */
+  --background: var(--graphite-25);
+  --surface: var(--graphite-0);
+  --surface-elevated: var(--graphite-0); /* paired with a shadow token */
+  --surface-sunken: var(--graphite-50);
+  --surface-inverse: var(--graphite-900);
+  --overlay: rgb(11 16 15 / 0.5);
+
+  /* ── Semantic: text ──────────────────────────────────────────────────────── */
+  --foreground: var(--graphite-900); /* 17.4:1 */
+  --foreground-secondary: var(--graphite-600); /* 7.6:1 */
+  --foreground-muted: var(--graphite-500); /* 4.9:1 — still AA for body text */
+  --foreground-inverse: var(--graphite-0);
+
+  /* ── Semantic: lines ─────────────────────────────────────────────────────── */
+  --border: var(--graphite-200); /* decorative separation only */
+  --border-strong: var(--graphite-300);
+  --input: var(--graphite-400); /* 3:1 — WCAG 1.4.11 control boundary */
+  --input-hover: var(--graphite-500);
+  --ring: var(--petrol-500); /* focus indicator, 5.2:1 */
+
+  /* ── Semantic: brand / primary action ────────────────────────────────────── */
+  --primary: var(--petrol-600); /* white text 6.9:1 */
+  --primary-hover: var(--petrol-700);
+  --primary-active: var(--petrol-800);
+  --primary-foreground: var(--graphite-0);
+  --primary-subtle: var(--petrol-50);
+  --primary-subtle-foreground: var(--petrol-700);
+  --primary-border: var(--petrol-200);
+
+  /* ── Semantic: secondary action ──────────────────────────────────────────── */
+  --secondary: var(--graphite-100);
+  --secondary-hover: var(--graphite-200);
+  --secondary-foreground: var(--graphite-900);
+
+  /* ── Semantic: feedback tones (solid · on-solid · subtle bg · on-subtle · border) ── */
+  --neutral: var(--graphite-700);
+  --neutral-foreground: var(--graphite-0);
+  --neutral-subtle: var(--graphite-50);
+  --neutral-subtle-foreground: var(--graphite-700);
+  --neutral-border: var(--graphite-200);
+
+  --info: #2563c9;
+  --info-foreground: #ffffff;
+  --info-subtle: #edf3fc;
+  --info-subtle-foreground: #174a96;
+  --info-border: #bcd2f2;
+
+  --success: #1d7a43;
+  --success-foreground: #ffffff;
+  --success-subtle: #eaf6ee;
+  --success-subtle-foreground: #17633a;
+  --success-border: #b6dec4;
+
+  --warning: #e8a317; /* solid warning carries dark text, never white */
+  --warning-foreground: #2b1a00;
+  --warning-subtle: #fff6e5;
+  --warning-subtle-foreground: #8a4b00;
+  --warning-border: #f3d08c;
+
+  --error: #c4271b;
+  --error-hover: #a61f15;
+  --error-foreground: #ffffff;
+  --error-subtle: #fdeeec;
+  --error-subtle-foreground: #a01d13;
+  --error-border: #f4c3bd;
+
+  /* AI accent — staff-facing only (verification, confidence, AI summaries). */
+  --ai: #5a4bc2;
+  --ai-foreground: #ffffff;
+  --ai-subtle: #f1effb;
+  --ai-subtle-foreground: #4a3ca8;
+  --ai-border: #d3cdf3;
+
+  --rating: #e09c0b;
+
+  /* ── Semantic: technician duty status (always paired with a text label) ──── */
+  --tech-available: var(--success);
+  --tech-on-job: var(--primary);
+  --tech-break: var(--warning);
+  --tech-offline: var(--graphite-400);
+
+  /* ── Motion ──────────────────────────────────────────────────────────────── */
+  --duration-instant: 100ms;
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 300ms;
+  --duration-slower: 420ms;
+
+  /* ── Layering ────────────────────────────────────────────────────────────── */
+  --z-sticky: 20;
+  --z-header: 30;
+  --z-overlay: 40;
+  --z-toast: 60;
+  --z-tooltip: 70;
+
+  /* ── Layout ──────────────────────────────────────────────────────────────── */
+  --sheet-max-height: 92dvh;
+  --header-height: 3.5rem;
+}

@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import '@servicepro/ui/styles.css';
+
+/* Workspace packages live outside this app's root, so Tailwind must be told to scan them. */
+@source '../../../packages/ui/src';

@@ -1,0 +1,118 @@
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* One focus treatment for the whole product: visible, brand-coloured, 3:1+. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--primary-subtle);
+    color: var(--primary-subtle-foreground);
+  }
+
+  /*
+   * Telugu and Devanagari have taller glyphs and stacked conjuncts; give them more
+   * vertical room so lines don't collide. Applied by setting `lang` on any ancestor.
+   */
+  :lang(te),
+  :lang(hi) {
+    --text-body-lg--line-height: 1.75;
+    --text-body--line-height: 1.7;
+    --text-sm--line-height: 1.65;
+    --text-caption--line-height: 1.6;
+    --text-h3--line-height: 1.6;
+    --text-h2--line-height: 1.5;
+    --text-h1--line-height: 1.45;
+    --text-display--line-height: 1.35;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ── Utilities ─────────────────────────────────────────────────────────────── */
+
+/* Standard transition for interactive elements. */
+@utility transition-interactive {
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-duration: var(--duration-fast);
+  transition-timing-function: var(--ease-standard);
+}
+
+/* Tactile press feedback for buttons and tappable cards. */
+@utility pressable {
+  &:active:not(:disabled, [aria-disabled='true']) {
+    transform: scale(0.98);
+  }
+}
+
+/* Bottom padding that clears the iOS home indicator / Android gesture bar. */
+@utility pb-safe {
+  padding-bottom: max(var(--spacing-4), env(safe-area-inset-bottom));
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Inline text link. */
+@utility link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  &:hover {
+    color: var(--primary-hover);
+  }
+}
+
+/* Loading placeholder. A gentle shimmer; static under reduced motion. */
+@utility skeleton {
+  background-color: var(--surface-sunken);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.6) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -50% 0;
+  }
+}
+
+/* Horizontal scrollers (service carousels, chip rows) without a visible scrollbar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}

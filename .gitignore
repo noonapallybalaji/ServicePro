@@ -1,0 +1,27 @@
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+.vite/
+coverage/
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+
+# Local storage (uploaded files in development)
+.storage/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
