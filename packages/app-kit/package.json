@@ -1,0 +1,30 @@
+{
+  "name": "@servicepro/app-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@servicepro/api-client": "workspace:*",
+    "@servicepro/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "lucide-react": "^1.0.0",
+    "react": "^19.0.0",
+    "react-router": "^7.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.104.1",
+    "@types/react": "^19.2.0",
+    "lucide-react": "^1.52.0",
+    "react": "^19.3.0",
+    "react-router": "^7.18.4",
+    "typescript": "~5.9.3"
+  }
+}

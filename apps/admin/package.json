@@ -10,6 +10,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@servicepro/api-client": "workspace:*",
+    "@servicepro/app-kit": "workspace:*",
     "@servicepro/ui": "workspace:*",
     "@tanstack/react-query": "^5.104.1",
     "lucide-react": "^1.52.0",

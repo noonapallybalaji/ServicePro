@@ -1327,11 +1327,7 @@
             "name": "page",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           },
@@ -1339,11 +1335,7 @@
             "name": "pageSize",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -3087,11 +3079,7 @@
             "name": "page",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           },
@@ -3099,11 +3087,7 @@
             "name": "pageSize",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -4428,11 +4412,7 @@
             "name": "take",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -4931,11 +4911,7 @@
             "name": "page",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           },
@@ -4943,11 +4919,7 @@
             "name": "pageSize",
             "in": "query",
             "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int32"
             }
           }
@@ -5075,6 +5047,92 @@
           }
         }
       }
+    },
+    "/api/v1/admin/settings": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "ListSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SettingView"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/settings/{key}": {
+      "put": {
+        "tags": [
+          "Settings"
+        ],
+        "operationId": "UpdateSetting",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5153,20 +5211,16 @@
             "type": "string"
           },
           "latitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "longitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           }
@@ -5227,20 +5281,16 @@
             "type": "string"
           },
           "latitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "longitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -5287,20 +5337,16 @@
             "type": "string"
           },
           "latitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "longitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           }
@@ -5378,11 +5424,9 @@
             ]
           },
           "purchaseYear": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -5448,11 +5492,9 @@
             ]
           },
           "purchaseYear": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -5498,31 +5540,23 @@
             "$ref": "#/components/schemas/AssignmentStatus"
           },
           "matchScore": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "breakdown": {
             "type": "object",
             "additionalProperties": {
-              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-              "type": [
-                "number",
-                "string"
-              ],
+              "type": "number",
               "format": "double"
             }
           },
           "distanceKm": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -5620,11 +5654,7 @@
             "type": "string"
           },
           "sizeBytes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int64"
           },
           "url": {
@@ -5760,72 +5790,44 @@
             }
           },
           "rank": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "matchScore": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "breakdown": {
             "type": "object",
             "additionalProperties": {
-              "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-              "type": [
-                "number",
-                "string"
-              ],
+              "type": "number",
               "format": "double"
             }
           },
           "distanceKm": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "jobsToday": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "maxJobsPerDay": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "ratingAverage": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "completedJobs": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -5854,22 +5856,14 @@
             "type": "string"
           },
           "baseVisitCharge": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "requiresPhotos": {
             "type": "boolean"
           },
           "sortOrder": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "isActive": {
@@ -6031,11 +6025,9 @@
             "format": "date-time"
           },
           "visitChargeOverride": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -6233,83 +6225,43 @@
             "format": "date"
           },
           "createdToday": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "awaitingAssignment": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "offered": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "assigned": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "inProgress": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "onHold": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "completedToday": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "cancelledToday": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "stuck": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "unpaidCompleted": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -6409,11 +6361,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -6466,19 +6416,11 @@
         "type": "object",
         "properties": {
           "created": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "skippedExisting": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "errors": {
@@ -6497,11 +6439,7 @@
         "type": "object",
         "properties": {
           "row": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "message": {
@@ -6525,19 +6463,11 @@
             "type": "string"
           },
           "quantity": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "unitPrice": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
         }
@@ -6559,11 +6489,7 @@
             "format": "uuid"
           },
           "position": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "type": {
@@ -6573,33 +6499,22 @@
             "type": "string"
           },
           "quantity": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "unitPrice": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
         }
       },
       "InvoiceLineSummary": {
         "required": [
+          "type",
           "description",
           "quantity",
           "unitPrice",
@@ -6607,34 +6522,26 @@
         ],
         "type": "object",
         "properties": {
+          "type": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
           "quantity": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "unitPrice": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
-        }
+        },
+        "description": "Type is VISIT | LABOUR | PART | OTHER."
       },
       "InvoiceLineType": {
         "enum": [
@@ -6693,51 +6600,27 @@
             "$ref": "#/components/schemas/InvoiceStatus"
           },
           "subtotal": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "taxRatePercent": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "taxAmount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "total": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "amountPaid": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "outstanding": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "issuedAt": {
@@ -6778,19 +6661,11 @@
             "type": "string"
           },
           "total": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "amountPaid": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "lines": {
@@ -6829,19 +6704,11 @@
             "type": "string"
           },
           "typicalDurationMinutes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "minSkillLevel": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "defaultPriority": {
@@ -6852,6 +6719,7 @@
           }
         }
       },
+      "JsonElement": { },
       "LedgerEntryRequest": {
         "required": [
           "type",
@@ -6864,11 +6732,7 @@
             "$ref": "#/components/schemas/LedgerEntryType"
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "note": {
@@ -6898,11 +6762,7 @@
             "$ref": "#/components/schemas/LedgerEntryType"
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "serviceRequestId": {
@@ -6947,19 +6807,11 @@
             "format": "uuid"
           },
           "cashInHand": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "earningsDue": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "entries": {
@@ -7162,6 +7014,7 @@
           "serviceRequestId",
           "srNumber",
           "categoryName",
+          "categoryCode",
           "locality",
           "pincode",
           "distanceKm",
@@ -7186,6 +7039,9 @@
           "categoryName": {
             "type": "string"
           },
+          "categoryCode": {
+            "type": "string"
+          },
           "locality": {
             "type": "string"
           },
@@ -7193,11 +7049,9 @@
             "type": "string"
           },
           "distanceKm": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -7245,11 +7099,7 @@
             "format": "date-time"
           },
           "codeLength": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "developmentCode": {
@@ -7291,27 +7141,15 @@
             }
           },
           "total": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -7332,27 +7170,15 @@
             }
           },
           "total": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -7373,27 +7199,15 @@
             }
           },
           "total": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "page": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "pageSize": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -7470,11 +7284,7 @@
             "$ref": "#/components/schemas/PaymentMethod"
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "reference": {
@@ -7536,19 +7346,11 @@
             "type": "string"
           },
           "priceMin": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "priceMax": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "isActive": {
@@ -7580,11 +7382,9 @@
             ]
           },
           "status": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "null",
-              "integer",
-              "string"
+              "integer"
             ],
             "format": "int32"
           },
@@ -7621,11 +7421,7 @@
             "$ref": "#/components/schemas/PaymentMethod"
           },
           "amount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "reference": {
@@ -7644,19 +7440,11 @@
         "type": "object",
         "properties": {
           "latitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "longitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           }
         }
@@ -7719,22 +7507,14 @@
             "type": "string"
           },
           "baseVisitCharge": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "requiresPhotos": {
             "type": "boolean"
           },
           "sortOrder": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "isActive": {
@@ -7778,19 +7558,11 @@
             "type": "string"
           },
           "typicalDurationMinutes": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "minSkillLevel": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "defaultPriority": {
@@ -7827,19 +7599,11 @@
             "type": "string"
           },
           "priceMin": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "priceMax": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "isActive": {
@@ -8114,19 +7878,13 @@
             ]
           },
           "visitCharge": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "finalAmount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -8317,6 +8075,33 @@
           }
         }
       },
+      "SettingView": {
+        "required": [
+          "key",
+          "description",
+          "value",
+          "defaultValue",
+          "isOverridden"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "defaultValue": {
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "isOverridden": {
+            "type": "boolean"
+          }
+        }
+      },
       "ShiftInput": {
         "required": [
           "day",
@@ -8376,11 +8161,7 @@
             "format": "uuid"
           },
           "level": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -8397,11 +8178,7 @@
             "format": "uuid"
           },
           "level": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           }
         }
@@ -8467,19 +8244,13 @@
             }
           },
           "completedJobs": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "ratingAverage": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -8528,39 +8299,27 @@
             "$ref": "#/components/schemas/EmploymentType"
           },
           "maxJobsPerDay": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "commissionType": {
             "$ref": "#/components/schemas/CommissionType"
           },
           "commissionValue": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "homeLatitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "homeLongitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           }
@@ -8624,57 +8383,41 @@
             "type": "boolean"
           },
           "maxJobsPerDay": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "commissionType": {
             "$ref": "#/components/schemas/CommissionType"
           },
           "commissionValue": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "homeLatitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "homeLongitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "lastLatitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "lastLongitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -8686,19 +8429,13 @@
             "format": "date-time"
           },
           "completedJobs": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "ratingAverage": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -8768,20 +8505,14 @@
             "type": "string"
           },
           "ratingAverage": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "completedJobs": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "dutyStatus": {
@@ -8971,19 +8702,13 @@
             "format": "date-time"
           },
           "visitCharge": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
-            "type": [
-              "number",
-              "string"
-            ],
+            "type": "number",
             "format": "double"
           },
           "finalAmount": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
@@ -9059,20 +8784,14 @@
             "type": "string"
           },
           "ratingAverage": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "completedJobs": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
+            "type": "integer",
             "format": "int32"
           },
           "phone": {
@@ -9132,20 +8851,16 @@
             ]
           },
           "latitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           },
           "longitude": {
-            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
             "type": [
               "null",
-              "number",
-              "string"
+              "number"
             ],
             "format": "double"
           }
@@ -9304,6 +9019,17 @@
               "string"
             ],
             "format": "date-time"
+          }
+        }
+      },
+      "UpdateSettingRequest": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/JsonElement"
           }
         }
       },
@@ -9488,6 +9214,9 @@
     },
     {
       "name": "Billing"
+    },
+    {
+      "name": "Settings"
     }
   ]
 }

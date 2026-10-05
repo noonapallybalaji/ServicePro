@@ -273,6 +273,7 @@ public sealed record OfferResponse(
     Guid ServiceRequestId,
     string SrNumber,
     string CategoryName,
+    string CategoryCode,
     string Locality,
     string Pincode,
     double? DistanceKm,
@@ -307,7 +308,7 @@ public sealed class ListMyOffers(
 
             var category = await catalog.GetCategoryAsync(job.Value.CategoryId, ct);
             result.Add(new OfferResponse(
-                offer.Id, offer.ServiceRequestId, job.Value.SrNumber, category?.Name ?? "Service",
+                offer.Id, offer.ServiceRequestId, job.Value.SrNumber, category?.Name ?? "Service", category?.Code ?? "OTHER",
                 job.Value.Locality, job.Value.Pincode, offer.DistanceKm, job.Value.ScheduledStart, job.Value.Priority,
                 offer.OfferedAt, offer.OfferExpiresAt));
         }

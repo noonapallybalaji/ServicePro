@@ -56,7 +56,12 @@ builder.Services.AddModuleComponents(typeof(Program).Assembly, eventRegistry); /
 
 // ── HTTP concerns ────────────────────────────────────────────────────────────
 var snakeUpperEnums = new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseUpper);
-builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Converters.Add(snakeUpperEnums));
+builder.Services.ConfigureHttpJsonOptions(o =>
+{
+    o.SerializerOptions.Converters.Add(snakeUpperEnums);
+    // Numbers are numbers: keeps the OpenAPI contract (and the TypeScript client) free of `number | string`.
+    o.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+});
 builder.Services.AddSignalR().AddJsonProtocol(o => o.PayloadSerializerOptions.Converters.Add(snakeUpperEnums));
 
 builder.Services.AddProblemDetails();
@@ -96,6 +101,7 @@ foreach (var module in ModuleCatalog.All)
     module.MapEndpoints(app);
 }
 
+app.MapSettingsEndpoints();
 app.MapHub<OpsHub>("/hubs/ops");
 app.MapHub<TechHub>("/hubs/tech");
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });

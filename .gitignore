@@ -25,3 +25,6 @@ appsettings.*.local.json
 .DS_Store
 Thumbs.db
 .idea/
+
+# Local caches (NuGet packages, temp) kept on the project drive
+.cache/

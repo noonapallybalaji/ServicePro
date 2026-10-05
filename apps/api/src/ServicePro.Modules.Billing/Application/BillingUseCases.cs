@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Application;
+using ServicePro.BuildingBlocks.Persistence;
 using ServicePro.BuildingBlocks.Security;
 using ServicePro.BuildingBlocks.Settings;
 using ServicePro.Contracts;
@@ -386,6 +387,6 @@ internal sealed class BillingDirectory(DbContext db) : IBillingDirectory
         return invoice is null
             ? null
             : new InvoiceSummary(invoice.Id, invoice.InvoiceNumber, invoice.Total, invoice.AmountPaid,
-                [.. invoice.Lines.OrderBy(l => l.Position).Select(l => new InvoiceLineSummary(l.Description, l.Quantity, l.UnitPrice, l.Amount))]);
+                [.. invoice.Lines.OrderBy(l => l.Position).Select(l => new InvoiceLineSummary(EnumText.ToText(l.Type), l.Description, l.Quantity, l.UnitPrice, l.Amount))]);
     }
 }

@@ -1,40 +1,56 @@
-import { Button, EmptyState } from '@servicepro/ui';
-import { Compass } from 'lucide-react';
-import { createBrowserRouter, Link, Navigate } from 'react-router';
+import { RequireSession, RouteError } from '@servicepro/app-kit';
+import type { ComponentType } from 'react';
+import { createBrowserRouter, type LazyRouteFunction, type RouteObject } from 'react-router';
 
-export const ROUTES = {
-  designSystem: '/design-system',
-} as const;
+import { LoginPage } from '../features/auth/login-page';
+import { AdminShell } from './shell';
 
-function NotFound() {
-  return (
-    <main id="main">
-      <EmptyState
-        icon={Compass}
-        title="This page doesn't exist yet"
-        description="Product screens are built after the design system is approved."
-        action={
-          <Button asChild variant="outline">
-            <Link to={ROUTES.designSystem}>Open the design system</Link>
-          </Button>
-        }
-      />
-    </main>
-  );
+export const STAFF_ROLES = ['OWNER', 'ADMIN', 'DISPATCHER'] as const;
+
+/** Route-level code splitting: each screen downloads only when first visited. */
+function page<TModule>(load: () => Promise<TModule>, pick: (module: TModule) => ComponentType): LazyRouteFunction<RouteObject> {
+  return async () => ({ Component: pick(await load()) });
 }
 
-/*
- * Only the internal design-system route exists in this phase. Product routes
- * (dashboard, leads, verification, ...) are added once the system is signed off.
- */
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to={ROUTES.designSystem} replace /> },
+  { path: '/login', element: <LoginPage />, errorElement: <RouteError /> },
   {
-    path: ROUTES.designSystem,
+    // Internal visual source of truth (COMPONENT-ARCHITECTURE.md §5), staff only.
+    path: '/design-system',
     lazy: async () => {
       const { DesignSystemPage } = await import('../features/design-system/design-system-page');
-      return { Component: DesignSystemPage };
+      return {
+        Component: () => (
+          <RequireSession roles={STAFF_ROLES} loginPath="/login">
+            <DesignSystemPage />
+          </RequireSession>
+        ),
+      };
     },
   },
-  { path: '*', element: <NotFound /> },
+  {
+    path: '/',
+    element: (
+      <RequireSession roles={STAFF_ROLES} loginPath="/login">
+        <AdminShell />
+      </RequireSession>
+    ),
+    errorElement: <RouteError />,
+    children: [
+      { index: true, lazy: page(() => import('../features/dashboard/dashboard-page'), (m) => m.DashboardPage) },
+      { path: 'requests', lazy: page(() => import('../features/requests/requests-page'), (m) => m.RequestsPage) },
+      { path: 'requests/new', lazy: page(() => import('../features/requests/new-request-page'), (m) => m.NewRequestPage) },
+      { path: 'requests/:requestId', lazy: page(() => import('../features/requests/request-detail-page'), (m) => m.RequestDetailPage) },
+      { path: 'dispatch', lazy: page(() => import('../features/dispatch/dispatch-page'), (m) => m.DispatchPage) },
+      { path: 'technicians', lazy: page(() => import('../features/technicians/technicians-page'), (m) => m.TechniciansPage) },
+      { path: 'technicians/new', lazy: page(() => import('../features/technicians/new-technician-page'), (m) => m.NewTechnicianPage) },
+      { path: 'technicians/:technicianId', lazy: page(() => import('../features/technicians/technician-detail-page'), (m) => m.TechnicianDetailPage) },
+      { path: 'customers', lazy: page(() => import('../features/customers/customers-page'), (m) => m.CustomersPage) },
+      { path: 'customers/new', lazy: page(() => import('../features/customers/new-customer-page'), (m) => m.NewCustomerPage) },
+      { path: 'customers/:customerId', lazy: page(() => import('../features/customers/customer-detail-page'), (m) => m.CustomerDetailPage) },
+      { path: 'billing', lazy: page(() => import('../features/billing/billing-page'), (m) => m.BillingPage) },
+      { path: 'settings', lazy: page(() => import('../features/settings/settings-page'), (m) => m.SettingsPage) },
+      { path: '*', element: <RouteError /> },
+    ],
+  },
 ]);

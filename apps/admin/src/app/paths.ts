@@ -1,0 +1,17 @@
+export const paths = {
+  login: '/login',
+  dashboard: '/',
+  requests: '/requests',
+  newRequest: (customerId?: string) => (customerId ? `/requests/new?customerId=${customerId}` : '/requests/new'),
+  request: (id: string) => `/requests/${id}`,
+  dispatch: '/dispatch',
+  technicians: '/technicians',
+  newTechnician: '/technicians/new',
+  technician: (id: string) => `/technicians/${id}`,
+  customers: '/customers',
+  newCustomer: '/customers/new',
+  customer: (id: string) => `/customers/${id}`,
+  billing: '/billing',
+  settings: '/settings',
+  designSystem: '/design-system',
+} as const;

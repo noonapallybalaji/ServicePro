@@ -14,4 +14,9 @@
     <Project Path="src/ServicePro.Modules.Technicians/ServicePro.Modules.Technicians.csproj" />
     <Project Path="src/ServicePro.SharedKernel/ServicePro.SharedKernel.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ServicePro.ArchitectureTests/ServicePro.ArchitectureTests.csproj" />
+    <Project Path="tests/ServicePro.IntegrationTests/ServicePro.IntegrationTests.csproj" />
+    <Project Path="tests/ServicePro.UnitTests/ServicePro.UnitTests.csproj" />
+  </Folder>
 </Solution>

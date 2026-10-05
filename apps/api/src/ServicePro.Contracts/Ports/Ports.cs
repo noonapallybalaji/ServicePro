@@ -181,7 +181,8 @@ public interface IServiceRequestWorkflow
 
 public sealed record InvoiceSummary(Guid InvoiceId, string InvoiceNumber, decimal Total, decimal AmountPaid, IReadOnlyList<InvoiceLineSummary> Lines);
 
-public sealed record InvoiceLineSummary(string Description, decimal Quantity, decimal UnitPrice, decimal Amount);
+/// <summary>Type is VISIT | LABOUR | PART | OTHER.</summary>
+public sealed record InvoiceLineSummary(string Type, string Description, decimal Quantity, decimal UnitPrice, decimal Amount);
 
 public interface IBillingDirectory
 {
