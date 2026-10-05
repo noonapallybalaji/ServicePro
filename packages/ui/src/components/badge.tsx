@@ -5,7 +5,7 @@ import { cn } from '../lib/cn';
 import { TONE_CLASSES, type Tone } from '../tokens/tones';
 
 const badgeVariants = cva(
-  'inline-flex max-w-full items-center gap-1 rounded-pill font-semibold whitespace-nowrap [&_svg]:shrink-0',
+  'inline-flex w-fit max-w-full items-center gap-1 rounded-pill font-semibold whitespace-nowrap [&_svg]:shrink-0',
   {
     variants: {
       size: {

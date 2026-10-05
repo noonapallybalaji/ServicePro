@@ -1,5 +1,5 @@
 import { getListMyJobsQueryKey, getListMyOffersQueryKey, useListMyOffers, useRealtime, useSession } from '@servicepro/api-client';
-import { AppShell, BottomNavItem, Badge, SidebarNavItem, StatusDot, toast } from '@servicepro/ui';
+import { AppShell, Avatar, BottomNavItem, Badge, BrandLockup, BrandMark, SidebarNavItem, StatusDot, Text, toast } from '@servicepro/ui';
 import { CalendarCheck, Inbox, UserRound, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
@@ -16,7 +16,7 @@ interface NavEntry {
 
 /**
  * Technician shell (UX-ARCHITECTURE.md §3.2): Today · Offers · Earnings · Profile.
- * Bottom bar on phones, sidebar on bigger screens; content stays a phone-width column.
+ * Bottom bar on phones, brand sidebar on desktop; pages lay out in columns from `lg`.
  */
 export function TechShell() {
   const { session } = useSession();
@@ -48,27 +48,54 @@ export function TechShell() {
   return (
     <AppShell
       header={
-        <div className="mx-auto flex h-header w-full max-w-prose items-center justify-between gap-3 px-4">
-          <span className="text-h3 text-foreground">ServicePro</span>
-          {health !== 'live' ? (
-            <Badge tone="warning" size="sm" role="status">
-              <StatusDot colorClass="bg-warning" />
-              {health === 'reconnecting' || health === 'connecting' ? 'Reconnecting…' : 'Offline'}
-            </Badge>
-          ) : null}
+        <div className="mx-auto flex h-header w-full max-w-wide items-center justify-between gap-3 px-4 md:px-6 lg:px-8">
+          <span className="flex items-center gap-2 lg:hidden">
+            <BrandMark className="size-8" />
+            <span className="text-h3 text-foreground">ServicePro</span>
+          </span>
+          <span className="max-lg:hidden" />
+          <div className="flex items-center gap-3">
+            {health !== 'live' ? (
+              <Badge tone="warning" size="sm" role="status">
+                <StatusDot colorClass="bg-warning" />
+                {health === 'reconnecting' || health === 'connecting' ? 'Reconnecting…' : 'Offline'}
+              </Badge>
+            ) : (
+              <Badge tone="success" size="sm" appearance="outline" className="max-sm:hidden">
+                <StatusDot colorClass="bg-success" live />
+                Live
+              </Badge>
+            )}
+            {session ? (
+              <span className="flex items-center gap-2">
+                <Avatar name={session.user.fullName} size="sm" />
+                <span className="text-sm font-semibold text-foreground max-md:hidden">{session.user.fullName}</span>
+              </span>
+            ) : null}
+          </div>
         </div>
       }
       sidebar={
-        <nav aria-label="Main" className="flex flex-col gap-6 px-4 py-6">
-          <span className="px-3 text-h3 text-foreground">ServicePro</span>
-          <ul className="flex flex-col gap-1">
-            {nav.map((item) => (
-              <SidebarNavItem key={item.to} asChild icon={item.icon} label={item.label} badge={item.badge}>
-                <NavLink to={item.to} end={item.end} />
-              </SidebarNavItem>
-            ))}
-          </ul>
-        </nav>
+        <div className="flex flex-1 flex-col gap-8 px-4 py-6">
+          <BrandLockup tagline="Technician app" className="px-2" />
+          <nav aria-label="Main">
+            <ul className="flex flex-col gap-1">
+              {nav.map((item) => (
+                <SidebarNavItem key={item.to} asChild icon={item.icon} label={item.label} badge={item.badge}>
+                  <NavLink to={item.to} end={item.end} />
+                </SidebarNavItem>
+              ))}
+            </ul>
+          </nav>
+          <div className="mt-auto flex flex-col gap-1 rounded-card bg-nav-hover p-4">
+            <Text variant="sm" weight="semibold">
+              Need help on a job?
+            </Text>
+            <Text variant="caption" tone="muted">
+              Call the office from the job screen — they can see what you see.
+            </Text>
+          </div>
+        </div>
       }
       bottomNav={nav.map((item) => (
         <BottomNavItem key={item.to} asChild icon={item.icon} label={item.label} badge={item.badge}>
@@ -76,7 +103,7 @@ export function TechShell() {
         </BottomNavItem>
       ))}
     >
-      <div className="mx-auto w-full max-w-prose px-4 py-6">
+      <div className="mx-auto w-full max-w-wide px-4 py-6 md:px-6 lg:px-8 lg:py-8">
         <Outlet />
       </div>
     </AppShell>

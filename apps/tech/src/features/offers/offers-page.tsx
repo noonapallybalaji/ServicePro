@@ -3,14 +3,15 @@ import { getListMyJobsQueryKey, getListMyOffersQueryKey, useAcceptOffer, useDecl
 import {
   Badge,
   Button,
-  CATEGORY_ICONS,
   Card,
+  CategoryTile,
   Dialog,
   DialogBody,
   DialogContent,
   DialogHeader,
   EmptyState,
-  Heading,
+  PageHeader,
+  SpotArt,
   Stack,
   Text,
   cn,
@@ -18,10 +19,9 @@ import {
   formatWindow,
   toast,
   useNow,
-  type CategoryCode,
 } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { Inbox, MapPin, Navigation, Wrench } from 'lucide-react';
+import { Inbox, MapPin, Navigation } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
@@ -35,21 +35,20 @@ export function OffersPage() {
 
   return (
     <Stack gap={6}>
-      <Heading level={1} size="h2">
-        Job offers
-      </Heading>
+      <PageHeader title="Job offers" description="Accept quickly — each offer is held for you for a few minutes." />
       <QueryState query={offers} loading={<DefaultSkeleton rows={2} />} errorTitle="Couldn't load your offers">
         {(data) =>
           data.length === 0 ? (
             <Card>
               <EmptyState
                 icon={Inbox}
+                illustration={<SpotArt kind="inbox" />}
                 title="No offers right now"
                 description="When the office offers you a job it shows up here, with a few minutes to accept."
               />
             </Card>
           ) : (
-            <ul className="flex flex-col gap-4">
+            <ul className="grid grid-cols-1 gap-4 lg:grid-cols-2">
               {data.map((offer) => (
                 <li key={offer.assignmentId}>
                   <OfferCard offer={offer} />
@@ -98,14 +97,11 @@ function OfferCard({ offer }: { offer: OfferResponse }) {
   const remainingMs = new Date(offer.expiresAt).getTime() - now.getTime();
   const expired = remainingMs <= 0;
   const urgent = remainingMs < 60_000;
-  const Icon = CATEGORY_ICONS[offer.categoryCode as CategoryCode] ?? Wrench;
 
   return (
-    <Card variant="elevated" className="flex flex-col gap-4">
+    <Card variant="elevated" className={cn('flex h-full flex-col gap-4 border-t-4', urgent ? 'border-t-error' : 'border-t-accent')}>
       <div className="flex items-start gap-4">
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-control bg-primary-subtle text-primary">
-          <Icon aria-hidden className="size-6" />
-        </span>
+        <CategoryTile code={offer.categoryCode} />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <Text weight="semibold">{offer.categoryName}</Text>
@@ -158,7 +154,7 @@ function OfferCard({ offer }: { offer: OfferResponse }) {
         />
       </div>
 
-      <div className="flex gap-3 *:flex-1">
+      <div className="mt-auto flex gap-3 *:flex-1">
         <Button variant="outline" disabled={expired || accept.isPending} onClick={() => setDeclining(true)}>
           Decline
         </Button>

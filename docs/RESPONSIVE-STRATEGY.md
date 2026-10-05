@@ -103,6 +103,8 @@ When a component must change form, use this table instead of deciding case by ca
 6. **Real-time without jank:** SignalR updates patch rows in place, with a brief `rise-in` highlight. Never reorder rows under the cursor. Show "3 new: click to show" instead.
 7. **Density on pointer-fine:** 40px controls, 14px table text, 12px row padding. Same components, `pointer-fine` density.
 8. **Max content width** 1280 (`max-w-content`) for forms and reading. Boards and tables may go full width.
+9. **No phone column on a big screen.** The technician app widens to `max-w-wide` (1152) from `lg`: Today becomes a hero band plus jobs (2/3) beside offers and done-today (1/3); a job puts history in a sticky right column; profile and earnings use a 1/3 + 2/3 split. Single-column grids use `grid-cols-1` (`minmax(0, 1fr)`) so long text truncates instead of widening the page.
+10. **Sign-in is a split screen** (`AuthLayout`): brand panel with illustration on the left, form on the right. On phones the panel becomes a short band above the form.
 
 ---
 

@@ -109,6 +109,30 @@
   }
 }
 
+/*
+ * Brand surfaces. Pair with data-surface="brand" so text tokens flip to white.
+ *   surface-brand — deep, quiet (sidebar)
+ *   surface-hero  — brighter, with a soft coral glow (hero bands, sign-in panels)
+ */
+@utility surface-brand {
+  background-color: var(--brand-via);
+  background-image: linear-gradient(180deg, var(--brand-via) 0%, var(--brand-to) 100%);
+}
+
+@utility surface-hero {
+  background-color: var(--brand-from);
+  background-image:
+    radial-gradient(circle at 92% 8%, rgb(255 122 69 / 0.38) 0, transparent 38%),
+    radial-gradient(circle at 0% 100%, rgb(14 165 233 / 0.3) 0, transparent 45%),
+    linear-gradient(135deg, var(--brand-from) 0%, var(--brand-via) 70%, var(--brand-to) 100%);
+}
+
+/* Faint dot grid for empty hero corners and illustration backdrops. */
+@utility bg-dots {
+  background-image: radial-gradient(rgb(255 255 255 / 0.14) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
 /* Horizontal scrollers (service carousels, chip rows) without a visible scrollbar. */
 @utility scrollbar-none {
   scrollbar-width: none;

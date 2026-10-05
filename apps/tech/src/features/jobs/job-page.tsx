@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   CardTitle,
+  CategoryTile,
   Heading,
   SERVICE_REQUEST_STATUS,
   Stack,
@@ -75,183 +76,191 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
 
   return (
     <>
-      <header className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Text variant="overline" tone="muted">
-            {job.card.srNumber}
-          </Text>
-          <StatusBadge status={status} audience="technician" size="sm" />
+      <header className="flex items-center gap-4">
+        <CategoryTile code={job.card.categoryCode} size="lg" />
+        <div className="flex min-w-0 flex-col gap-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Text variant="overline" tone="muted">
+              {job.card.srNumber}
+            </Text>
+            <StatusBadge status={status} audience="technician" size="sm" />
+          </div>
+          <Heading level={1} size="h2">
+            {job.card.categoryName}
+            {job.issueTypeName ? ` · ${job.issueTypeName}` : ''}
+          </Heading>
+          {job.card.scheduledStart ? (
+            <Text tone="secondary" className="tabular-nums">
+              {formatWindow(job.card.scheduledStart, job.card.scheduledEnd)}
+            </Text>
+          ) : null}
         </div>
-        <Heading level={1} size="h2">
-          {job.card.categoryName}
-          {job.issueTypeName ? ` · ${job.issueTypeName}` : ''}
-        </Heading>
-        {job.card.scheduledStart ? (
-          <Text tone="secondary" className="tabular-nums">
-            {formatWindow(job.card.scheduledStart, job.card.scheduledEnd)}
-          </Text>
-        ) : null}
       </header>
 
-      {status === 'AWAITING_ESTIMATE_APPROVAL' ? (
-        <Alert tone="info" title="Waiting for the customer" description="They're reviewing the estimate. You'll be notified when they respond." />
-      ) : null}
-      {job.card.status === 'CLOSED' ? <Alert tone="success" title="Job closed" description="Payment received. Nice work." /> : null}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+          {status === 'AWAITING_ESTIMATE_APPROVAL' ? (
+            <Alert tone="info" title="Waiting for the customer" description="They're reviewing the estimate. You'll be notified when they respond." />
+          ) : null}
+          {job.card.status === 'CLOSED' ? <Alert tone="success" title="Job closed" description="Payment received. Nice work." /> : null}
 
-      <Card className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <CardTitle>{job.card.customerName}</CardTitle>
-          <Text variant="sm" tone="secondary" className="flex items-start gap-1">
-            <MapPin aria-hidden className="mt-1 size-4 shrink-0" />
-            <span>
-              {addressLine}
-              {job.address.landmark ? <span className="block text-foreground-muted">Landmark: {job.address.landmark}</span> : null}
-            </span>
-          </Text>
-        </div>
-        <div className="flex gap-3 *:flex-1">
-          <Button asChild variant="outline">
-            <a href={`tel:${job.card.customerPhone}`}>
-              <Phone aria-hidden /> Call
-            </a>
-          </Button>
-          <Button asChild variant="outline">
-            <a
-              href={directionsUrl({ latitude: job.address.latitude, longitude: job.address.longitude, text: addressLine })}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Navigation aria-hidden /> Navigate
-            </a>
-          </Button>
-        </div>
-      </Card>
+          <Card className="flex flex-col gap-4 border-l-4 border-l-primary">
+            <div className="flex flex-col gap-1">
+              <CardTitle>{job.card.customerName}</CardTitle>
+              <Text variant="sm" tone="secondary" className="flex items-start gap-1">
+                <MapPin aria-hidden className="mt-1 size-4 shrink-0" />
+                <span>
+                  {addressLine}
+                  {job.address.landmark ? <span className="block text-foreground-muted">Landmark: {job.address.landmark}</span> : null}
+                </span>
+              </Text>
+            </div>
+            <div className="flex gap-3 *:flex-1">
+              <Button asChild variant="outline">
+                <a href={`tel:${job.card.customerPhone}`}>
+                  <Phone aria-hidden /> Call
+                </a>
+              </Button>
+              <Button asChild variant="outline">
+                <a
+                  href={directionsUrl({ latitude: job.address.latitude, longitude: job.address.longitude, text: addressLine })}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Navigation aria-hidden /> Navigate
+                </a>
+              </Button>
+            </div>
+          </Card>
 
-      <Card className="flex flex-col gap-2">
-        <Text variant="overline" tone="muted">
-          Problem
-        </Text>
-        <Text>{job.problemDescription}</Text>
-        {job.applianceDescription ? (
-          <Text variant="sm" tone="secondary">
-            Appliance: {job.applianceDescription}
-          </Text>
-        ) : null}
-        {job.notes.length > 0 ? (
-          <ul className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
-            {job.notes.map((note) => (
-              <li key={note.id} className="text-sm text-foreground-secondary">
-                {note.body} <span className="text-caption text-foreground-muted">· {formatDateTime(note.createdAt)}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </Card>
-
-      {BILLABLE.has(status) || invoice ? (
-        <Card className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
+          <Card className="flex flex-col gap-2">
             <Text variant="overline" tone="muted">
-              Bill
+              Problem
             </Text>
-            {invoice ? (
-              <Text variant="sm" tone="muted">
-                {invoice.invoiceNumber}
+            <Text>{job.problemDescription}</Text>
+            {job.applianceDescription ? (
+              <Text variant="sm" tone="secondary">
+                Appliance: {job.applianceDescription}
               </Text>
             ) : null}
-          </div>
-          {invoice ? (
-            <>
-              <ul className="flex flex-col gap-1">
-                {invoice.lines.map((line) => (
-                  <li key={line.description} className="flex justify-between gap-3 text-sm">
-                    <span className="text-foreground-secondary">{line.description}</span>
-                    <span className="tabular-nums">{formatINR(line.amount)}</span>
+            {job.notes.length > 0 ? (
+              <ul className="mt-2 flex flex-col gap-2 border-t border-border pt-3">
+                {job.notes.map((note) => (
+                  <li key={note.id} className="text-sm text-foreground-secondary">
+                    {note.body} <span className="text-caption text-foreground-muted">· {formatDateTime(note.createdAt)}</span>
                   </li>
                 ))}
               </ul>
-              <div className="flex items-baseline justify-between border-t border-border pt-3">
-                <Text weight="semibold">Total</Text>
-                <Text variant="stat-sm">{formatINR(invoice.total)}</Text>
+            ) : null}
+          </Card>
+
+          {BILLABLE.has(status) || invoice ? (
+            <Card className="flex flex-col gap-3">
+              <div className="flex items-center justify-between gap-3">
+                <Text variant="overline" tone="muted">
+                  Bill
+                </Text>
+                {invoice ? (
+                  <Text variant="sm" tone="muted">
+                    {invoice.invoiceNumber}
+                  </Text>
+                ) : null}
               </div>
-              {invoice.amountPaid > 0 ? (
-                <Text variant="sm" tone="success">
-                  Paid {formatINR(invoice.amountPaid)}
+              {invoice ? (
+                <>
+                  <ul className="flex flex-col gap-1">
+                    {invoice.lines.map((line) => (
+                      <li key={line.description} className="flex justify-between gap-3 text-sm">
+                        <span className="text-foreground-secondary">{line.description}</span>
+                        <span className="tabular-nums">{formatINR(line.amount)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-baseline justify-between border-t border-border pt-3">
+                    <Text weight="semibold">Total</Text>
+                    <Text variant="stat-sm">{formatINR(invoice.total)}</Text>
+                  </div>
+                  {invoice.amountPaid > 0 ? (
+                    <Text variant="sm" tone="success">
+                      Paid {formatINR(invoice.amountPaid)}
+                    </Text>
+                  ) : null}
+                </>
+              ) : (
+                <Text variant="sm" tone="secondary">
+                  Visiting charge {formatINR(job.visitCharge)}. Add parts and labour once you know what's needed.
                 </Text>
+              )}
+              {invoice == null || invoice.amountPaid === 0 ? (
+                <Button variant="outline" onClick={() => setSheet('bill')}>
+                  <ReceiptText aria-hidden /> {invoice ? 'Edit bill' : 'Prepare bill'}
+                </Button>
               ) : null}
-            </>
-          ) : (
-            <Text variant="sm" tone="secondary">
-              Visiting charge {formatINR(job.visitCharge)}. Add parts and labour once you know what's needed.
+            </Card>
+          ) : null}
+
+          <Card className="flex flex-col gap-3">
+            <Text variant="overline" tone="muted">
+              Photos
             </Text>
-          )}
-          {invoice == null || invoice.amountPaid === 0 ? (
-            <Button variant="outline" onClick={() => setSheet('bill')}>
-              <ReceiptText aria-hidden /> {invoice ? 'Edit bill' : 'Prepare bill'}
-            </Button>
-          ) : null}
-        </Card>
-      ) : null}
+            {job.attachments.length > 0 ? (
+              <ul className="grid grid-cols-3 gap-2">
+                {job.attachments.map((attachment) => (
+                  <li key={attachment.id} className="flex flex-col gap-1">
+                    <AuthImage src={attachment.url} alt={attachment.kind === 'PHOTO_AFTER' ? 'After repair' : 'Before repair'} className="aspect-square w-full rounded-control" />
+                    <Text variant="caption" tone="muted">
+                      {attachment.kind === 'PHOTO_AFTER' ? 'After' : attachment.kind === 'PHOTO_BEFORE' ? 'Before' : 'Photo'}
+                    </Text>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Text variant="sm" tone="secondary">
+                {job.requiresPhotos ? 'An after-photo is required to complete this job.' : 'Photos help if there is a dispute later.'}
+              </Text>
+            )}
+            {!['CLOSED', 'CANCELLED', 'CLOSED_NO_REPAIR'].includes(status) ? (
+              <div className="flex gap-3 *:flex-1">
+                <PhotoButton jobId={job.card.id} kind="PHOTO_BEFORE" label="Before photo" />
+                <PhotoButton jobId={job.card.id} kind="PHOTO_AFTER" label="After photo" />
+              </div>
+            ) : null}
+          </Card>
 
-      <Card className="flex flex-col gap-3">
-        <Text variant="overline" tone="muted">
-          Photos
-        </Text>
-        {job.attachments.length > 0 ? (
-          <ul className="grid grid-cols-3 gap-2">
-            {job.attachments.map((attachment) => (
-              <li key={attachment.id} className="flex flex-col gap-1">
-                <AuthImage src={attachment.url} alt={attachment.kind === 'PHOTO_AFTER' ? 'After repair' : 'Before repair'} className="aspect-square w-full rounded-control" />
-                <Text variant="caption" tone="muted">
-                  {attachment.kind === 'PHOTO_AFTER' ? 'After' : attachment.kind === 'PHOTO_BEFORE' ? 'Before' : 'Photo'}
-                </Text>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Text variant="sm" tone="secondary">
-            {job.requiresPhotos ? 'An after-photo is required to complete this job.' : 'Photos help if there is a dispute later.'}
-          </Text>
-        )}
-        {!['CLOSED', 'CANCELLED', 'CLOSED_NO_REPAIR'].includes(status) ? (
-          <div className="flex gap-3 *:flex-1">
-            <PhotoButton jobId={job.card.id} kind="PHOTO_BEFORE" label="Before photo" />
-            <PhotoButton jobId={job.card.id} kind="PHOTO_AFTER" label="After photo" />
-          </div>
-        ) : null}
-      </Card>
-
-      <section className="flex flex-col gap-3" aria-labelledby="history">
-        <Heading level={2} size="h3" id="history">
-          History
-        </Heading>
-        <Card>
-          <StatusTimeline density="compact" steps={toTimeline(job)} />
-        </Card>
-      </section>
-
-      {primary || problems.length > 0 || canCollect || needsBill ? (
-        <StickyActionBar className="md:sticky md:bottom-4 md:rounded-card md:border md:border-border md:bg-surface md:p-3 md:shadow-md">
-          {problems.length > 0 ? (
-            <Button variant="outline" size="lg" onClick={() => setSheet('problem')} className="md:w-auto">
-              Problem
-            </Button>
+          {primary || problems.length > 0 || canCollect || needsBill ? (
+            <StickyActionBar className="md:sticky md:bottom-4 md:z-(--z-sticky) md:rounded-card md:border md:border-border md:bg-surface md:p-3 md:shadow-lg">
+              {problems.length > 0 ? (
+                <Button variant="outline" size="lg" onClick={() => setSheet('problem')} className="md:w-auto">
+                  Problem
+                </Button>
+              ) : null}
+              {canCollect ? (
+                <Button size="lg" className="md:flex-1" onClick={() => setSheet('payment')}>
+                  Collect {formatINR(outstanding)}
+                </Button>
+              ) : needsBill ? (
+                <Button size="lg" className="md:flex-1" onClick={() => setSheet('bill')}>
+                  Prepare bill
+                </Button>
+              ) : primary ? (
+                <Button size="lg" className="md:flex-1" loading={transition.isPending} onClick={onPrimary}>
+                  {FORWARD_ACTIONS[primary.to]}
+                </Button>
+              ) : null}
+            </StickyActionBar>
           ) : null}
-          {canCollect ? (
-            <Button size="lg" className="md:flex-1" onClick={() => setSheet('payment')}>
-              Collect {formatINR(outstanding)}
-            </Button>
-          ) : needsBill ? (
-            <Button size="lg" className="md:flex-1" onClick={() => setSheet('bill')}>
-              Prepare bill
-            </Button>
-          ) : primary ? (
-            <Button size="lg" className="md:flex-1" loading={transition.isPending} onClick={onPrimary}>
-              {FORWARD_ACTIONS[primary.to]}
-            </Button>
-          ) : null}
-        </StickyActionBar>
-      ) : null}
+        </div>
+
+        <section className="flex flex-col gap-3 lg:sticky lg:top-20 min-w-0" aria-labelledby="history">
+          <Heading level={2} size="h3" id="history">
+            History
+          </Heading>
+          <Card>
+            <StatusTimeline density="compact" steps={toTimeline(job)} />
+          </Card>
+        </section>
+
+      </div>
 
       <ProblemSheet job={job} open={sheet === 'problem'} onOpenChange={(open) => setSheet(open ? 'problem' : null)} />
       <CompletionSheet job={job} open={sheet === 'complete'} onOpenChange={(open) => setSheet(open ? 'complete' : null)} onCompleted={() => setSheet(job.invoice ? 'payment' : 'bill')} />

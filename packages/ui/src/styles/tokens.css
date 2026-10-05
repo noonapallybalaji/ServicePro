@@ -113,6 +113,58 @@
 
   --rating: #e09c0b;
 
+  /* ── Semantic: accent — warm coral for highlights, promos, illustration pops ── */
+  --accent: #ff7a45; /* carries dark text, never white */
+  --accent-hover: #ff6a2e;
+  --accent-foreground: #2a0f00;
+  --accent-subtle: #fff1ea;
+  --accent-subtle-foreground: #a8370f;
+  --accent-border: #ffc9b0;
+
+  /*
+   * ── Semantic: hues — the colourful layer ─────────────────────────────────────
+   * Six friendly hues for appliance categories, avatars and illustrations. Each has a
+   * tinted background, an AA text colour on that tint, and a vivid fill for artwork.
+   * Hues decorate; they never carry status (that is what the tones above are for).
+   */
+  --hue-sky: #0ea5e9;
+  --hue-sky-subtle: #e3f4fd;
+  --hue-sky-foreground: #075985;
+  --hue-violet: #8b5cf6;
+  --hue-violet-subtle: #efeafe;
+  --hue-violet-foreground: #5b21b6;
+  --hue-mint: #10b981;
+  --hue-mint-subtle: #e2f7ef;
+  --hue-mint-foreground: #065f46;
+  --hue-indigo: #6366f1;
+  --hue-indigo-subtle: #e9eafe;
+  --hue-indigo-foreground: #3730a3;
+  --hue-orange: #f97316;
+  --hue-orange-subtle: #ffeedf;
+  --hue-orange-foreground: #9a3412;
+  --hue-rose: #f43f5e;
+  --hue-rose-subtle: #fee9ec;
+  --hue-rose-foreground: #9f1239;
+
+  /* Artwork neutrals (skin, hair, metal) — illustrations only. */
+  --art-skin: #c98b62;
+  --art-skin-shade: #a86e4b;
+  --art-hair: #2b1d16;
+  --art-metal: #d7dde0;
+  --art-ink: var(--graphite-900);
+
+  /* ── Semantic: brand surfaces (sidebar, hero bands, sign-in panels) ────────── */
+  --brand-from: var(--petrol-600);
+  --brand-via: var(--petrol-800);
+  --brand-to: #062831;
+
+  /* Navigation item colours; brand surfaces override them (see [data-surface='brand']). */
+  --nav-foreground: var(--foreground-secondary);
+  --nav-foreground-hover: var(--foreground);
+  --nav-hover: var(--surface-sunken);
+  --nav-active: var(--primary-subtle);
+  --nav-active-foreground: var(--primary-subtle-foreground);
+
   /* ── Semantic: technician duty status (always paired with a text label) ──── */
   --tech-available: var(--success);
   --tech-on-job: var(--primary);
@@ -136,4 +188,42 @@
   /* ── Layout ──────────────────────────────────────────────────────────────── */
   --sheet-max-height: 92dvh;
   --header-height: 3.5rem;
+}
+
+/*
+ * A dark brand surface (sidebar, hero band). Text tokens flip to white inside it, so
+ * ordinary components (Text, nav items, outline badges) read correctly without variants.
+ * White at 66% on --petrol-800 is still ≥ 7:1.
+ */
+[data-surface='brand'] {
+  --foreground: #ffffff;
+  --foreground-secondary: rgb(255 255 255 / 0.84);
+  --foreground-muted: rgb(255 255 255 / 0.68);
+  --border: rgb(255 255 255 / 0.14);
+  --ring: #ffffff;
+
+  --nav-foreground: rgb(255 255 255 / 0.78);
+  --nav-foreground-hover: #ffffff;
+  --nav-hover: rgb(255 255 255 / 0.08);
+  --nav-active: rgb(255 255 255 / 0.14);
+  --nav-active-foreground: #ffffff;
+
+  color: var(--foreground);
+}
+
+/* A light card placed on a brand surface: restores the default text and nav tokens. */
+[data-surface='light'] {
+  --foreground: var(--graphite-900);
+  --foreground-secondary: var(--graphite-600);
+  --foreground-muted: var(--graphite-500);
+  --border: var(--graphite-200);
+  --ring: var(--petrol-500);
+
+  --nav-foreground: var(--foreground-secondary);
+  --nav-foreground-hover: var(--foreground);
+  --nav-hover: var(--surface-sunken);
+  --nav-active: var(--primary-subtle);
+  --nav-active-foreground: var(--primary-subtle-foreground);
+
+  color: var(--foreground);
 }

@@ -26,8 +26,8 @@ export function AppShell({ header, sidebar, bottomNav, children, className }: Ap
     <div className={cn('flex min-h-dvh bg-background', className)}>
       <SkipLink />
       {sidebar ? (
-        <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col border-r border-border bg-surface lg:flex">
-          {sidebar}
+        <aside data-surface="brand" className="surface-brand hidden w-sidebar shrink-0 lg:block">
+          <div className="sticky top-0 flex h-dvh flex-col overflow-y-auto">{sidebar}</div>
         </aside>
       ) : null}
       <div className="flex min-w-0 flex-1 flex-col">
@@ -64,9 +64,9 @@ export function SidebarNavItem({ icon, label, badge, asChild = false, className,
     <li>
       <Comp
         className={cn(
-          'transition-interactive flex h-10 items-center gap-3 rounded-control px-3 text-sm font-semibold text-foreground-secondary',
-          'hover:bg-surface-sunken hover:text-foreground aria-[current=page]:bg-primary-subtle aria-[current=page]:text-primary-subtle-foreground',
-          '[&_svg]:size-5 [&_svg]:shrink-0',
+          'transition-interactive flex h-10 items-center gap-3 rounded-control px-3 text-sm font-semibold text-nav-foreground',
+          'hover:bg-nav-hover hover:text-nav-foreground-hover aria-[current=page]:bg-nav-active aria-[current=page]:text-nav-active-foreground',
+          '[&_svg]:size-5 [&_svg]:shrink-0 aria-[current=page]:[&_svg]:text-accent',
           className,
         )}
         {...props}
@@ -89,16 +89,16 @@ export function BottomNavItem({ icon, label, badge, asChild = false, className, 
     <li className="flex-1">
       <Comp
         className={cn(
-          'transition-interactive relative flex h-14 flex-col items-center justify-center gap-1 rounded-control text-caption text-foreground-muted',
+          'group transition-interactive relative flex h-14 flex-col items-center justify-center gap-1 rounded-control text-caption text-foreground-muted',
           'aria-[current=page]:text-primary [&_svg]:size-6',
           className,
         )}
         {...props}
       >
         {asChild ? <Slot.Slottable>{children}</Slot.Slottable> : null}
-        <span className="relative">
+        <span className="transition-interactive relative flex h-8 w-14 items-center justify-center rounded-pill group-aria-[current=page]:bg-primary-subtle">
           {icon}
-          {badge ? <NavBadge count={badge} className="absolute -top-2 -right-3" /> : null}
+          {badge ? <NavBadge count={badge} className="absolute -top-1 right-0" /> : null}
         </span>
         <span className="font-semibold">{label}</span>
       </Comp>

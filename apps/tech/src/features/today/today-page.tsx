@@ -7,9 +7,23 @@ import {
   useSession,
   useSetMyDutyStatus,
 } from '@servicepro/api-client';
-import { Alert, Button, Card, DutyStatusBadge, EmptyState, Heading, Stack, Switch, Text, formatDay } from '@servicepro/ui';
+import {
+  Button,
+  Card,
+  DutyStatusBadge,
+  EmptyState,
+  Heading,
+  HeroBand,
+  SpotArt,
+  Stack,
+  StatTile,
+  Switch,
+  TechnicianScene,
+  Text,
+  formatDay,
+} from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarCheck } from 'lucide-react';
+import { BellRing, CalendarCheck, CircleCheck, Inbox, Wrench } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { paths } from '../../app/paths';
@@ -26,78 +40,101 @@ export function TodayPage() {
   const jobs = useListMyJobs();
   const offers = useListMyOffers();
   const firstName = session?.user.fullName.split(' ')[0] ?? '';
+  const offerCount = offers.data?.length ?? 0;
 
   return (
-    <Stack gap={6}>
-      <div className="flex flex-col gap-1">
-        <Text variant="sm" tone="muted">
-          {formatDay(new Date())}
-        </Text>
-        <Heading level={1} size="h2">
-          {greeting(new Date())}, {firstName}
-        </Heading>
-      </div>
+    <Stack gap={8}>
+      <HeroBand art={<TechnicianScene />}>
+        <div className="flex flex-col gap-1">
+          <Text variant="sm" tone="muted">
+            {formatDay(new Date())}
+          </Text>
+          <Heading level={1} size="h1">
+            {greeting(new Date())}, {firstName}
+          </Heading>
+          <Text tone="secondary">Here's your day. Keep your status on duty to get new jobs.</Text>
+        </div>
+        <DutyCard />
+        <div className="grid grid-cols-3 gap-3">
+          <StatTile hue="sky" icon={Wrench} value={jobs.data?.active.length ?? '–'} label="Active" />
+          <StatTile hue="mint" icon={CircleCheck} value={jobs.data?.completedToday.length ?? '–'} label="Done today" />
+          <StatTile hue="orange" icon={Inbox} value={offers.data ? offerCount : '–'} label="Offers" />
+        </div>
+      </HeroBand>
 
-      <DutyCard />
-
-      {offers.data && offers.data.length > 0 ? (
-        <Alert
-          tone="info"
-          role="status"
-          title={offers.data.length === 1 ? 'You have a new job offer' : `You have ${offers.data.length} job offers`}
-          description="Offers expire after a few minutes if nobody accepts them."
-          action={
-            <Button asChild size="sm">
-              <Link to={paths.offers}>View offers</Link>
-            </Button>
-          }
-        />
-      ) : null}
-
-      <QueryState query={jobs} loading={<DefaultSkeleton rows={3} />} errorTitle="Couldn't load your jobs">
-        {(data) => (
-          <Stack gap={6}>
-            <section aria-labelledby="active-jobs" className="flex flex-col gap-3">
-              <Heading level={2} size="h3" id="active-jobs">
-                Your jobs
-              </Heading>
-              {data.active.length === 0 ? (
-                <Card>
-                  <EmptyState
-                    size="compact"
-                    icon={CalendarCheck}
-                    title="No jobs yet today"
-                    description="New offers appear automatically. Keep your status on duty to receive them."
-                  />
-                </Card>
-              ) : (
-                <ul className="flex flex-col gap-3">
-                  {data.active.map((job, index) => (
-                    <li key={job.id}>
-                      <JobCard job={job} emphasis={index === 0} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            {data.completedToday.length > 0 ? (
-              <section aria-labelledby="done-jobs" className="flex flex-col gap-3">
-                <Heading level={2} size="h3" id="done-jobs">
-                  Done today · {data.completedToday.length}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <QueryState query={jobs} loading={<DefaultSkeleton rows={3} />} errorTitle="Couldn't load your jobs">
+          {(data) => (
+            <>
+              <section aria-labelledby="active-jobs" className="flex min-w-0 flex-col gap-4 lg:col-span-2">
+                <Heading level={2} size="h2" id="active-jobs">
+                  Your jobs
                 </Heading>
-                <ul className="flex flex-col gap-3">
-                  {data.completedToday.map((job) => (
-                    <li key={job.id}>
-                      <JobCard job={job} />
-                    </li>
-                  ))}
-                </ul>
+                {data.active.length === 0 ? (
+                  <Card>
+                    <EmptyState
+                      icon={CalendarCheck}
+                      illustration={<SpotArt kind="calendar" />}
+                      title="No jobs yet today"
+                      description="New offers appear automatically. Keep your status on duty to receive them."
+                    />
+                  </Card>
+                ) : (
+                  <ul className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    {data.active.map((job, index) => (
+                      <li key={job.id}>
+                        <JobCard job={job} emphasis={index === 0} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
-            ) : null}
-          </Stack>
-        )}
-      </QueryState>
+
+              <aside className="flex min-w-0 flex-col gap-6">
+                {offerCount > 0 ? (
+                  <Card className="flex flex-col gap-4 border-accent-border bg-accent-subtle">
+                    <div className="flex items-start gap-3">
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-accent text-accent-foreground">
+                        <BellRing aria-hidden className="size-5" />
+                      </span>
+                      <div className="flex flex-col gap-1" role="status">
+                        <Text weight="semibold">{offerCount === 1 ? 'You have a new job offer' : `You have ${offerCount} job offers`}</Text>
+                        <Text variant="sm" tone="secondary">
+                          Offers expire after a few minutes if nobody accepts them.
+                        </Text>
+                      </div>
+                    </div>
+                    <Button asChild>
+                      <Link to={paths.offers}>View offers</Link>
+                    </Button>
+                  </Card>
+                ) : null}
+
+                <section aria-labelledby="done-jobs" className="flex flex-col gap-4">
+                  <Heading level={2} size="h3" id="done-jobs">
+                    Done today · {data.completedToday.length}
+                  </Heading>
+                  {data.completedToday.length === 0 ? (
+                    <Card variant="sunken">
+                      <Text variant="sm" tone="secondary">
+                        Finished jobs land here. Each one adds to your earnings.
+                      </Text>
+                    </Card>
+                  ) : (
+                    <ul className="flex flex-col gap-3">
+                      {data.completedToday.map((job) => (
+                        <li key={job.id}>
+                          <JobCard job={job} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </aside>
+            </>
+          )}
+        </QueryState>
+      </div>
     </Stack>
   );
 }
@@ -116,7 +153,7 @@ function DutyCard() {
   const onDuty = status === 'AVAILABLE' || status === 'ON_JOB';
 
   return (
-    <Card className="flex items-center justify-between gap-4">
+    <Card data-surface="light" className="flex items-center justify-between gap-4 border-0 shadow-md md:max-w-sheet">
       <div className="flex flex-col gap-2">
         <Text weight="semibold">Duty status</Text>
         {status ? <DutyStatusBadge status={status} size="sm" /> : <Text variant="sm" tone="muted">Loading…</Text>}

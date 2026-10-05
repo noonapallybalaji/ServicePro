@@ -1,8 +1,10 @@
-import { ChevronRight, ShieldCheck, Star, type LucideIcon } from 'lucide-react';
+import { ChevronRight, ShieldCheck, Star, Wrench, type LucideIcon } from 'lucide-react';
 import { Slot } from 'radix-ui';
 import type { ComponentProps, ReactNode } from 'react';
 
 import { Avatar } from '../components/avatar';
+import { ApplianceArt } from '../illustrations/appliance-art';
+import { HUE_CLASSES, categoryHue } from '../tokens/hues';
 import { Badge } from '../components/badge';
 import { cardVariants } from '../components/card';
 import { cn } from '../lib/cn';
@@ -10,10 +12,25 @@ import { formatINR } from '../lib/format';
 import { TECHNICIAN_DUTY_STATUS, type TechnicianDutyStatus } from '../tokens/status';
 import { DutyStatusBadge } from './status';
 
+/* ── CategoryTile ─────────────────────────────────────────────────────────── */
+
+const CATEGORY_TILE_SIZE = { sm: 'size-10 p-1', md: 'size-14 p-1', lg: 'size-20 p-2', xl: 'size-32 p-3' } as const;
+
+/** The appliance illustration on its category-tinted tile. Decorative. */
+export function CategoryTile({ code, size = 'md', className }: { code: string | null | undefined; size?: keyof typeof CATEGORY_TILE_SIZE; className?: string }) {
+  return (
+    <span className={cn('flex shrink-0 items-center justify-center rounded-card', HUE_CLASSES[categoryHue(code)].subtle, CATEGORY_TILE_SIZE[size], className)}>
+      <ApplianceArt code={code} backdrop={false} className="size-full" />
+    </span>
+  );
+}
+
 /* ── ServiceCard ──────────────────────────────────────────────────────────── */
 
 interface ServiceCardProps extends Omit<ComponentProps<'button'>, 'title'> {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Shows the category's illustration on a tinted tile instead of the icon. */
+  categoryCode?: string;
   title: string;
   description?: string;
   /** Visiting charge from the price list (PLAN.md §7.5) — shown up front to build trust. */
@@ -29,7 +46,8 @@ interface ServiceCardProps extends Omit<ComponentProps<'button'>, 'title'> {
 }
 
 export function ServiceCard({
-  icon: IconComponent,
+  icon: IconComponent = Wrench,
+  categoryCode,
   title,
   description,
   startingPrice,
@@ -52,9 +70,13 @@ export function ServiceCard({
   const content =
     layout === 'tile' ? (
       <>
-        <span className="flex size-12 items-center justify-center rounded-control bg-primary-subtle text-primary">
-          <IconComponent aria-hidden className="size-6" />
-        </span>
+        {categoryCode ? (
+          <CategoryTile code={categoryCode} size="lg" className="w-full" />
+        ) : (
+          <span className="flex size-12 items-center justify-center rounded-control bg-primary-subtle text-primary">
+            <IconComponent aria-hidden className="size-6" />
+          </span>
+        )}
         <span className="flex flex-col gap-1">
           <span className="text-body font-semibold text-foreground">{title}</span>
           {description ? <span className="text-sm text-foreground-secondary">{description}</span> : null}
@@ -63,9 +85,13 @@ export function ServiceCard({
       </>
     ) : (
       <>
-        <span className="flex size-12 shrink-0 items-center justify-center rounded-control bg-primary-subtle text-primary">
-          <IconComponent aria-hidden className="size-6" />
-        </span>
+        {categoryCode ? (
+          <CategoryTile code={categoryCode} />
+        ) : (
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-control bg-primary-subtle text-primary">
+            <IconComponent aria-hidden className="size-6" />
+          </span>
+        )}
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-body font-semibold text-foreground">{title}</span>
           {description ? <span className="text-sm text-foreground-secondary">{description}</span> : null}

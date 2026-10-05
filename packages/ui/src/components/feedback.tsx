@@ -84,6 +84,8 @@ export function Skeleton({ className }: { className?: string }) {
 
 interface StateProps {
   icon: LucideIcon;
+  /** Spot illustration shown instead of the icon (e.g. <SpotArt kind="inbox" />). */
+  illustration?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
   action?: ReactNode;
@@ -96,7 +98,7 @@ interface StateProps {
  * Every empty state answers: why is this empty, and what can I do about it?
  * ("No jobs yet today — new offers appear here automatically.")
  */
-export function EmptyState({ icon: IconComponent, title, description, action, size = 'page', className }: StateProps) {
+export function EmptyState({ icon: IconComponent, illustration, title, description, action, size = 'page', className }: StateProps) {
   return (
     <div
       className={cn(
@@ -105,14 +107,18 @@ export function EmptyState({ icon: IconComponent, title, description, action, si
         className,
       )}
     >
-      <span
-        className={cn(
-          'flex items-center justify-center rounded-full bg-surface-sunken text-foreground-secondary',
-          size === 'page' ? 'size-14' : 'size-10',
-        )}
-      >
-        <IconComponent aria-hidden className={size === 'page' ? 'size-6' : 'size-5'} />
-      </span>
+      {illustration ? (
+        <span className={cn('flex [&>svg]:size-full', size === 'page' ? 'size-32' : 'size-24')}>{illustration}</span>
+      ) : (
+        <span
+          className={cn(
+            'flex items-center justify-center rounded-full bg-surface-sunken text-foreground-secondary',
+            size === 'page' ? 'size-14' : 'size-10',
+          )}
+        >
+          <IconComponent aria-hidden className={size === 'page' ? 'size-6' : 'size-5'} />
+        </span>
+      )}
       <div className="flex max-w-prose flex-col gap-1">
         <p className={cn('font-semibold text-foreground', size === 'page' ? 'text-h3' : 'text-body')}>{title}</p>
         {description ? <p className="text-sm text-foreground-secondary">{description}</p> : null}
@@ -122,7 +128,7 @@ export function EmptyState({ icon: IconComponent, title, description, action, si
   );
 }
 
-interface ErrorStateProps extends Omit<StateProps, 'icon' | 'action'> {
+interface ErrorStateProps extends Omit<StateProps, 'icon' | 'action' | 'illustration'> {
   icon?: LucideIcon;
   onRetry?: () => void;
   retryLabel?: string;

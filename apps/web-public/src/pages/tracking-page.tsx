@@ -7,11 +7,13 @@ import {
   CUSTOMER_MILESTONES,
   ErrorState,
   Heading,
+  HeroBand,
   Skeleton,
   Stack,
   STATUS_TO_CUSTOMER_MILESTONE,
   StatusTimeline,
   TechnicianCard,
+  TechnicianScene,
   Text,
   formatDateTime,
   formatINR,
@@ -23,7 +25,7 @@ import { FileDown, Link2Off, MessageCircle, Phone } from 'lucide-react';
 import { useParams } from 'react-router';
 
 import { SUPPORT_PHONE, whatsappLink } from '../config';
-import { SiteHeader } from './site-header';
+import { SiteFooter, SiteHeader } from './site-header';
 
 /** Statuses where something interrupted the normal flow. */
 const ATTENTION: ReadonlySet<ServiceRequestStatus> = new Set(['WAITING_FOR_PARTS', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'UNABLE_TO_REPAIR', 'CANCELLED']);
@@ -95,7 +97,7 @@ export function TrackingPage() {
     <>
       <SiteHeader />
       <main id="main">
-        <Container size="prose" className="py-6 md:py-10">
+        <Container className="py-6 md:py-10">
           {tracking.isPending ? (
             <Stack gap={4}>
               <Skeleton className="h-8 w-3/4" />
@@ -120,6 +122,7 @@ export function TrackingPage() {
           )}
         </Container>
       </main>
+      <SiteFooter />
     </>
   );
 }
@@ -132,15 +135,17 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
 
   return (
     <Stack gap={6}>
-      <div className="flex flex-col gap-2" aria-live="polite">
-        <Text variant="sm" tone="muted">
-          Hi {data.customerFirstName} · {data.srNumber} · {data.categoryName}
-        </Text>
-        <Heading level={1}>{title}</Heading>
-        <Text variant="body-lg" tone="secondary">
-          {detail}
-        </Text>
-      </div>
+      <HeroBand art={<TechnicianScene />} artSize="md">
+        <div className="flex flex-col gap-2" aria-live="polite">
+          <Text variant="sm" tone="muted">
+            Hi {data.customerFirstName} · {data.srNumber} · {data.categoryName}
+          </Text>
+          <Heading level={1}>{title}</Heading>
+          <Text variant="body-lg" tone="secondary">
+            {detail}
+          </Text>
+        </div>
+      </HeroBand>
 
       {attention && data.status === 'CUSTOMER_UNAVAILABLE' && SUPPORT_PHONE ? (
         <Alert
@@ -156,121 +161,127 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
         />
       ) : null}
 
-      {data.technician ? (
-        <TechnicianCard
-          name={data.technician.fullName}
-          photoUrl={data.technician.photoUrl ?? undefined}
-          specialty={data.technician.specialty}
-          rating={data.technician.ratingAverage ?? undefined}
-          completedJobs={data.technician.completedJobs}
-          actions={
-            data.technician.phone ? (
-              <Button asChild>
-                <a href={`tel:${data.technician.phone}`}>
-                  <Phone aria-hidden /> Call {data.technician.fullName.split(' ')[0]}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-6">
+          {data.technician ? (
+            <TechnicianCard
+              name={data.technician.fullName}
+              photoUrl={data.technician.photoUrl ?? undefined}
+              specialty={data.technician.specialty}
+              rating={data.technician.ratingAverage ?? undefined}
+              completedJobs={data.technician.completedJobs}
+              actions={
+                data.technician.phone ? (
+                  <Button asChild>
+                    <a href={`tel:${data.technician.phone}`}>
+                      <Phone aria-hidden /> Call {data.technician.fullName.split(' ')[0]}
+                    </a>
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : null}
+
+          <Card>
+            <StatusTimeline steps={milestones(data)} />
+          </Card>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-6">
+          <Card className="flex flex-col gap-3">
+            <Text variant="overline" tone="muted">
+              Your service
+            </Text>
+            <Text>{data.problemDescription}</Text>
+            <Text variant="sm" tone="secondary">
+              {data.locality}
+              {data.city ? `, ${data.city}` : ''}
+              {data.scheduledStart ? ` · ${formatWindow(data.scheduledStart, data.scheduledEnd)}` : ''}
+            </Text>
+          </Card>
+
+          <Card className="flex flex-col gap-3">
+            <Text variant="overline" tone="muted">
+              Cost
+            </Text>
+            {data.invoice ? (
+              <>
+                <ul className="flex flex-col gap-1">
+                  {data.invoice.lines.map((line, index) => (
+                    <li key={`${line.description}-${index}`} className="flex justify-between gap-3 text-sm">
+                      <span className="text-foreground-secondary">{line.description}</span>
+                      <span className="tabular-nums">{formatINR(line.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-baseline justify-between border-t border-border pt-3">
+                  <Text weight="semibold">Total</Text>
+                  <Text variant="stat-sm">{formatINR(data.invoice.total)}</Text>
+                </div>
+                <Text variant="sm" tone={data.invoice.amountPaid >= data.invoice.total ? 'success' : 'secondary'}>
+                  {data.invoice.amountPaid >= data.invoice.total ? 'Paid in full. Thank you!' : `Paid ${formatINR(data.invoice.amountPaid)}`}
+                </Text>
+                <Button asChild variant="outline" className="self-start">
+                  <a href={`/api/v1/public/track/${encodeURIComponent(token)}/invoice.pdf`} target="_blank" rel="noreferrer">
+                    <FileDown aria-hidden /> Download bill ({data.invoice.invoiceNumber})
+                  </a>
+                </Button>
+              </>
+            ) : (
+              <Text>
+                Visiting charge <span className="font-semibold tabular-nums">{formatINR(data.visitCharge)}</span>. Any repair cost is explained to you before work
+                starts.
+              </Text>
+            )}
+          </Card>
+
+          {data.photos.length > 0 ? (
+            <Card className="flex flex-col gap-3">
+              <Text variant="overline" tone="muted">
+                Photos
+              </Text>
+              <div className="grid grid-cols-2 gap-3">
+                {[...beforePhotos, ...afterPhotos].map((photo) => (
+                  <figure key={photo.id} className="flex flex-col gap-1">
+                    <img src={photo.url} alt={photo.kind === 'PHOTO_AFTER' ? 'After the repair' : 'Before the repair'} className="aspect-square w-full rounded-control object-cover" loading="lazy" />
+                    <figcaption className="text-caption text-foreground-muted">
+                      {photo.kind === 'PHOTO_AFTER' ? 'After' : 'Before'} · {formatDateTime(photo.createdAt)}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </Card>
+          ) : null}
+
+          {data.messages.length > 0 ? (
+            <Card className="flex flex-col gap-2">
+              <Text variant="overline" tone="muted">
+                Notes from us
+              </Text>
+              {data.messages.map((message, index) => (
+                <Text key={index} variant="sm">
+                  {message}
+                </Text>
+              ))}
+            </Card>
+          ) : null}
+
+          {SUPPORT_PHONE ? (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button asChild variant="outline" className="sm:flex-1">
+                <a href={`tel:${SUPPORT_PHONE}`}>
+                  <Phone aria-hidden /> Call us
                 </a>
               </Button>
-            ) : undefined
-          }
-        />
-      ) : null}
-
-      <Card>
-        <StatusTimeline steps={milestones(data)} />
-      </Card>
-
-      <Card className="flex flex-col gap-3">
-        <Text variant="overline" tone="muted">
-          Your service
-        </Text>
-        <Text>{data.problemDescription}</Text>
-        <Text variant="sm" tone="secondary">
-          {data.locality}
-          {data.city ? `, ${data.city}` : ''}
-          {data.scheduledStart ? ` · ${formatWindow(data.scheduledStart, data.scheduledEnd)}` : ''}
-        </Text>
-      </Card>
-
-      <Card className="flex flex-col gap-3">
-        <Text variant="overline" tone="muted">
-          Cost
-        </Text>
-        {data.invoice ? (
-          <>
-            <ul className="flex flex-col gap-1">
-              {data.invoice.lines.map((line, index) => (
-                <li key={`${line.description}-${index}`} className="flex justify-between gap-3 text-sm">
-                  <span className="text-foreground-secondary">{line.description}</span>
-                  <span className="tabular-nums">{formatINR(line.amount)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="flex items-baseline justify-between border-t border-border pt-3">
-              <Text weight="semibold">Total</Text>
-              <Text variant="stat-sm">{formatINR(data.invoice.total)}</Text>
+              <Button asChild variant="outline" className="sm:flex-1">
+                <a href={whatsappLink(`Hi, I have a question about ${data.srNumber}.`)} target="_blank" rel="noreferrer">
+                  <MessageCircle aria-hidden /> WhatsApp us
+                </a>
+              </Button>
             </div>
-            <Text variant="sm" tone={data.invoice.amountPaid >= data.invoice.total ? 'success' : 'secondary'}>
-              {data.invoice.amountPaid >= data.invoice.total ? 'Paid in full. Thank you!' : `Paid ${formatINR(data.invoice.amountPaid)}`}
-            </Text>
-            <Button asChild variant="outline" className="self-start">
-              <a href={`/api/v1/public/track/${encodeURIComponent(token)}/invoice.pdf`} target="_blank" rel="noreferrer">
-                <FileDown aria-hidden /> Download bill ({data.invoice.invoiceNumber})
-              </a>
-            </Button>
-          </>
-        ) : (
-          <Text>
-            Visiting charge <span className="font-semibold tabular-nums">{formatINR(data.visitCharge)}</span>. Any repair cost is explained to you before work
-            starts.
-          </Text>
-        )}
-      </Card>
-
-      {data.photos.length > 0 ? (
-        <Card className="flex flex-col gap-3">
-          <Text variant="overline" tone="muted">
-            Photos
-          </Text>
-          <div className="grid grid-cols-2 gap-3">
-            {[...beforePhotos, ...afterPhotos].map((photo) => (
-              <figure key={photo.id} className="flex flex-col gap-1">
-                <img src={photo.url} alt={photo.kind === 'PHOTO_AFTER' ? 'After the repair' : 'Before the repair'} className="aspect-square w-full rounded-control object-cover" loading="lazy" />
-                <figcaption className="text-caption text-foreground-muted">
-                  {photo.kind === 'PHOTO_AFTER' ? 'After' : 'Before'} · {formatDateTime(photo.createdAt)}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </Card>
-      ) : null}
-
-      {data.messages.length > 0 ? (
-        <Card className="flex flex-col gap-2">
-          <Text variant="overline" tone="muted">
-            Notes from us
-          </Text>
-          {data.messages.map((message, index) => (
-            <Text key={index} variant="sm">
-              {message}
-            </Text>
-          ))}
-        </Card>
-      ) : null}
-
-      {SUPPORT_PHONE ? (
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild variant="outline" className="sm:flex-1">
-            <a href={`tel:${SUPPORT_PHONE}`}>
-              <Phone aria-hidden /> Call us
-            </a>
-          </Button>
-          <Button asChild variant="outline" className="sm:flex-1">
-            <a href={whatsappLink(`Hi, I have a question about ${data.srNumber}.`)} target="_blank" rel="noreferrer">
-              <MessageCircle aria-hidden /> WhatsApp us
-            </a>
-          </Button>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </Stack>
   );
 }

@@ -16,6 +16,10 @@ export const BUTTON_VARIANT_CLASSES = {
   outline: 'border border-input bg-surface text-foreground hover:border-input-hover hover:bg-surface-sunken',
   ghost: 'text-foreground hover:bg-surface-sunken',
   destructive: 'bg-error text-error-foreground hover:bg-error-hover',
+  /** Warm highlight — the main call to action on a brand (dark) surface or a marketing page. */
+  accent: 'bg-accent text-accent-foreground shadow-sm hover:bg-accent-hover',
+  /** White button for secondary actions on a brand surface. */
+  inverse: 'bg-surface text-primary-subtle-foreground hover:bg-primary-subtle',
 } as const;
 
 const buttonVariants = cva(BUTTON_BASE, {

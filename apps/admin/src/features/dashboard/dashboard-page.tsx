@@ -1,5 +1,5 @@
 import { DefaultSkeleton, QueryState } from '@servicepro/app-kit';
-import { useGetDashboardSummary, useGetLiveBoard, useListTechnicians, type ServiceRequestCard, type ServiceRequestStatus } from '@servicepro/api-client';
+import { useGetDashboardSummary, useSession, useGetLiveBoard, useListTechnicians, type ServiceRequestCard, type ServiceRequestStatus } from '@servicepro/api-client';
 import {
   Avatar,
   Button,
@@ -7,11 +7,16 @@ import {
   DutyStatusBadge,
   EmptyState,
   Heading,
-  PageHeader,
+  HeroBand,
+  SpotArt,
   Stack,
+  TechnicianScene,
   TECHNICIAN_DUTY_STATUS,
   Text,
+  HUE_CLASSES,
+  cn,
   formatDay,
+  type Hue,
 } from '@servicepro/ui';
 import { CircleCheck, Hourglass, IndianRupee, Inbox, PauseCircle, Plus, Send, TriangleAlert, Truck, UserCheck } from 'lucide-react';
 import { Link } from 'react-router';
@@ -21,13 +26,13 @@ import { KpiCard } from '../../components/kpi-card';
 import { RequestCardLink } from '../../components/request-list';
 
 /** Board columns: statuses grouped the way the owner thinks about the day. */
-const COLUMNS: { title: string; statuses: ServiceRequestStatus[] }[] = [
-  { title: 'To assign', statuses: ['NEW', 'READY_FOR_ASSIGNMENT'] },
-  { title: 'Offered', statuses: ['OFFERED'] },
-  { title: 'Assigned', statuses: ['ACCEPTED'] },
-  { title: 'In progress', statuses: ['EN_ROUTE', 'ARRIVED', 'DIAGNOSING', 'AWAITING_ESTIMATE_APPROVAL', 'IN_PROGRESS'] },
-  { title: 'On hold', statuses: ['WAITING_FOR_PARTS', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'UNABLE_TO_REPAIR'] },
-  { title: 'Done today', statuses: ['COMPLETED', 'CLOSED', 'CLOSED_NO_REPAIR', 'CANCELLED'] },
+const COLUMNS: { title: string; hue: Hue; statuses: ServiceRequestStatus[] }[] = [
+  { title: 'To assign', hue: 'violet', statuses: ['NEW', 'READY_FOR_ASSIGNMENT'] },
+  { title: 'Offered', hue: 'orange', statuses: ['OFFERED'] },
+  { title: 'Assigned', hue: 'indigo', statuses: ['ACCEPTED'] },
+  { title: 'In progress', hue: 'sky', statuses: ['EN_ROUTE', 'ARRIVED', 'DIAGNOSING', 'AWAITING_ESTIMATE_APPROVAL', 'IN_PROGRESS'] },
+  { title: 'On hold', hue: 'rose', statuses: ['WAITING_FOR_PARTS', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'UNABLE_TO_REPAIR'] },
+  { title: 'Done today', hue: 'mint', statuses: ['COMPLETED', 'CLOSED', 'CLOSED_NO_REPAIR', 'CANCELLED'] },
 ];
 
 /** "What's happening right now?" (UX-ARCHITECTURE.md §3.3, RESPONSIVE-STRATEGY.md §5.2). */
@@ -35,34 +40,50 @@ export function DashboardPage() {
   const summary = useGetDashboardSummary();
   const board = useGetLiveBoard();
   const s = summary.data;
+  const { session } = useSession();
+  const firstName = session?.user.fullName.split(' ')[0] ?? '';
 
   return (
     <Stack gap={8}>
-      <PageHeader
-        title="Today"
-        description={formatDay(new Date())}
-        actions={
-          <Button asChild>
+      <HeroBand art={<TechnicianScene />} artSize="md">
+        <div className="flex flex-col gap-1">
+          <Text variant="sm" tone="muted">
+            {formatDay(new Date())}
+          </Text>
+          <Heading level={1}>Hello{firstName ? `, ${firstName}` : ''}</Heading>
+          <Text variant="body-lg" tone="secondary">
+            {s
+              ? `${s.createdToday} new today · ${s.inProgress} in progress · ${s.awaitingAssignment} waiting for a technician`
+              : "Here's what's happening today."}
+          </Text>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="accent" size="lg">
             <Link to={paths.newRequest()}>
               <Plus aria-hidden /> New request
             </Link>
           </Button>
-        }
-      />
+          <Button asChild variant="inverse" size="lg">
+            <Link to={paths.dispatch}>
+              <Send aria-hidden /> Open dispatch
+            </Link>
+          </Button>
+        </div>
+      </HeroBand>
 
       <section aria-label="Key numbers" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
-        <KpiCard label="New today" value={s?.createdToday} icon={Inbox} to={paths.requests} />
-        <KpiCard label="To assign" value={s?.awaitingAssignment} icon={Send} tone={s && s.awaitingAssignment > 0 ? 'info' : 'neutral'} to={paths.dispatch} />
-        <KpiCard label="Offered" value={s?.offered} icon={Hourglass} to={`${paths.requests}?view=offered`} />
-        <KpiCard label="Assigned" value={s?.assigned} icon={UserCheck} to={`${paths.requests}?view=assigned`} />
-        <KpiCard label="In progress" value={s?.inProgress} icon={Truck} tone="primary" to={`${paths.requests}?view=progress`} />
-        <KpiCard label="On hold" value={s?.onHold} icon={PauseCircle} tone={s && s.onHold > 0 ? 'warning' : 'neutral'} to={`${paths.requests}?view=hold`} />
-        <KpiCard label="Completed" value={s?.completedToday} icon={CircleCheck} tone="success" />
-        <KpiCard label="Stuck" value={s?.stuck} icon={TriangleAlert} tone={s && s.stuck > 0 ? 'warning' : 'neutral'} to={`${paths.requests}?view=stuck`} />
-        <KpiCard label="Unpaid" value={s?.unpaidCompleted} icon={IndianRupee} tone={s && s.unpaidCompleted > 0 ? 'warning' : 'neutral'} to={paths.billing} />
+        <KpiCard label="New today" value={s?.createdToday} icon={Inbox} hue="sky" to={paths.requests} />
+        <KpiCard label="To assign" value={s?.awaitingAssignment} icon={Send} hue="violet" to={paths.dispatch} />
+        <KpiCard label="Offered" value={s?.offered} icon={Hourglass} hue="orange" to={`${paths.requests}?view=offered`} />
+        <KpiCard label="Assigned" value={s?.assigned} icon={UserCheck} hue="indigo" to={`${paths.requests}?view=assigned`} />
+        <KpiCard label="In progress" value={s?.inProgress} icon={Truck} hue="sky" to={`${paths.requests}?view=progress`} />
+        <KpiCard label="On hold" value={s?.onHold} icon={PauseCircle} hue="rose" tone={s && s.onHold > 0 ? 'warning' : 'neutral'} to={`${paths.requests}?view=hold`} />
+        <KpiCard label="Completed" value={s?.completedToday} icon={CircleCheck} hue="mint" />
+        <KpiCard label="Stuck" value={s?.stuck} icon={TriangleAlert} hue="rose" tone={s && s.stuck > 0 ? 'warning' : 'neutral'} to={`${paths.requests}?view=stuck`} />
+        <KpiCard label="Unpaid" value={s?.unpaidCompleted} icon={IndianRupee} hue="orange" tone={s && s.unpaidCompleted > 0 ? 'warning' : 'neutral'} to={paths.billing} />
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <section aria-labelledby="board" className="flex flex-col gap-4 lg:col-span-2">
           <Heading level={2} id="board">
             Live board
@@ -73,6 +94,7 @@ export function DashboardPage() {
                 <Card>
                   <EmptyState
                     icon={Inbox}
+                    illustration={<SpotArt kind="calendar" />}
                     title="No jobs today yet"
                     description="New requests appear here the moment they're created."
                     action={
@@ -83,10 +105,10 @@ export function DashboardPage() {
                   />
                 </Card>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                   {COLUMNS.map((column) => {
                     const cards = data.cards.filter((c) => column.statuses.includes(c.status));
-                    return <BoardColumn key={column.title} title={column.title} cards={cards} />;
+                    return <BoardColumn key={column.title} title={column.title} hue={column.hue} cards={cards} />;
                   })}
                 </div>
               )
@@ -103,14 +125,12 @@ export function DashboardPage() {
   );
 }
 
-function BoardColumn({ title, cards }: { title: string; cards: ServiceRequestCard[] }) {
+function BoardColumn({ title, hue, cards }: { title: string; hue: Hue; cards: ServiceRequestCard[] }) {
   return (
-    <div className="flex flex-col gap-3 rounded-card bg-surface-sunken p-3">
+    <div className={cn('flex flex-col gap-3 rounded-card border-t-4 bg-surface-sunken p-3', HUE_CLASSES[hue].border)}>
       <div className="flex items-center justify-between px-1">
         <Text weight="semibold">{title}</Text>
-        <Text variant="sm" tone="muted" className="tabular-nums">
-          {cards.length}
-        </Text>
+        <span className={cn('inline-flex min-w-6 justify-center rounded-pill px-2 text-sm font-bold tabular-nums', HUE_CLASSES[hue].subtle)}>{cards.length}</span>
       </div>
       {cards.length === 0 ? (
         <Text variant="sm" tone="muted" className="px-1 pb-2">
@@ -144,7 +164,7 @@ function NeedsAttention({ cards }: { cards: ServiceRequestCard[] }) {
       </Heading>
       {items.length === 0 ? (
         <Card>
-          <EmptyState size="compact" icon={CircleCheck} title="All clear" description="Nothing is stuck, unassigned or unpaid." />
+          <EmptyState size="compact" icon={CircleCheck} illustration={<SpotArt kind="done" />} title="All clear" description="Nothing is stuck, unassigned or unpaid." />
         </Card>
       ) : (
         <ul className="flex flex-col gap-2">

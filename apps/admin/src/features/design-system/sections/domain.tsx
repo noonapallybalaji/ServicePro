@@ -2,7 +2,6 @@ import {
   AiBadge,
   AiSummary,
   Button,
-  CATEGORY_ICONS,
   Card,
   ConfidenceMeter,
   IntakeCallStatus,
@@ -30,7 +29,7 @@ export function ServiceSection() {
           {DEMO_SERVICES.map((service) => (
             <li key={service.code} className="w-2/5 shrink-0 snap-start sm:w-1/4 md:w-auto">
               <ServiceCard
-                icon={CATEGORY_ICONS[service.code]}
+                categoryCode={service.code}
                 title={service.title}
                 startingPrice={service.price}
               />
@@ -44,7 +43,7 @@ export function ServiceSection() {
             <li key={service.code}>
               <ServiceCard
                 layout="row"
-                icon={CATEGORY_ICONS[service.code]}
+                categoryCode={service.code}
                 title={service.title}
                 description={service.description}
                 startingPrice={service.price}

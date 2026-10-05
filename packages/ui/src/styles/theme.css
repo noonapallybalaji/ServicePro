@@ -53,6 +53,7 @@
   --container-drawer: 32rem;
   --container-prose: 40rem;
   --container-content: 80rem;
+  --container-wide: 72rem; /* technician app on desktop */
 
   /* ── Typography scale ────────────────────────────────────────────────────── */
   --text-display: clamp(2.25rem, 1.85rem + 1.6vw, 3rem);
@@ -205,6 +206,38 @@
   --color-ai-border: var(--ai-border);
 
   --color-rating: var(--rating);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-accent-subtle-foreground: var(--accent-subtle-foreground);
+  --color-accent-border: var(--accent-border);
+
+  --color-hue-sky: var(--hue-sky);
+  --color-hue-sky-subtle: var(--hue-sky-subtle);
+  --color-hue-sky-foreground: var(--hue-sky-foreground);
+  --color-hue-violet: var(--hue-violet);
+  --color-hue-violet-subtle: var(--hue-violet-subtle);
+  --color-hue-violet-foreground: var(--hue-violet-foreground);
+  --color-hue-mint: var(--hue-mint);
+  --color-hue-mint-subtle: var(--hue-mint-subtle);
+  --color-hue-mint-foreground: var(--hue-mint-foreground);
+  --color-hue-indigo: var(--hue-indigo);
+  --color-hue-indigo-subtle: var(--hue-indigo-subtle);
+  --color-hue-indigo-foreground: var(--hue-indigo-foreground);
+  --color-hue-orange: var(--hue-orange);
+  --color-hue-orange-subtle: var(--hue-orange-subtle);
+  --color-hue-orange-foreground: var(--hue-orange-foreground);
+  --color-hue-rose: var(--hue-rose);
+  --color-hue-rose-subtle: var(--hue-rose-subtle);
+  --color-hue-rose-foreground: var(--hue-rose-foreground);
+
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-foreground-hover: var(--nav-foreground-hover);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --color-nav-active-foreground: var(--nav-active-foreground);
 
   --color-tech-available: var(--tech-available);
   --color-tech-on-job: var(--tech-on-job);

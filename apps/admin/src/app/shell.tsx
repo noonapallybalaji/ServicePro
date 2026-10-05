@@ -4,6 +4,8 @@ import {
   Avatar,
   Badge,
   BottomNavItem,
+  BrandLockup,
+  BrandMark,
   Dialog,
   DialogBody,
   DialogContent,
@@ -67,8 +69,8 @@ export function AdminShell() {
     <AppShell
       header={<Header live={health} />}
       sidebar={
-        <div className="flex h-full flex-col gap-6 px-4 py-6">
-          <span className="px-3 text-h3 text-foreground">ServicePro</span>
+        <div className="flex flex-1 flex-col gap-8 px-4 py-6">
+          <BrandLockup tagline="Operations" className="px-2" />
           <nav aria-label="Main" className="flex flex-1 flex-col gap-6">
             <NavGroup title="Operate" items={OPERATE} />
             <NavGroup title="Manage" items={MANAGE} />
@@ -146,7 +148,10 @@ function Header({ live }: { live: ReturnType<typeof useRealtime> }) {
 
   return (
     <div className="flex h-header items-center gap-3 px-4 md:px-6 lg:px-8">
-      <span className="text-h3 text-foreground lg:hidden">ServicePro</span>
+      <span className="flex items-center gap-2 lg:hidden">
+        <BrandMark className="size-8" />
+        <span className="text-h3 text-foreground max-sm:hidden">ServicePro</span>
+      </span>
       <form role="search" onSubmit={search} className="hidden max-w-md flex-1 md:block">
         <Input
           type="search"

@@ -29,19 +29,21 @@ Visual cues come from well-made electronics: calibrated readouts, status LEDs, c
 - **Status LED.** A small solid dot, pulsing only when something is live. This is the brand's single signature motion.
 - **Clean panels.** Flat white surfaces on a warm-grey canvas, hairline borders, generous padding. Depth comes from layout, not shadows.
 - **Petrol.** A deep blue-teal: cool air, clean water, a calm signal. Not generic SaaS blue, and clearly distinct from success green.
+- **Warm and colourful around the work.** *(Revised Oct 2026, after review against consumer home-services apps.)* Home views open with a petrol **brand band** (`HeroBand`) and an original illustration; a coral **accent** marks the main call to action on brand surfaces; each appliance category has its own **hue** and flat illustration. Work surfaces (forms, tables, job details) stay calm and white.
 
 ### 1.4 What we avoid (and why)
-- **Gradients and glassmorphism.** They age quickly, hurt legibility in sunlight, and cost GPU on budget phones.
+- **Glassmorphism and gradient text.** They hurt legibility in sunlight and cost GPU on budget phones. Gradients are allowed only on the two brand-surface utilities (`surface-brand`, `surface-hero`), always behind white text that meets AA.
+- **Stock photos and copied artwork.** Imagery is our own flat SVG set ([illustrations/](../packages/ui/src/illustrations/)): no text inside it, decorative (`aria-hidden`), and coloured from tokens.
 - **Large radii and big shadows.** They make the product look like a toy and make dense admin screens mushy.
 - **AI visual clichés** (sparkles, purple glows, robot avatars) in customer UI. The AI's job is to disappear (UX-ARCHITECTURE §6).
-- **Generic admin-template look** (blue sidebar, rainbow KPI tiles, stock charts). The dashboard uses the same calm system as the customer app.
+- **Colour that pretends to be status.** Hues decorate (a KPI chip, a board column stripe); when a number needs action, the attention *tone* replaces the hue.
 
 ### 1.5 Design principles
 1. **Clarity over cleverness.** If a label needs explaining, change the label.
 2. **One thing at a time on mobile.** Full-screen steps, one primary action.
 3. **Show the money and the person.** Price and technician identity are first-class UI, never footnotes.
 4. **Status is sacred.** Status always shows as colour + icon + words, and is always current.
-5. **Restraint is premium.** Few colours, few sizes, lots of space. Each extra variant has to justify itself.
+5. **Friendly, not noisy.** Colour and illustration live at the edges of a task (home views, empty states, sign-in, category tiles), never inside forms or tables. Each extra variant has to justify itself.
 6. **Built for the real conditions:** sunlight, one hand, 4G, Telugu, a ₹10k Android phone.
 
 ---
@@ -90,10 +92,22 @@ Every tone has five slots: `solid`, `foreground` (on solid), `subtle` (backgroun
 - **Petrol is for action and progress.** Buttons, links, selected states, completed timeline steps and focus. Not decoration.
 - **Feedback colours mean something.** Green = done/good, amber = needs attention, red = failed/destructive, blue = informational. Never use them for decoration.
 - **Warning solid takes dark text**, never white (white on amber fails contrast).
-- **Violet is AI, and only for staff.** It never appears in the customer or technician apps.
+- **AI is marked by the `AiBadge` (icon + label), for staff only.** The decorative `hue-violet` (TV category, illustrations) is a different, lighter violet and never carries AI meaning.
 - **Never colour alone.** Every status pairs colour with an icon or dot **and** a text label (WCAG 1.4.1).
 
-### 2.4 Dark mode: not in v1
+### 2.4 Accent, hues and brand surfaces
+
+| Token | Use | Rule |
+|---|---|---|
+| `--accent` (+ `-hover`, `-subtle`, `-subtle-foreground`, `-border`) | Coral `#ff7a45`: the main CTA on brand surfaces (`Button variant="accent"`), offer callouts, illustration pops | Always **dark text** on solid accent |
+| `--hue-{sky,violet,mint,indigo,orange,rose}` (+ `-subtle`, `-foreground`) | Category tiles, avatars, KPI chips, board columns, illustrations | Decoration only; `-foreground` on `-subtle` is AA |
+| `--brand-from / -via / -to` | `surface-brand` (sidebar, footer) and `surface-hero` (hero bands, sign-in panel, earnings card) | Pair with `data-surface="brand"` |
+
+- **Categories → hues** live in [`hues.ts`](../packages/ui/src/tokens/hues.ts) (`CATEGORY_HUES`, `categoryHue()`); avatars get a stable hue from the name (`hueForName`).
+- **`data-surface="brand"`** flips the text, border and nav tokens to white, so ordinary components work on the dark band. Put white cards inside with `data-surface="light"`. Don't put `outline`/`ghost` buttons on a brand surface; use `accent` or `inverse`.
+- **Components:** `HeroBand`, `AuthLayout`, `StatTile`, `CategoryTile`, `BrandLockup`, and the artwork `ApplianceArt`, `TechnicianScene`, `SpotArt` (empty states via `EmptyState illustration`).
+
+### 2.5 Dark mode: not in v1
 Dark mode is **not genuinely useful** for these users yet:
 - Technicians work outdoors in daylight, where a light, high-contrast UI reads better.
 - Customers use the product briefly (a booking, a tracking check).
