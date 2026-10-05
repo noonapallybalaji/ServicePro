@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    The only way modules talk to each other (ADR 0001):
+      Events/  — published through the outbox
+      Ports/   — interfaces implemented by the owning module, consumed by others
+      Enums    — shared vocabulary
+  -->
+  <ItemGroup>
+    <ProjectReference Include="..\ServicePro.SharedKernel\ServicePro.SharedKernel.csproj" />
+  </ItemGroup>
+</Project>

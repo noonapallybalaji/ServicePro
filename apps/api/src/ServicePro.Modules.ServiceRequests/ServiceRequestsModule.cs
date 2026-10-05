@@ -1,0 +1,191 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using ServicePro.BuildingBlocks;
+using ServicePro.BuildingBlocks.Modules;
+using ServicePro.BuildingBlocks.Persistence;
+using ServicePro.BuildingBlocks.Security;
+using ServicePro.BuildingBlocks.Web;
+using ServicePro.Contracts;
+using ServicePro.Contracts.Ports;
+using ServicePro.Modules.ServiceRequests.Application;
+using ServicePro.Modules.ServiceRequests.Domain;
+using ServicePro.SharedKernel;
+
+namespace ServicePro.Modules.ServiceRequests;
+
+public sealed class ServiceRequestsModule : IModule
+{
+    public string Name => "ServiceRequests";
+
+    public void Register(IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddScoped<IServiceRequestWorkflow, ServiceRequestWorkflowPort>();
+        services.AddScoped<ServiceRequestViewBuilder>();
+        services.AddSetting(OpsSettings.StuckAfterMinutes);
+    }
+
+    public void MapEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        MapStaffEndpoints(endpoints);
+        MapTechnicianEndpoints(endpoints);
+        MapSharedEndpoints(endpoints);
+        MapPublicEndpoints(endpoints);
+    }
+
+    private static void MapStaffEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        var staff = endpoints.MapGroup("/api/v1/admin/service-requests").WithTags("Service requests").RequireAuthorization(AuthPolicies.Staff);
+
+        staff.MapGet("/", async (
+                [FromQuery] ServiceRequestStatus[]? status,
+                Guid? technicianId,
+                Guid? customerId,
+                string? srNumber,
+                DateOnly? createdFrom,
+                DateOnly? createdTo,
+                bool? onlyStuck,
+                int? page,
+                int? pageSize,
+                ListServiceRequests useCase,
+                CancellationToken ct) =>
+                Results.Ok(await useCase.HandleAsync(
+                    new ServiceRequestFilter(status, technicianId, customerId, srNumber, createdFrom, createdTo, onlyStuck),
+                    new PageRequest(page ?? 1, pageSize ?? 25),
+                    ct)))
+            .Produces<PagedResult<ServiceRequestCard>>()
+            .WithName("ListServiceRequests");
+
+        staff.MapGet("/{serviceRequestId:guid}", async (Guid serviceRequestId, GetServiceRequestDetail useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
+            .Produces<ServiceRequestDetail>()
+            .WithStandardErrors()
+            .WithName("GetServiceRequest");
+
+        staff.MapPost("/", async (CreateServiceRequestRequest request, CreateServiceRequest useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToIdResponse())
+            .Validate<CreateServiceRequestRequest>()
+            .Produces<IdResponse>()
+            .WithStandardErrors()
+            .WithName("CreateServiceRequest");
+
+        staff.MapPut("/{serviceRequestId:guid}", async (Guid serviceRequestId, UpdateServiceRequestRequest request, UpdateServiceRequest useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, request, ct)).ToHttp())
+            .Validate<UpdateServiceRequestRequest>()
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("UpdateServiceRequest");
+
+        staff.MapPost("/{serviceRequestId:guid}/transitions", async (Guid serviceRequestId, TransitionRequest request, TransitionServiceRequest useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, request, ct)).ToHttp())
+            .Validate<TransitionRequest>()
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("TransitionServiceRequest");
+
+        var dashboard = endpoints.MapGroup("/api/v1/admin/dashboard").WithTags("Dashboard").RequireAuthorization(AuthPolicies.Staff);
+
+        dashboard.MapGet("/summary", async (GetDashboardSummary useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(ct)))
+            .Produces<DashboardSummaryResponse>()
+            .WithName("GetDashboardSummary");
+
+        dashboard.MapGet("/board", async (DateOnly? date, GetLiveBoard useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(date, ct)))
+            .Produces<BoardResponse>()
+            .WithName("GetLiveBoard");
+    }
+
+    private static void MapTechnicianEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        var jobs = endpoints.MapGroup("/api/v1/tech/jobs").WithTags("Technician app").RequireAuthorization(AuthPolicies.Technician);
+
+        jobs.MapGet("/", async (ListMyJobs useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(ct)))
+            .Produces<MyJobsResponse>()
+            .WithName("ListMyJobs");
+
+        jobs.MapGet("/{serviceRequestId:guid}", async (Guid serviceRequestId, GetServiceRequestDetail useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
+            .Produces<ServiceRequestDetail>()
+            .WithStandardErrors()
+            .WithName("GetMyJob");
+
+        jobs.MapPost("/{serviceRequestId:guid}/transitions", async (Guid serviceRequestId, TransitionRequest request, TransitionServiceRequest useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, request, ct)).ToHttp())
+            .Validate<TransitionRequest>()
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("TransitionMyJob");
+    }
+
+    /// <summary>Used by both staff and the assigned technician (authorisation is checked per job).</summary>
+    private static void MapSharedEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        var shared = endpoints.MapGroup("/api/v1/service-requests/{serviceRequestId:guid}").WithTags("Service requests").RequireAuthorization();
+
+        shared.MapPost("/notes", async (Guid serviceRequestId, AddNoteRequest request, AddServiceRequestNote useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, request, ct)).ToHttp())
+            .Validate<AddNoteRequest>()
+            .Produces<NoteResponse>()
+            .WithStandardErrors()
+            .WithName("AddServiceRequestNote");
+
+        // Multipart: `kind` is PHOTO_BEFORE | PHOTO_AFTER | PHOTO_ISSUE | VOICE_NOTE | DOCUMENT.
+        shared.MapPost("/attachments", async (Guid serviceRequestId, [FromForm] string kind, IFormFile file, UploadServiceRequestAttachment useCase, CancellationToken ct) =>
+            {
+                if (!EnumText.TryParse<AttachmentKind>(kind, out var attachmentKind))
+                {
+                    return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: "Unknown attachment kind.");
+                }
+
+                await using var stream = file.OpenReadStream();
+                return (await useCase.HandleAsync(serviceRequestId, attachmentKind, stream, file.ContentType, file.Length, ct)).ToHttp();
+            })
+            .DisableAntiforgery()
+            .Produces<AttachmentResponse>()
+            .WithStandardErrors()
+            .WithName("UploadServiceRequestAttachment");
+
+        shared.MapGet("/attachments/{attachmentId:guid}", async (Guid serviceRequestId, Guid attachmentId, OpenServiceRequestAttachment useCase, CancellationToken ct) =>
+            {
+                var result = await useCase.HandleAsync(serviceRequestId, attachmentId, ct);
+                return result.IsSuccess ? Results.File(result.Value.Content, result.Value.ContentType) : result.Error!.ToProblem();
+            })
+            .Produces(StatusCodes.Status200OK, contentType: "application/octet-stream")
+            .WithStandardErrors()
+            .WithName("GetServiceRequestAttachment");
+
+        shared.MapPost("/completion-code", async (Guid serviceRequestId, ReissueCompletionCode useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("ReissueCompletionCode");
+
+        endpoints.MapGet("/api/v1/meta/transitions", (GetWorkflowMetadata useCase) => Results.Ok(useCase.Handle()))
+            .WithTags("Meta")
+            .RequireAuthorization()
+            .Produces<IReadOnlyList<TransitionRuleResponse>>()
+            .WithName("GetWorkflowTransitions");
+    }
+
+    private static void MapPublicEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        var track = endpoints.MapGroup("/api/v1/public/track/{token}").WithTags("Tracking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Public);
+
+        track.MapGet("/", async (string token, GetTracking useCase, CancellationToken ct) => (await useCase.HandleAsync(token, ct)).ToHttp())
+            .Produces<TrackingResponse>()
+            .WithStandardErrors()
+            .WithName("GetTracking");
+
+        track.MapGet("/photos/{attachmentId:guid}", async (string token, Guid attachmentId, OpenTrackingPhoto useCase, CancellationToken ct) =>
+            {
+                var result = await useCase.HandleAsync(token, attachmentId, ct);
+                return result.IsSuccess ? Results.File(result.Value.Content, result.Value.ContentType) : result.Error!.ToProblem();
+            })
+            .Produces(StatusCodes.Status200OK, contentType: "image/jpeg")
+            .WithStandardErrors()
+            .WithName("GetTrackingPhoto");
+    }
+}

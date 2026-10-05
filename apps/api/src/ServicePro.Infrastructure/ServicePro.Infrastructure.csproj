@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Composition root for persistence: the only project that references every module (ADR 0001/0002). -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ServicePro.Modules.Identity\ServicePro.Modules.Identity.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Catalog\ServicePro.Modules.Catalog.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Customers\ServicePro.Modules.Customers.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Technicians\ServicePro.Modules.Technicians.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.ServiceRequests\ServicePro.Modules.ServiceRequests.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Dispatch\ServicePro.Modules.Dispatch.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Notifications\ServicePro.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Billing\ServicePro.Modules.Billing.csproj" />
+  </ItemGroup>
+</Project>

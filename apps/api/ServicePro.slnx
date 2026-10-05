@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ServicePro.Api/ServicePro.Api.csproj" />
+    <Project Path="src/ServicePro.BuildingBlocks/ServicePro.BuildingBlocks.csproj" />
+    <Project Path="src/ServicePro.Contracts/ServicePro.Contracts.csproj" />
+    <Project Path="src/ServicePro.Infrastructure/ServicePro.Infrastructure.csproj" />
+    <Project Path="src/ServicePro.Modules.Billing/ServicePro.Modules.Billing.csproj" />
+    <Project Path="src/ServicePro.Modules.Catalog/ServicePro.Modules.Catalog.csproj" />
+    <Project Path="src/ServicePro.Modules.Customers/ServicePro.Modules.Customers.csproj" />
+    <Project Path="src/ServicePro.Modules.Dispatch/ServicePro.Modules.Dispatch.csproj" />
+    <Project Path="src/ServicePro.Modules.Identity/ServicePro.Modules.Identity.csproj" />
+    <Project Path="src/ServicePro.Modules.Notifications/ServicePro.Modules.Notifications.csproj" />
+    <Project Path="src/ServicePro.Modules.ServiceRequests/ServicePro.Modules.ServiceRequests.csproj" />
+    <Project Path="src/ServicePro.Modules.Technicians/ServicePro.Modules.Technicians.csproj" />
+    <Project Path="src/ServicePro.SharedKernel/ServicePro.SharedKernel.csproj" />
+  </Folder>
+</Solution>

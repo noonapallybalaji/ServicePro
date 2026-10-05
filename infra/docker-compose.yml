@@ -1,0 +1,38 @@
+# Local development stack (PLAN.md §15.1).
+#   docker compose -f infra/docker-compose.yml up -d                       → PostgreSQL
+#   docker compose -f infra/docker-compose.yml --profile observability up -d → + Seq log viewer
+name: servicepro
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-servicepro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-servicepro}
+      POSTGRES_DB: ${POSTGRES_DB:-servicepro}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-servicepro} -d ${POSTGRES_DB:-servicepro}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  seq:
+    image: datalust/seq:latest
+    profiles: ["observability"]
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "true"
+    ports:
+      - "${SEQ_PORT:-5341}:80"
+    volumes:
+      - seqdata:/data
+
+volumes:
+  pgdata:
+  seqdata:
