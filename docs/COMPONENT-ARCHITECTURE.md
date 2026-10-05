@@ -215,10 +215,10 @@ It is built **only** from `@servicepro/ui`. If a screen can't be built from the 
 | Phase | Scope | Exit criteria |
 |---|---|---|
 | **A. Foundation** ✅ *(this delivery)* | Tokens, theme resets, base CSS, motion, a11y rules, foundation + layout + shared domain components, demo route, docs | Typecheck, lint and build pass. Demo verified at 390 px and 1440 px. **Awaiting approval** |
-| **B. Shells & data plumbing** | `AppShell` (+ nav parts), `PageHeader`, `Menu`, `OtpInput`, `SearchInput`, i18n package (`packages/i18n`, en/te/hi) with status labels moved into it, Orval client + Query conventions, SignalR hook | Each app boots into an empty authenticated shell on all breakpoints |
-| **C. Technician app** (PLAN Phase 1 critical path) | Today, Offers, Job page, JobActionBar, ProblemSheet, Completion (photo + OTP), offline queue | A technician runs a full job on a real phone in ≤ 6 taps + photo + OTP |
-| **D. Admin core** | Dashboard (KPIs, board, needs-attention), Requests table/board + drawer, Dispatch + AssignmentPanel, Technicians | Owner runs a day of jobs without phone calls (PLAN Phase 1 exit) |
-| **E. Customer** | Tracking page, estimate approval, review. Then landing + request flow (PLAN Phase 2) | Lighthouse mobile ≥ 90 on landing. Tracking works on a 3G throttle |
+| **B. Shells & data plumbing** ✅ *(except i18n)* | `AppShell` + nav items, `PageHeader`, `Table`, `OtpInput`; `@servicepro/api-client` (Orval + session + SignalR); `@servicepro/app-kit`. **Open:** `packages/i18n` (te/hi), `Menu`, `Combobox` | Each app boots into an authenticated shell on all breakpoints |
+| **C. Technician app** ✅ *(offline queue open)* | Today, Offers (countdown), Job page with action bar, Problem sheet, Completion (photo + code), Bill builder, Payment, Earnings, Profile; installable PWA. **Open:** offline write queue | A technician runs a full job on a real phone in ≤ 6 taps + photo + OTP |
+| **D. Admin core** ✅ | Dashboard (KPIs, live board, needs-attention, team), Requests (views, detail, status changes, payments), Dispatch + AssignmentPanel, Technicians, Customers (+ CSV import), Billing (payments, cash ledger), Settings (rules, catalog, areas, team, message templates) | Owner runs a day of jobs without phone calls (PLAN Phase 1 exit) |
+| **E. Customer** ◐ | ✅ Tracking page (milestones, technician, cost, bill PDF, photos). **Phase 2/3:** landing + request flow, estimate approval, reviews | Lighthouse mobile ≥ 90 on landing. Tracking works on a 3G throttle |
 | **F. AI surfaces** | Verification workspace, AudioPlayer, AI activity entries, call-status page wired to live events | Reviewer clears a lead in < 60 s |
 | **G. Billing & reports** | Estimates/invoices/payments/ledger, parts, reports incl. AI performance | — |
 
