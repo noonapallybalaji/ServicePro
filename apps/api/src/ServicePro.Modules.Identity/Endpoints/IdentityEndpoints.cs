@@ -40,9 +40,11 @@ internal static class IdentityEndpoints
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithName("VerifyLoginOtp");
 
+        // Runs on every app load, so it gets the looser policy: a whole office shares one IP,
+        // and a 256-bit refresh token can't be brute-forced anyway.
         auth.MapPost("/refresh", async (RefreshSession useCase, HttpContext http, CancellationToken ct) =>
                 IssueSession(await useCase.HandleAsync(http.Request.Cookies[RefreshCookie], ct), http))
-            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .RequireRateLimiting(RateLimitPolicies.Public)
             .Produces<AuthSessionResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithName("RefreshSession");
