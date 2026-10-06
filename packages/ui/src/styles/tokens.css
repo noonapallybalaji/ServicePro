@@ -193,12 +193,13 @@
 /*
  * A dark brand surface (sidebar, hero band). Text tokens flip to white inside it, so
  * ordinary components (Text, nav items, outline badges) read correctly without variants.
- * White at 66% on --petrol-800 is still ≥ 7:1.
+ * Measured on the lightest brand colour (--petrol-600, where hero gradients start):
+ * secondary 5.96:1, muted 5.10:1 — both AA for body text.
  */
 [data-surface='brand'] {
   --foreground: #ffffff;
-  --foreground-secondary: rgb(255 255 255 / 0.84);
-  --foreground-muted: rgb(255 255 255 / 0.68);
+  --foreground-secondary: rgb(255 255 255 / 0.9);
+  --foreground-muted: rgb(255 255 255 / 0.8);
   --border: rgb(255 255 255 / 0.14);
   --ring: #ffffff;
 

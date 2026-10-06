@@ -215,6 +215,7 @@ export function StepProgress({
       </div>
       <div
         role="progressbar"
+        aria-label={label}
         aria-valuemin={1}
         aria-valuemax={total}
         aria-valuenow={current}

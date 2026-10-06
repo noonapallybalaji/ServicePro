@@ -14,4 +14,6 @@ export default defineConfig({
     },
   },
   preview: { port: 5192 },
+  // The build-time renderer bundles workspace packages (they ship TypeScript source).
+  ssr: { noExternal: [/^@servicepro\//] },
 });

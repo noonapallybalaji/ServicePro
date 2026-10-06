@@ -84,6 +84,14 @@ builder.Services.AddHealthChecks().AddDbContextCheck<ServiceProDbContext>("datab
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+// The API is never a search result: tell crawlers not to index any response (tracking data included).
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+    await next();
+});
+
 app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
 app.UseRateLimiter();

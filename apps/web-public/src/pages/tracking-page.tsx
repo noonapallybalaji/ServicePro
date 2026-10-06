@@ -24,8 +24,10 @@ import {
 import { FileDown, Link2Off, MessageCircle, Phone } from 'lucide-react';
 import { useParams } from 'react-router';
 
-import { SUPPORT_PHONE, whatsappLink } from '../config';
-import { SiteFooter, SiteHeader } from './site-header';
+import { SITE, whatsappLink } from '../site';
+import { SiteLayout } from '../components/site-layout';
+import { usePageMeta } from '../seo/head';
+import { PAGES } from '../seo/pages';
 
 /** Statuses where something interrupted the normal flow. */
 const ATTENTION: ReadonlySet<ServiceRequestStatus> = new Set(['WAITING_FOR_PARTS', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'UNABLE_TO_REPAIR', 'CANCELLED']);
@@ -89,14 +91,13 @@ function milestones(t: TrackingResponse): TimelineStep[] {
 }
 
 export function TrackingPage() {
+  usePageMeta(PAGES.tracking);
   const { token = '' } = useParams();
   // Customers keep this open while waiting: poll gently (PLAN.md §12.5).
   const tracking = useGetTracking(token, { query: { refetchInterval: 30_000, retry: false } });
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
-      <main id="main" className="flex-1">
+    <SiteLayout>
         <Container className="py-6 md:py-10">
           {tracking.isPending ? (
             <Stack gap={4}>
@@ -105,25 +106,26 @@ export function TrackingPage() {
               <Skeleton className="h-64 w-full rounded-card" />
             </Stack>
           ) : tracking.isError ? (
-            <ErrorState
-              icon={Link2Off}
-              title="This tracking link has expired or doesn't exist"
-              description="Links stay active until 30 days after your service. Call us and we'll help."
-              secondaryAction={
-                SUPPORT_PHONE ? (
-                  <Button asChild variant="outline">
-                    <a href={`tel:${SUPPORT_PHONE}`}>Call us</a>
-                  </Button>
-                ) : undefined
-              }
-            />
+            <>
+              <h1 className="sr-only">Track your service</h1>
+              <ErrorState
+                icon={Link2Off}
+                title="This tracking link has expired or doesn't exist"
+                description="Links stay active until 30 days after your service. Call us and we'll help."
+                secondaryAction={
+                  SITE.phone ? (
+                    <Button asChild variant="outline">
+                      <a href={`tel:${SITE.phone}`}>Call us</a>
+                    </Button>
+                  ) : undefined
+                }
+              />
+            </>
           ) : (
             <Tracking data={tracking.data} token={token} />
           )}
         </Container>
-      </main>
-      <SiteFooter />
-    </div>
+    </SiteLayout>
   );
 }
 
@@ -147,7 +149,7 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
         </div>
       </HeroBand>
 
-      {attention && data.status === 'CUSTOMER_UNAVAILABLE' && SUPPORT_PHONE ? (
+      {attention && data.status === 'CUSTOMER_UNAVAILABLE' && SITE.phone ? (
         <Alert
           tone="warning"
           title="Choose a new time"
@@ -266,10 +268,10 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
             </Card>
           ) : null}
 
-          {SUPPORT_PHONE ? (
+          {SITE.phone ? (
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild variant="outline" className="sm:flex-1">
-                <a href={`tel:${SUPPORT_PHONE}`}>
+                <a href={`tel:${SITE.phone}`}>
                   <Phone aria-hidden /> Call us
                 </a>
               </Button>

@@ -1,35 +1,31 @@
 import './styles.css';
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 
-import { BookingPage } from './pages/booking/booking-page';
-import { HomePage } from './pages/home-page';
-import { TrackingPage } from './pages/tracking-page';
+import { routes } from './routes';
 
 /*
- * Customer site: landing page, online booking and tracking. The AI qualification call joins the
- * booking flow in Phase 2 (PLAN.md §16). Kept separate from staff apps so ad traffic never
- * downloads staff code (PLAN.md §6.1).
+ * Customer site: landing and service pages, online booking and tracking. Content pages are
+ * pre-rendered at build time (scripts/prerender.mjs) and hydrated here; booking and tracking
+ * render in the browser. Kept separate from staff apps so ad traffic never downloads staff code
+ * (PLAN.md §6.1).
  */
-const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: true } } });
-
-const router = createBrowserRouter([
-  { path: '/', element: <HomePage /> },
-  { path: '/book', element: <BookingPage /> },
-  { path: '/t/:token', element: <TrackingPage /> },
-  { path: '*', element: <HomePage /> },
-]);
+const router = createBrowserRouter(routes);
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element #root not found');
 
-createRoot(rootElement).render(
+const app = (
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </StrictMode>,
+    <RouterProvider router={router} />
+  </StrictMode>
 );
+
+// Pre-rendered pages arrive with markup to hydrate; the app shell (booking, tracking) is empty.
+if (rootElement.firstElementChild) {
+  hydrateRoot(rootElement, app);
+} else {
+  createRoot(rootElement).render(app);
+}

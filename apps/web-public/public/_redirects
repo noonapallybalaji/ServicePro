@@ -1,0 +1,4 @@
+# Netlify / Cloudflare Pages rewrites (same rules as scripts/serve-dist.mjs).
+# Pre-rendered pages are served as files; unknown paths get 404.html with a real 404 status.
+/book        /app.html   200
+/t/*         /app.html   200

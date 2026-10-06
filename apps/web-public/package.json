@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
-    "preview": "vite preview",
+    "build": "tsc -p tsconfig.json && vite build && vite build --ssr src/entry-server.tsx --outDir dist-server && node scripts/prerender.mjs",
+    "preview": "node scripts/serve-dist.mjs",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {

@@ -11,7 +11,7 @@ Service management and technician dispatch for an appliance-repair business: req
 | `apps/api` | ASP.NET Core 10 modular monolith (ADR 0001): Identity, Catalog, Customers, Technicians, ServiceRequests, Dispatch, Notifications, Billing |
 | `apps/admin` | Owner/dispatcher web app: dashboard, live board, requests, dispatch, customers, technicians, billing, settings · `/design-system` |
 | `apps/tech` | Technician PWA: OTP sign-in, offers, job workflow, completion code, bill, payment, earnings |
-| `apps/web-public` | Customer site: landing page, online booking `/book` (phone verified by SMS code), tracking page `/t/{token}` |
+| `apps/web-public` | Customer site: landing, services, service pages, about, contact, FAQ (pre-rendered for SEO — [docs/SEO.md](docs/SEO.md)), online booking `/book`, tracking `/t/{token}` |
 | `packages/ui` | Design system (tokens, components) — [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) |
 | `packages/api-client` | Generated TypeScript client + React Query hooks (ADR 0007) |
 | `packages/app-kit` | Shared app plumbing: providers, session guard, query states |

@@ -5,10 +5,15 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/dev-dist/**', '**/node_modules/**', '**/generated/**', 'apps/api/**', '.cache/**'] },
+  { ignores: ['**/dist/**', '**/dist-server/**', '**/dev-dist/**', '**/node_modules/**', '**/generated/**', 'apps/api/**', '.cache/**'] },
   js.configs.recommended,
   ...tseslint.configs.strict,
   jsxA11y.flatConfigs.recommended,
+  {
+    // Build and tooling scripts run in Node (and pass callbacks to a headless browser).
+    files: ['**/scripts/**/*.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },

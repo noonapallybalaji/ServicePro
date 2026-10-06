@@ -33,8 +33,10 @@ import { ArrowLeft, BadgeIndianRupee, CircleCheck, KeyRound, MapPin, MapPinned, 
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
-import { SUPPORT_PHONE } from '../../config';
-import { SiteFooter, SiteHeader } from '../site-header';
+import { SITE } from '../../site';
+import { SiteLayout } from '../../components/site-layout';
+import { usePageMeta } from '../../seo/head';
+import { PAGES } from '../../seo/pages';
 import { BOOKABLE_DAYS, SLOTS, bookableDays, isSlotAvailable, slotWindow, type SlotId } from './slots';
 
 const STEPS = ['What needs repairing?', "What's wrong?", 'Where and when?', 'Your details'] as const;
@@ -75,6 +77,7 @@ const EMPTY: Draft = {
  * proven with an SMS code. The job is created as NEW and the office confirms it.
  */
 export function BookingPage() {
+  usePageMeta(PAGES.book);
   const [params] = useSearchParams();
   const catalog = useGetActiveCatalog();
   const [step, setStep] = useState(0);
@@ -96,15 +99,14 @@ export function BookingPage() {
   };
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
-      <main id="main" className="flex-1 bg-background">
+    <SiteLayout>
         <Container className="py-6 md:py-10">
           {booked ? (
             <BookingDone booking={booked} draft={draft} category={category} />
           ) : (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
               <Card padding="lg" className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+                <h1 className="sr-only">Book a repair</h1>
                 <div className="flex flex-col gap-4">
                   {currentStep > 0 ? (
                     <button type="button" onClick={() => go(currentStep - 1)} className="link inline-flex items-center gap-1 self-start text-sm">
@@ -140,9 +142,7 @@ export function BookingPage() {
             </div>
           )}
         </Container>
-      </main>
-      <SiteFooter />
-    </div>
+    </SiteLayout>
   );
 }
 
@@ -558,9 +558,9 @@ function BookingDone({ booking, draft, category }: { booking: OnlineBookingRespo
         <Button asChild size="lg">
           <Link to={booking.trackingPath}>Track your booking</Link>
         </Button>
-        {SUPPORT_PHONE ? (
+        {SITE.phone ? (
           <Button asChild size="lg" variant="outline">
-            <a href={`tel:${SUPPORT_PHONE}`}>
+            <a href={`tel:${SITE.phone}`}>
               <Phone aria-hidden /> Call us
             </a>
           </Button>

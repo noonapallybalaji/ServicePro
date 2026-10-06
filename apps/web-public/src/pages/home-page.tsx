@@ -1,45 +1,26 @@
-import { Button, Container, Heading, HUE_CLASSES, ServiceCard, SpotArt, TechnicianScene, Text, cn, type Hue } from '@servicepro/ui';
-import { BadgeIndianRupee, CalendarCheck, KeyRound, MapPinned, MessageCircle, Phone, PhoneCall, type LucideIcon } from 'lucide-react';
+import { Button, Container, Heading, HUE_CLASSES, ServiceCard, SpotArt, TechnicianScene, Text, cn } from '@servicepro/ui';
+import { ArrowRight, PhoneCall } from 'lucide-react';
 import { Link } from 'react-router';
 
-import { SUPPORT_PHONE, whatsappLink } from '../config';
-import { SiteFooter, SiteHeader } from './site-header';
-
-/** Appliances the business repairs (PLAN.md §7.5 seed catalogue). */
-const SERVICES = [
-  { code: 'AC', title: 'AC repair & service', description: 'Cooling, gas top-up, servicing, installation' },
-  { code: 'FRIDGE', title: 'Refrigerator repair', description: 'Not cooling, noise, leaks, compressor' },
-  { code: 'WASHER', title: 'Washing machine repair', description: 'Not spinning, draining, door, motor' },
-  { code: 'TV', title: 'TV repair', description: 'No picture, no sound, panel and board faults' },
-  { code: 'MICROWAVE', title: 'Microwave repair', description: 'Not heating, sparking, buttons, turntable' },
-] as const;
-
-/** Promises the product actually enforces — never marketing claims it can't back up. */
-const PROMISES: { icon: LucideIcon; hue: Hue; title: string; text: string }[] = [
-  { icon: BadgeIndianRupee, hue: 'orange', title: 'Price before work', text: 'You approve the estimate before any repair starts.' },
-  { icon: MapPinned, hue: 'sky', title: 'Live tracking', text: 'See who is coming and when, from one WhatsApp link.' },
-  { icon: KeyRound, hue: 'mint', title: 'Completion code', text: 'A job closes only when you share your code.' },
-];
-
-const STEPS: { title: string; text: string; hue: Hue }[] = [
-  { title: 'Book in a minute', text: 'Pick the appliance, the problem and a time that suits you — online, or by call or WhatsApp.', hue: 'violet' },
-  { title: 'A technician visits', text: 'The best-matched technician checks your appliance and explains the cost first.', hue: 'sky' },
-  { title: 'Pay after the repair', text: 'Share your completion code when you’re happy, then pay by UPI or cash.', hue: 'mint' },
-];
+import { BookActions, StepList } from '../components/page-parts';
+import { SiteLayout } from '../components/site-layout';
+import { SERVICES, servicePath } from '../content/services';
+import { PROMISES } from '../content/site-content';
+import { usePageMeta } from '../seo/head';
+import { PAGES } from '../seo/pages';
+import { SITE, whatsappLink } from '../site';
 
 export function HomePage() {
-  const bookText = 'Hi, I need an appliance repaired.';
+  usePageMeta(PAGES.home);
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <SiteHeader />
-      <main id="main" className="flex-1">
+    <SiteLayout>
         <section data-surface="brand" className="surface-hero relative isolate overflow-hidden">
           <div aria-hidden className="bg-dots absolute inset-y-0 right-0 -z-10 w-1/2" />
           <Container className="grid items-center gap-10 py-12 md:py-16 lg:grid-cols-2 lg:py-20">
             <div className="flex flex-col gap-6">
-              <Text variant="overline" className="text-accent">
-                Home appliance repair
+              <Text variant="overline" className="text-accent-border">
+                Home appliance repair in {SITE.city}
               </Text>
               <Heading level={1} size="display">
                 Your appliance, fixed at home — without the guesswork.
@@ -48,25 +29,7 @@ export function HomePage() {
                 Doorstep repair for AC, fridge, washing machine, TV and microwave. You see the price before work starts and track the visit live.
               </Text>
               <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button asChild variant="accent" size="lg">
-                  <Link to="/book">
-                    <CalendarCheck aria-hidden /> Book a repair
-                  </Link>
-                </Button>
-                {SUPPORT_PHONE ? (
-                  <>
-                    <Button asChild variant="inverse" size="lg">
-                      <a href={`tel:${SUPPORT_PHONE}`}>
-                        <Phone aria-hidden /> Call us
-                      </a>
-                    </Button>
-                    <Button asChild variant="inverse" size="lg">
-                      <a href={whatsappLink(bookText)} target="_blank" rel="noreferrer">
-                        <MessageCircle aria-hidden /> WhatsApp
-                      </a>
-                    </Button>
-                  </>
-                ) : null}
+                <BookActions />
               </div>
             </div>
             <div className="mx-auto w-full max-w-sheet [&>svg]:h-auto [&>svg]:w-full">
@@ -100,17 +63,24 @@ export function HomePage() {
               <Heading level={2} size="h1" id="services-title">
                 What we repair
               </Heading>
-              <Text tone="secondary">Tap a service to book a visit.</Text>
+              <Text tone="secondary">Choose your appliance to see the problems we fix in {SITE.city}.</Text>
             </div>
             <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-5">
               {SERVICES.map((service) => (
-                <li key={service.code}>
-                  <ServiceCard asChild categoryCode={service.code} title={service.title} description={service.description}>
-                    <Link to={`/book?service=${service.code}`} aria-label={`Book ${service.title}`} />
+                <li key={service.slug}>
+                  <ServiceCard asChild categoryCode={service.code} title={service.title} description={service.summary}>
+                    <Link to={servicePath(service)} />
                   </ServiceCard>
                 </li>
               ))}
             </ul>
+            <div className="flex justify-center">
+              <Button asChild variant="outline">
+                <Link to="/services">
+                  All appliance repair services <ArrowRight aria-hidden />
+                </Link>
+              </Button>
+            </div>
           </section>
         </Container>
 
@@ -124,17 +94,7 @@ export function HomePage() {
                 Three simple steps
               </Heading>
             </div>
-            <ol className="grid grid-cols-1 gap-4 md:grid-cols-3">
-              {STEPS.map((step, index) => (
-                <li key={step.title} className="flex flex-col gap-4 rounded-card bg-background p-6">
-                  <span className={cn('flex size-12 items-center justify-center rounded-full text-h3 font-bold', HUE_CLASSES[step.hue].subtle)}>{index + 1}</span>
-                  <span className="flex flex-col gap-2">
-                    <span className="text-h3 text-foreground">{step.title}</span>
-                    <span className="text-body text-foreground-secondary">{step.text}</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <StepList />
           </Container>
         </section>
 
@@ -147,7 +107,7 @@ export function HomePage() {
                 Open the tracking link from your WhatsApp message to see who's coming, when, and your bill once the job is done.
               </Text>
             </div>
-            {SUPPORT_PHONE ? (
+            {SITE.phone ? (
               <Button asChild size="lg">
                 <a href={whatsappLink('Hi, please resend my tracking link.')} target="_blank" rel="noreferrer">
                   <PhoneCall aria-hidden /> Resend my link
@@ -156,8 +116,6 @@ export function HomePage() {
             ) : null}
           </div>
         </Container>
-      </main>
-      <SiteFooter />
-    </div>
+    </SiteLayout>
   );
 }

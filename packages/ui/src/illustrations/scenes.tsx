@@ -239,12 +239,17 @@ export function BrandMark({ className }: ArtProps) {
 }
 
 /** Brand mark + product name, for sidebars, sign-in panels and the public header. */
-export function BrandLockup({ name = 'ServicePro', tagline, className }: ArtProps & { name?: string; tagline?: string }) {
+export function BrandLockup({
+  name = 'ServicePro',
+  tagline,
+  className,
+  nameClassName,
+}: ArtProps & { name?: string; tagline?: string; nameClassName?: string }) {
   return (
-    <span className={cn('inline-flex items-center gap-3', className)}>
+    <span className={cn('inline-flex min-w-0 items-center gap-3', className)}>
       <BrandMark />
-      <span className="flex flex-col">
-        <span className="text-h3 font-bold text-foreground">{name}</span>
+      <span className="flex min-w-0 flex-col">
+        <span className={cn('text-h3 font-bold text-foreground', nameClassName)}>{name}</span>
         {tagline ? <span className="text-caption text-foreground-muted">{tagline}</span> : null}
       </span>
     </span>
