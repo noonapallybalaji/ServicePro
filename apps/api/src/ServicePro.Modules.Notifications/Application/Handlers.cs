@@ -146,13 +146,16 @@ public sealed class SmsOtpSender(NotificationDispatcher dispatcher) : IOtpSender
 {
     public async Task SendAsync(PhoneNumber phone, string code, OtpPurpose purpose, CancellationToken ct)
     {
+        var (template, recipient) = purpose == OtpPurpose.Booking
+            ? (TemplateCodes.OtpBooking, RecipientType.Customer)
+            : (TemplateCodes.OtpLogin, RecipientType.Technician);
         var notification = await dispatcher.SendAsync(new NotificationRequest(
-            TemplateCodes.OtpLogin, NotificationChannel.Sms, RecipientType.Technician, null, phone.Value,
+            template, NotificationChannel.Sms, recipient, null, phone.Value,
             NotificationDispatcher.DefaultLanguage, new Dictionary<string, string> { ["code"] = code }, null), ct);
 
         if (notification.Status == NotificationStatus.Failed)
         {
-            throw new InvalidOperationException($"Couldn't send the login code: {notification.Error}");
+            throw new InvalidOperationException($"Couldn't send the one-time code: {notification.Error}");
         }
     }
 }

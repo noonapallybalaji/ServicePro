@@ -2,7 +2,7 @@
 
 Service management and technician dispatch for an appliance-repair business: requests, dispatch, a technician app, live tracking for customers, billing. See [PLAN.md](PLAN.md) for the product, [docs/](docs/) for UX and design, and [docs/adr/](docs/adr/) for architecture decisions.
 
-**Status:** Phase 0 (foundations) and Phase 1 (digitise operations) of PLAN.md §16. AI intake (Phase 2) isn't started.
+**Status:** Phase 0 (foundations) and Phase 1 (digitise operations) of PLAN.md §16, plus online booking brought forward from Phase 2. AI intake isn't started.
 
 ## What's here
 
@@ -11,7 +11,7 @@ Service management and technician dispatch for an appliance-repair business: req
 | `apps/api` | ASP.NET Core 10 modular monolith (ADR 0001): Identity, Catalog, Customers, Technicians, ServiceRequests, Dispatch, Notifications, Billing |
 | `apps/admin` | Owner/dispatcher web app: dashboard, live board, requests, dispatch, customers, technicians, billing, settings · `/design-system` |
 | `apps/tech` | Technician PWA: OTP sign-in, offers, job workflow, completion code, bill, payment, earnings |
-| `apps/web-public` | Customer site: tracking page `/t/{token}` |
+| `apps/web-public` | Customer site: landing page, online booking `/book` (phone verified by SMS code), tracking page `/t/{token}` |
 | `packages/ui` | Design system (tokens, components) — [docs/DESIGN-SYSTEM.md](docs/DESIGN-SYSTEM.md) |
 | `packages/api-client` | Generated TypeScript client + React Query hooks (ADR 0007) |
 | `packages/app-kit` | Shared app plumbing: providers, session guard, query states |
@@ -42,7 +42,7 @@ pnpm --filter @servicepro/web-public dev  # http://localhost:5192
 |---|---|
 | Admin | `owner@servicepro.local` / `ChangeMe!2026` |
 | Technician | Ravi `9876500001`, Suresh `9876500002`, Anil `9876500003`, Priya `9876500004`. The OTP is shown on screen in Development |
-| Customer | Open the tracking link from a request's detail page (or from the API log's WhatsApp message) |
+| Customer | Book at http://localhost:5192/book (try pincode `500081`; the SMS code is shown on screen in Development), or open a tracking link from a request's detail page |
 
 WhatsApp/SMS messages are written to the API log until a provider is configured (ADR 0009).
 

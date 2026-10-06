@@ -12,13 +12,18 @@ export function SiteHeader({ size = 'content' }: { size?: 'content' | 'prose' })
         <Link to="/" className="rounded-control">
           <BrandLockup name={BUSINESS_NAME} />
         </Link>
-        {SUPPORT_PHONE ? (
+        <div className="flex items-center gap-2">
+          {SUPPORT_PHONE ? (
+            <Button asChild variant="ghost" size="sm" className="max-sm:hidden">
+              <a href={`tel:${SUPPORT_PHONE}`}>
+                <Phone aria-hidden /> Call us
+              </a>
+            </Button>
+          ) : null}
           <Button asChild variant="accent" size="sm">
-            <a href={`tel:${SUPPORT_PHONE}`}>
-              <Phone aria-hidden /> Call us
-            </a>
+            <Link to="/book">Book now</Link>
           </Button>
-        ) : null}
+        </div>
       </Container>
     </header>
   );

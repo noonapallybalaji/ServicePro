@@ -1,6 +1,8 @@
 import { DefaultSkeleton, QueryState } from '@servicepro/app-kit';
 import { useListServiceRequests, type ServiceRequestCard } from '@servicepro/api-client';
 import {
+  Alert,
+  Button,
   Card,
   Dialog,
   DialogBody,
@@ -29,13 +31,26 @@ import { AssignmentPanel } from './assignment-panel';
  * ranked technicians for the selected job on the right. On phones the ranking opens full-screen.
  */
 export function DispatchPage() {
-  const queue = useListServiceRequests({ status: ['NEW', 'READY_FOR_ASSIGNMENT', 'OFFERED', 'RESCHEDULED'], pageSize: 100 });
+  const queue = useListServiceRequests({ status: ['READY_FOR_ASSIGNMENT', 'OFFERED', 'RESCHEDULED'], pageSize: 100 });
+  const toReview = useListServiceRequests({ status: ['NEW'], pageSize: 1 });
+  const reviewCount = toReview.data?.total ?? 0;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const isDesktop = useMediaQuery(MEDIA_QUERIES.lg);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title="Dispatch" description="Pick a job, then the best technician for it." />
+      {reviewCount > 0 ? (
+        <Alert
+          tone="info"
+          title={reviewCount === 1 ? '1 new booking to check before dispatch' : `${reviewCount} new bookings to check before dispatch`}
+          action={
+            <Button asChild size="sm" variant="outline">
+              <Link to={`${paths.requests}?view=review`}>Review</Link>
+            </Button>
+          }
+        />
+      ) : null}
       <QueryState query={queue} loading={<DefaultSkeleton rows={4} />} errorTitle="Couldn't load the queue">
         {(data) => {
           const selected = data.items.find((r) => r.id === selectedId) ?? (isDesktop ? data.items[0] : undefined);

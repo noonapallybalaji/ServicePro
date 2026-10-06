@@ -23,6 +23,18 @@ public interface IUserProvisioning
     Task<Result> SetActiveAsync(Guid userId, bool isActive, CancellationToken ct);
 }
 
+public sealed record IssuedOtp(DateTimeOffset ExpiresAt, int CodeLength, string? DevelopmentCode);
+
+/// <summary>One-time codes that prove someone holds a phone number (Identity owns the challenges).</summary>
+public interface IPhoneVerification
+{
+    /// <summary>Creates and sends a code. Refuses while the previous code is still cooling down.</summary>
+    Task<Result<IssuedOtp>> IssueAsync(PhoneNumber phone, OtpPurpose purpose, CancellationToken ct);
+
+    /// <summary>Checks the latest unused code and consumes it on success. Wrong attempts are counted, so save either way.</summary>
+    Task<Result> VerifyAsync(PhoneNumber phone, OtpPurpose purpose, string code, CancellationToken ct);
+}
+
 // ── Notifications ───────────────────────────────────────────────────────────
 
 public interface IOtpSender
@@ -67,6 +79,22 @@ public sealed record AddressInfo(
 }
 
 public sealed record ApplianceInfo(Guid Id, Guid CustomerId, Guid CategoryId, string? Brand, string? ModelNumber);
+
+public sealed record SelfServiceContact(string FullName, PhoneNumber Phone, RequestChannel Source);
+
+public sealed record SelfServiceAddress(string Line1, string? Line2, string? Landmark, string Locality, string City, string State, string Pincode);
+
+public sealed record CustomerAddressRef(Guid CustomerId, Guid AddressId);
+
+/// <summary>Customer records created by customers themselves (online booking).</summary>
+public interface ICustomerRegistry
+{
+    /// <summary>
+    /// Finds the customer by phone (creating them if new) and reuses a matching address or adds it.
+    /// Existing names and details are never overwritten by self-service input.
+    /// </summary>
+    Task<Result<CustomerAddressRef>> FindOrCreateAsync(SelfServiceContact contact, SelfServiceAddress address, CancellationToken ct);
+}
 
 public interface ICustomerDirectory
 {

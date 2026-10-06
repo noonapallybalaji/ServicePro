@@ -1,7 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using ServicePro.BuildingBlocks.Application;
 using ServicePro.BuildingBlocks.Security;
 using ServicePro.Contracts;
@@ -61,10 +60,8 @@ public sealed record OtpRequest(string Phone);
 
 public sealed record OtpRequestedResponse(DateTimeOffset ExpiresAt, int CodeLength, string? DevelopmentCode);
 
-public sealed class RequestLoginOtp(DbContext db, IOtpSender sender, IOptions<AuthOptions> options, IClock clock) : IUseCase
+public sealed class RequestLoginOtp(DbContext db, PhoneVerification verification, IClock clock) : IUseCase
 {
-    private readonly AuthOptions _options = options.Value;
-
     public async Task<Result<OtpRequestedResponse>> HandleAsync(OtpRequest request, CancellationToken ct)
     {
         var phoneResult = PhoneNumber.Create(request.Phone);
@@ -74,15 +71,7 @@ public sealed class RequestLoginOtp(DbContext db, IOtpSender sender, IOptions<Au
         }
 
         var phone = phoneResult.Value;
-        var now = clock.UtcNow;
-        var expiresAt = now.AddMinutes(_options.OtpTtlMinutes);
-
-        var lastSentAt = await db.Set<OtpChallenge>()
-            .Where(o => o.Phone == phone && o.Purpose == OtpPurpose.Login)
-            .OrderByDescending(o => o.CreatedAt)
-            .Select(o => (DateTimeOffset?)o.CreatedAt)
-            .FirstOrDefaultAsync(ct);
-        if (lastSentAt is { } sent && now - sent < TimeSpan.FromSeconds(_options.OtpCooldownSeconds))
+        if (await verification.IsCoolingDownAsync(phone, OtpPurpose.Login, clock.UtcNow, ct))
         {
             return Error.Conflict("otp.cooldown", "A code was just sent. Wait a few seconds before asking again.");
         }
@@ -91,18 +80,20 @@ public sealed class RequestLoginOtp(DbContext db, IOtpSender sender, IOptions<Au
         var isTechnician = await db.Set<User>().AnyAsync(u => u.Phone == phone && u.IsActive && u.Role == UserRole.Technician, ct);
         if (!isTechnician)
         {
-            return new OtpRequestedResponse(expiresAt, _options.OtpLength, null);
+            return ToResponse(verification.Pretend());
         }
 
-        var code = SecureTokens.NumericCode(_options.OtpLength);
-        db.Set<OtpChallenge>().Add(new OtpChallenge(phone, OtpPurpose.Login, SecureTokens.Hash(code), expiresAt));
+        var issued = await verification.IssueAsync(phone, OtpPurpose.Login, ct);
+        if (issued.IsFailure)
+        {
+            return issued.Error!;
+        }
 
-        // Send first: if delivery fails nothing is stored; the sender's delivery record commits with the challenge.
-        await sender.SendAsync(phone, code, OtpPurpose.Login, ct);
         await db.SaveChangesAsync(ct);
-
-        return new OtpRequestedResponse(expiresAt, _options.OtpLength, _options.ExposeOtpInResponse ? code : null);
+        return ToResponse(issued.Value);
     }
+
+    private static OtpRequestedResponse ToResponse(IssuedOtp otp) => new(otp.ExpiresAt, otp.CodeLength, otp.DevelopmentCode);
 }
 
 public sealed record OtpVerifyRequest(string Phone, string Code);
@@ -116,7 +107,7 @@ internal sealed class OtpVerifyRequestValidator : AbstractValidator<OtpVerifyReq
     }
 }
 
-public sealed class VerifyLoginOtp(DbContext db, SessionIssuer sessions, IClock clock) : IUseCase
+public sealed class VerifyLoginOtp(DbContext db, PhoneVerification verification, SessionIssuer sessions, IClock clock) : IUseCase
 {
     public async Task<Result<IssuedSession>> HandleAsync(OtpVerifyRequest request, CancellationToken ct)
     {
@@ -127,21 +118,11 @@ public sealed class VerifyLoginOtp(DbContext db, SessionIssuer sessions, IClock 
         }
 
         var phone = phoneResult.Value;
-        var challenge = await db.Set<OtpChallenge>()
-            .Where(o => o.Phone == phone && o.Purpose == OtpPurpose.Login && o.ConsumedAt == null)
-            .OrderByDescending(o => o.CreatedAt)
-            .FirstOrDefaultAsync(ct);
-        if (challenge is null)
-        {
-            return Error.Validation("otp.expired", "This code has expired. Request a new one.");
-        }
-
-        var now = clock.UtcNow;
-        var verification = challenge.Verify(request.Code, now);
-        if (verification.IsFailure)
+        var verified = await verification.VerifyAsync(phone, OtpPurpose.Login, request.Code, ct);
+        if (verified.IsFailure)
         {
             await db.SaveChangesAsync(ct); // persist the attempt count
-            return verification.Error!;
+            return verified.Error!;
         }
 
         var user = await db.Set<User>().FirstOrDefaultAsync(u => u.Phone == phone && u.IsActive && u.Role == UserRole.Technician, ct);
@@ -150,7 +131,7 @@ public sealed class VerifyLoginOtp(DbContext db, SessionIssuer sessions, IClock 
             return AuthErrors.InvalidCredentials;
         }
 
-        user.RecordLogin(now);
+        user.RecordLogin(clock.UtcNow);
         var session = await sessions.IssueAsync(user, familyId: null, ct);
         await db.SaveChangesAsync(ct);
         return session;

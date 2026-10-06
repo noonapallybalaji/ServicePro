@@ -36,12 +36,13 @@ import { paths } from '../../app/paths';
 import { BackLink, humanize } from '../../components/common';
 import { StuckBadge } from '../../components/request-list';
 import { AssignmentPanel } from '../dispatch/assignment-panel';
-import { AddNoteForm, EditRequestDialog, StaffPaymentDialog, StatusChangeDialog, UnassignDialog } from './request-dialogs';
+import { AddNoteForm, EditRequestDialog, ReviewBookingAlert, StaffPaymentDialog, StatusChangeDialog, UnassignDialog } from './request-dialogs';
 
 /** Customer site base URL for tracking links (VITE_PUBLIC_SITE_URL). */
 const PUBLIC_SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, '') ?? window.location.origin;
 
-const ASSIGNABLE = new Set(['NEW', 'READY_FOR_ASSIGNMENT', 'OFFERED', 'ACCEPTED', 'RESCHEDULED']);
+// NEW requests are confirmed first (ReviewBookingAlert); the workflow only offers ready jobs.
+const ASSIGNABLE = new Set(['READY_FOR_ASSIGNMENT', 'OFFERED', 'ACCEPTED', 'RESCHEDULED']);
 
 export function RequestDetailPage() {
   const { requestId = '' } = useParams();
@@ -99,6 +100,8 @@ function RequestDetail({ request }: { request: ServiceRequestDetail }) {
           </>
         }
       />
+
+      {card.status === 'NEW' ? <ReviewBookingAlert request={request} /> : null}
 
       {card.status === 'COMPLETED' && outstanding > 0 ? (
         <Alert

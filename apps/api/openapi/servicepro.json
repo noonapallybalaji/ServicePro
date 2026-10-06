@@ -3025,7 +3025,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/ServiceRequestStatus"
+                "type": "string"
               }
             }
           },
@@ -3099,6 +3099,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PagedResultOfServiceRequestCard"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -3843,6 +3853,146 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/bookings/code": {
+      "post": {
+        "tags": [
+          "Online booking"
+        ],
+        "operationId": "RequestBookingCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingCodeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/bookings": {
+      "post": {
+        "tags": [
+          "Online booking"
+        ],
+        "operationId": "BookServiceOnline",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnlineBookingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnlineBookingResponse"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -5728,6 +5878,85 @@
           }
         }
       },
+      "BookingAddressRequest": {
+        "required": [
+          "line1",
+          "line2",
+          "landmark",
+          "locality",
+          "city",
+          "state",
+          "pincode"
+        ],
+        "type": "object",
+        "properties": {
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landmark": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pincode": {
+            "type": "string"
+          }
+        }
+      },
+      "BookingCodeRequest": {
+        "required": [
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "BookingCodeResponse": {
+        "required": [
+          "expiresAt",
+          "codeLength",
+          "developmentCode"
+        ],
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "codeLength": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "developmentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "BrandResponse": {
         "required": [
           "id",
@@ -7072,6 +7301,71 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "OnlineBookingRequest": {
+        "required": [
+          "categoryId",
+          "issueTypeId",
+          "problemDescription",
+          "fullName",
+          "phone",
+          "code",
+          "address",
+          "preferredSlotStart",
+          "preferredSlotEnd"
+        ],
+        "type": "object",
+        "properties": {
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issueTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "problemDescription": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/BookingAddressRequest"
+          },
+          "preferredSlotStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredSlotEnd": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "OnlineBookingResponse": {
+        "required": [
+          "srNumber",
+          "trackingPath"
+        ],
+        "type": "object",
+        "properties": {
+          "srNumber": {
+            "type": "string"
+          },
+          "trackingPath": {
+            "type": "string"
           }
         }
       },
@@ -9205,6 +9499,9 @@
     },
     {
       "name": "Dashboard"
+    },
+    {
+      "name": "Online booking"
     },
     {
       "name": "Dispatch"

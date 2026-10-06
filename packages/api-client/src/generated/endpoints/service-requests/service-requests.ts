@@ -86,7 +86,7 @@ export const getListServiceRequestsQueryKey = (params?: ListServiceRequestsParam
     }
 
     
-export const getListServiceRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = unknown>(params?: ListServiceRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServiceRequests>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+export const getListServiceRequestsQueryOptions = <TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = ProblemDetails>(params?: ListServiceRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServiceRequests>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -105,10 +105,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type ListServiceRequestsQueryResult = NonNullable<Awaited<ReturnType<typeof listServiceRequests>>>
-export type ListServiceRequestsQueryError = unknown
+export type ListServiceRequestsQueryError = ProblemDetails
 
 
-export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = unknown>(
+export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = ProblemDetails>(
  params: undefined |  ListServiceRequestsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServiceRequests>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof listServiceRequests>>,
@@ -118,7 +118,7 @@ export function useListServiceRequests<TData = Awaited<ReturnType<typeof listSer
       >, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = unknown>(
+export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = ProblemDetails>(
  params?: ListServiceRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServiceRequests>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof listServiceRequests>>,
@@ -128,12 +128,12 @@ export function useListServiceRequests<TData = Awaited<ReturnType<typeof listSer
       >, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = unknown>(
+export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = ProblemDetails>(
  params?: ListServiceRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServiceRequests>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 
-export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = unknown>(
+export function useListServiceRequests<TData = Awaited<ReturnType<typeof listServiceRequests>>, TError = ProblemDetails>(
  params?: ListServiceRequestsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listServiceRequests>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

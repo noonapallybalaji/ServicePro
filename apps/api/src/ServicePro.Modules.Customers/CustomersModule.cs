@@ -17,8 +17,11 @@ public sealed class CustomersModule : IModule
 {
     public string Name => "Customers";
 
-    public void Register(IServiceCollection services, IConfiguration configuration) =>
+    public void Register(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddScoped<ICustomerDirectory, CustomerDirectory>();
+        services.AddScoped<ICustomerRegistry, CustomerRegistry>();
+    }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {

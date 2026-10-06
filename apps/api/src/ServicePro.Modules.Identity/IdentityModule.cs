@@ -30,6 +30,8 @@ public sealed class IdentityModule : IModule
         services.AddScoped<SessionIssuer>();
         services.AddScoped<UserAccounts>();
         services.AddScoped<IUserProvisioning>(sp => sp.GetRequiredService<UserAccounts>());
+        services.AddScoped<PhoneVerification>();
+        services.AddScoped<IPhoneVerification>(sp => sp.GetRequiredService<PhoneVerification>());
 
         var options = section.Get<AuthOptions>() ?? new AuthOptions();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

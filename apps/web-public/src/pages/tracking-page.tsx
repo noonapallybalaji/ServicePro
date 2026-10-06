@@ -94,9 +94,9 @@ export function TrackingPage() {
   const tracking = useGetTracking(token, { query: { refetchInterval: 30_000, retry: false } });
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <main id="main">
+      <main id="main" className="flex-1">
         <Container className="py-6 md:py-10">
           {tracking.isPending ? (
             <Stack gap={4}>
@@ -123,7 +123,7 @@ export function TrackingPage() {
         </Container>
       </main>
       <SiteFooter />
-    </>
+    </div>
   );
 }
 

@@ -13,6 +13,7 @@ export * from './generated/endpoints/dashboard/dashboard';
 export * from './generated/endpoints/dispatch/dispatch';
 export * from './generated/endpoints/meta/meta';
 export * from './generated/endpoints/notifications/notifications';
+export * from './generated/endpoints/online-booking/online-booking';
 export * from './generated/endpoints/service-requests/service-requests';
 export * from './generated/endpoints/settings/settings';
 export * from './generated/endpoints/technician-app/technician-app';

@@ -12,6 +12,7 @@ import {
   type ServiceRequestDetail,
 } from '@servicepro/api-client';
 import {
+  Alert,
   Button,
   Checkbox,
   Dialog,
@@ -28,6 +29,7 @@ import {
   Stack,
   Textarea,
   formatINR,
+  formatWindow,
   toast,
 } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
@@ -378,5 +380,45 @@ export function AddNoteForm({ requestId }: { requestId: string }) {
         </Button>
       </div>
     </form>
+  );
+}
+
+/**
+ * A request still in NEW (online bookings wait here) must be checked before dispatch:
+ * staff confirm it, or cancel it from "Change status".
+ */
+export function ReviewBookingAlert({ request }: { request: ServiceRequestDetail }) {
+  const refresh = useRefreshRequest(request.card.id);
+  const confirm = useTransitionServiceRequest({
+    mutation: {
+      onSuccess: async () => {
+        await refresh();
+        toast.success('Booking confirmed', { description: 'It is now in the dispatch queue.' });
+      },
+    },
+  });
+  const online = request.channel === 'WEBSITE';
+  const slot = request.preferredSlotStart ? formatWindow(request.preferredSlotStart, request.preferredSlotEnd) : null;
+
+  return (
+    <Alert
+      tone="info"
+      title={online ? 'New online booking — check it, then confirm' : 'Check this request, then confirm'}
+      description={`${slot ? `Customer prefers ${slot}. ` : ''}Call the customer if the address or problem looks unclear.`}
+      action={
+        <Button
+          size="sm"
+          loading={confirm.isPending}
+          onClick={() =>
+            confirm.mutate({
+              serviceRequestId: request.card.id,
+              data: { to: 'READY_FOR_ASSIGNMENT', reasonCode: 'REVIEWED', note: null, completionCode: null, latitude: null, longitude: null },
+            })
+          }
+        >
+          Confirm booking
+        </Button>
+      }
+    />
   );
 }

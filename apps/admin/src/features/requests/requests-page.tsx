@@ -20,6 +20,7 @@ const OPEN_VIEW: View = { id: 'open', label: 'Open', statuses: ['NEW', 'READY_FO
 
 const VIEWS: View[] = [
   OPEN_VIEW,
+  { id: 'review', label: 'To review', statuses: ['NEW'] },
   { id: 'unassigned', label: 'To assign', statuses: ['NEW', 'READY_FOR_ASSIGNMENT'] },
   { id: 'offered', label: 'Offered', statuses: ['OFFERED'] },
   { id: 'assigned', label: 'Assigned', statuses: ['ACCEPTED'] },

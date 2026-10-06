@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ServicePro.BuildingBlocks.Persistence;
 using ServicePro.Contracts.Ports;
 using ServicePro.Modules.Customers.Domain;
+using ServicePro.SharedKernel.Results;
 using ServicePro.SharedKernel.ValueObjects;
 
 namespace ServicePro.Modules.Customers.Infrastructure;
@@ -100,4 +101,34 @@ internal sealed class CustomerDirectory(DbContext db) : ICustomerDirectory
             .Where(a => a.Id == applianceId)
             .Select(a => new ApplianceInfo(a.Id, a.CustomerId, a.CategoryId, a.Brand, a.ModelNumber))
             .FirstOrDefaultAsync(ct);
+}
+
+internal sealed class CustomerRegistry(DbContext db) : ICustomerRegistry
+{
+    public async Task<Result<CustomerAddressRef>> FindOrCreateAsync(SelfServiceContact contact, SelfServiceAddress address, CancellationToken ct)
+    {
+        var customer = await db.Set<Customer>()
+            .Include(c => c.Addresses)
+            .FirstOrDefaultAsync(c => c.PrimaryPhone == contact.Phone, ct);
+
+        if (customer is null)
+        {
+            customer = Customer.Create(contact.FullName, contact.Phone, contact.Source);
+            db.Set<Customer>().Add(customer);
+        }
+        else if (customer.IsBlocked)
+        {
+            return Error.Forbidden("booking.unavailable", "We can't take this booking online. Please call us.");
+        }
+
+        var existing = customer.Addresses.FirstOrDefault(a =>
+            a.Pincode == address.Pincode.Trim() &&
+            string.Equals(a.Line1, address.Line1.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        var target = existing ?? customer.AddAddress(
+            new AddressDetails(null, address.Line1, address.Line2, address.Landmark, address.Locality, address.City, address.State, address.Pincode, null),
+            makeDefault: false);
+
+        return new CustomerAddressRef(customer.Id, target.Id);
+    }
 }

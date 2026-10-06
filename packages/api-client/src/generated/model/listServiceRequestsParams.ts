@@ -5,10 +5,9 @@
  * Service management & technician dispatch (PLAN.md).
  * OpenAPI spec version: v1
  */
-import type { ServiceRequestStatus } from './serviceRequestStatus';
 
 export type ListServiceRequestsParams = {
-status?: ServiceRequestStatus[];
+status?: string[];
 technicianId?: string;
 customerId?: string;
 srNumber?: string;

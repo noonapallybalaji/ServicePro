@@ -54,6 +54,7 @@ internal sealed class CreateServiceRequestRequestValidator : AbstractValidator<C
 
 public sealed class CreateServiceRequest(
     DbContext db,
+    SrNumberGenerator srNumbers,
     ICustomerDirectory customers,
     ICatalogDirectory catalog,
     ICurrentUser currentUser,
@@ -103,7 +104,7 @@ public sealed class CreateServiceRequest(
             return Error.Validation("sr.parent_invalid", "The original job must belong to the same customer.");
         }
 
-        var srNumber = await NextSrNumberAsync(ct);
+        var srNumber = await srNumbers.NextAsync(ct);
         var serviceRequest = ServiceRequest.Create(
             new NewServiceRequest(
                 srNumber,
@@ -129,8 +130,12 @@ public sealed class CreateServiceRequest(
         await db.SaveChangesAsync(ct);
         return serviceRequest.Id;
     }
+}
 
-    private async Task<string> NextSrNumberAsync(CancellationToken ct)
+/// <summary>Human-friendly job numbers (SR-10001…) from a database sequence, so they never collide.</summary>
+public sealed class SrNumberGenerator(DbContext db)
+{
+    public async Task<string> NextAsync(CancellationToken ct)
     {
         var next = await db.Database
             .SqlQueryRaw<long>($"SELECT nextval('{OpsSchema.Name}.{OpsSchema.SrNumberSequence}') AS \"Value\"")

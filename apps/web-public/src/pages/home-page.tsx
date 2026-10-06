@@ -1,5 +1,6 @@
 import { Button, Container, Heading, HUE_CLASSES, ServiceCard, SpotArt, TechnicianScene, Text, cn, type Hue } from '@servicepro/ui';
-import { BadgeIndianRupee, KeyRound, MapPinned, MessageCircle, Phone, PhoneCall, type LucideIcon } from 'lucide-react';
+import { BadgeIndianRupee, CalendarCheck, KeyRound, MapPinned, MessageCircle, Phone, PhoneCall, type LucideIcon } from 'lucide-react';
+import { Link } from 'react-router';
 
 import { SUPPORT_PHONE, whatsappLink } from '../config';
 import { SiteFooter, SiteHeader } from './site-header';
@@ -21,7 +22,7 @@ const PROMISES: { icon: LucideIcon; hue: Hue; title: string; text: string }[] = 
 ];
 
 const STEPS: { title: string; text: string; hue: Hue }[] = [
-  { title: 'Tell us what’s wrong', text: 'Call or WhatsApp us. We note the appliance, the problem and a time that suits you.', hue: 'violet' },
+  { title: 'Book in a minute', text: 'Pick the appliance, the problem and a time that suits you — online, or by call or WhatsApp.', hue: 'violet' },
   { title: 'A technician visits', text: 'The best-matched technician checks your appliance and explains the cost first.', hue: 'sky' },
   { title: 'Pay after the repair', text: 'Share your completion code when you’re happy, then pay by UPI or cash.', hue: 'mint' },
 ];
@@ -30,9 +31,9 @@ export function HomePage() {
   const bookText = 'Hi, I need an appliance repaired.';
 
   return (
-    <>
+    <div className="flex min-h-dvh flex-col">
       <SiteHeader />
-      <main id="main">
+      <main id="main" className="flex-1">
         <section data-surface="brand" className="surface-hero relative isolate overflow-hidden">
           <div aria-hidden className="bg-dots absolute inset-y-0 right-0 -z-10 w-1/2" />
           <Container className="grid items-center gap-10 py-12 md:py-16 lg:grid-cols-2 lg:py-20">
@@ -46,25 +47,26 @@ export function HomePage() {
               <Text variant="body-lg" tone="secondary">
                 Doorstep repair for AC, fridge, washing machine, TV and microwave. You see the price before work starts and track the visit live.
               </Text>
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Button asChild variant="accent" size="lg">
+                  <Link to="/book">
+                    <CalendarCheck aria-hidden /> Book a repair
+                  </Link>
+                </Button>
                 {SUPPORT_PHONE ? (
                   <>
-                    <Button asChild variant="accent" size="lg">
+                    <Button asChild variant="inverse" size="lg">
                       <a href={`tel:${SUPPORT_PHONE}`}>
-                        <Phone aria-hidden /> Call to book
+                        <Phone aria-hidden /> Call us
                       </a>
                     </Button>
                     <Button asChild variant="inverse" size="lg">
                       <a href={whatsappLink(bookText)} target="_blank" rel="noreferrer">
-                        <MessageCircle aria-hidden /> WhatsApp us
+                        <MessageCircle aria-hidden /> WhatsApp
                       </a>
                     </Button>
                   </>
-                ) : (
-                  <Button asChild variant="accent" size="lg">
-                    <a href="#services">See what we repair</a>
-                  </Button>
-                )}
+                ) : null}
               </div>
             </div>
             <div className="mx-auto w-full max-w-sheet [&>svg]:h-auto [&>svg]:w-full">
@@ -98,20 +100,14 @@ export function HomePage() {
               <Heading level={2} size="h1" id="services-title">
                 What we repair
               </Heading>
-              <Text tone="secondary">Tap a service to book it on WhatsApp.</Text>
+              <Text tone="secondary">Tap a service to book a visit.</Text>
             </div>
             <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 xl:grid-cols-5">
               {SERVICES.map((service) => (
                 <li key={service.code}>
-                  {SUPPORT_PHONE ? (
-                    <ServiceCard asChild categoryCode={service.code} title={service.title} description={service.description}>
-                      <a href={whatsappLink(`Hi, I need ${service.title.toLowerCase()}.`)} target="_blank" rel="noreferrer" aria-label={`Book ${service.title} on WhatsApp`} />
-                    </ServiceCard>
-                  ) : (
-                    <ServiceCard asChild categoryCode={service.code} title={service.title} description={service.description}>
-                      <div />
-                    </ServiceCard>
-                  )}
+                  <ServiceCard asChild categoryCode={service.code} title={service.title} description={service.description}>
+                    <Link to={`/book?service=${service.code}`} aria-label={`Book ${service.title}`} />
+                  </ServiceCard>
                 </li>
               ))}
             </ul>
@@ -162,6 +158,6 @@ export function HomePage() {
         </Container>
       </main>
       <SiteFooter />
-    </>
+    </div>
   );
 }

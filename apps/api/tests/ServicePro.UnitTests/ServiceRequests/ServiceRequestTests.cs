@@ -58,6 +58,23 @@ public sealed class ServiceRequestTests
     }
 
     [Fact]
+    public void Online_bookings_wait_in_new_until_staff_confirm_them()
+    {
+        var request = ServiceRequest.Create(
+            new NewServiceRequest("SR-10002", Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), null,
+                "Fridge not cooling", RequestChannel.Website, Priority.Normal, 349, Now.AddDays(1), Now.AddDays(1).AddHours(3),
+                null, null, false, null, AwaitsReview: true),
+            Actor.Customer, Now);
+
+        request.Status.ShouldBe(ServiceRequestStatus.New);
+        request.DomainEvents.OfType<ServiceRequestCreated>().ShouldHaveSingleItem();
+        request.Offer(TechnicianId, Guid.NewGuid(), Staff, Now).IsFailure.ShouldBeTrue();
+
+        request.Transition(ServiceRequestStatus.ReadyForAssignment, Staff, new TransitionInput(), Now).IsSuccess.ShouldBeTrue();
+        request.Offer(TechnicianId, Guid.NewGuid(), Staff, Now).IsSuccess.ShouldBeTrue();
+    }
+
+    [Fact]
     public void Dispatch_transitions_cannot_be_made_through_the_manual_path()
     {
         var request = NewRequest();

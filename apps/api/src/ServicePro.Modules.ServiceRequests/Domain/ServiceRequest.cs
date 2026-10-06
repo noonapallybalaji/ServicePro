@@ -35,7 +35,8 @@ public sealed record NewServiceRequest(
     DateTimeOffset? ScheduledStart,
     DateTimeOffset? ScheduledEnd,
     bool IsWarrantyVisit,
-    Guid? ParentServiceRequestId);
+    Guid? ParentServiceRequestId,
+    bool AwaitsReview = false);
 
 /// <summary>
 /// The job: from request to closure (PLAN.md §7.7, §8). Every status change goes through
@@ -148,10 +149,10 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
             Channel = details.Channel,
             Priority = details.Priority,
             VisitCharge = details.VisitCharge,
-            PreferredSlotStart = details.PreferredSlotStart,
-            PreferredSlotEnd = details.PreferredSlotEnd,
-            ScheduledStart = details.ScheduledStart,
-            ScheduledEnd = details.ScheduledEnd,
+            PreferredSlotStart = Utc(details.PreferredSlotStart),
+            PreferredSlotEnd = Utc(details.PreferredSlotEnd),
+            ScheduledStart = Utc(details.ScheduledStart),
+            ScheduledEnd = Utc(details.ScheduledEnd),
             IsWarrantyVisit = details.IsWarrantyVisit,
             ParentServiceRequestId = details.ParentServiceRequestId,
             PaymentStatus = details.IsWarrantyVisit ? PaymentStatus.Waived : PaymentStatus.NotDue,
@@ -161,9 +162,18 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
         };
 
         request.Raise(new ServiceRequestCreated(request.Id, request.SrNumber, request.CustomerId));
-        request.ApplyTransition(ServiceRequestStatus.ReadyForAssignment, actor, new TransitionInput(ReasonCode: "CREATED"), now);
+
+        // Self-service bookings stay NEW until staff check them; staff-created jobs are ready at once.
+        if (!details.AwaitsReview)
+        {
+            request.ApplyTransition(ServiceRequestStatus.ReadyForAssignment, actor, new TransitionInput(ReasonCode: "CREATED"), now);
+        }
+
         return request;
     }
+
+    /// <summary>PostgreSQL stores instants in UTC; clients may send any offset (e.g. +05:30).</summary>
+    private static DateTimeOffset? Utc(DateTimeOffset? value) => value?.ToUniversalTime();
 
     public void UpdateDetails(
         Guid? applianceId,
@@ -179,10 +189,10 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
         IssueTypeId = issueTypeId;
         ProblemDescription = problemDescription.Trim();
         Priority = priority;
-        PreferredSlotStart = preferredSlotStart;
-        PreferredSlotEnd = preferredSlotEnd;
-        ScheduledStart = scheduledStart;
-        ScheduledEnd = scheduledEnd;
+        PreferredSlotStart = Utc(preferredSlotStart);
+        PreferredSlotEnd = Utc(preferredSlotEnd);
+        ScheduledStart = Utc(scheduledStart);
+        ScheduledEnd = Utc(scheduledEnd);
     }
 
     /// <summary>A manual (non-dispatch) transition by staff or the assigned technician.</summary>

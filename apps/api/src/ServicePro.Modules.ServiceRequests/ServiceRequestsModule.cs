@@ -25,6 +25,7 @@ public sealed class ServiceRequestsModule : IModule
     {
         services.AddScoped<IServiceRequestWorkflow, ServiceRequestWorkflowPort>();
         services.AddScoped<ServiceRequestViewBuilder>();
+        services.AddScoped<SrNumberGenerator>();
         services.AddSetting(OpsSettings.StuckAfterMinutes);
     }
 
@@ -40,8 +41,9 @@ public sealed class ServiceRequestsModule : IModule
     {
         var staff = endpoints.MapGroup("/api/v1/admin/service-requests").WithTags("Service requests").RequireAuthorization(AuthPolicies.Staff);
 
-        staff.MapGet("/", async (
-                [FromQuery] ServiceRequestStatus[]? status,
+        // Statuses arrive as API text (READY_FOR_ASSIGNMENT); default enum binding only accepts "ReadyForAssignment".
+        staff.MapGet("/", async Task<IResult> (
+                [FromQuery] string[]? status,
                 Guid? technicianId,
                 Guid? customerId,
                 string? srNumber,
@@ -52,11 +54,25 @@ public sealed class ServiceRequestsModule : IModule
                 int? pageSize,
                 ListServiceRequests useCase,
                 CancellationToken ct) =>
-                Results.Ok(await useCase.HandleAsync(
-                    new ServiceRequestFilter(status, technicianId, customerId, srNumber, createdFrom, createdTo, onlyStuck),
+            {
+                var statuses = new List<ServiceRequestStatus>();
+                foreach (var text in status ?? [])
+                {
+                    if (!EnumText.TryParse<ServiceRequestStatus>(text, out var parsed))
+                    {
+                        return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Unknown status '{text}'.");
+                    }
+
+                    statuses.Add(parsed);
+                }
+
+                return Results.Ok(await useCase.HandleAsync(
+                    new ServiceRequestFilter(statuses.Count > 0 ? [.. statuses] : null, technicianId, customerId, srNumber, createdFrom, createdTo, onlyStuck),
                     new PageRequest(page ?? 1, pageSize ?? 25),
-                    ct)))
+                    ct));
+            })
             .Produces<PagedResult<ServiceRequestCard>>()
+            .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithName("ListServiceRequests");
 
         staff.MapGet("/{serviceRequestId:guid}", async (Guid serviceRequestId, GetServiceRequestDetail useCase, CancellationToken ct) =>
@@ -172,6 +188,23 @@ public sealed class ServiceRequestsModule : IModule
 
     private static void MapPublicEndpoints(IEndpointRouteBuilder endpoints)
     {
+        // Online booking: both steps send SMS or check codes, so they get the strict auth limit.
+        var bookings = endpoints.MapGroup("/api/v1/public/bookings").WithTags("Online booking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth);
+
+        bookings.MapPost("/code", async (BookingCodeRequest request, RequestBookingCode useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .Validate<BookingCodeRequest>()
+            .Produces<BookingCodeResponse>()
+            .WithStandardErrors()
+            .WithName("RequestBookingCode");
+
+        bookings.MapPost("/", async (OnlineBookingRequest request, BookServiceOnline useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .Validate<OnlineBookingRequest>()
+            .Produces<OnlineBookingResponse>()
+            .WithStandardErrors()
+            .WithName("BookServiceOnline");
+
         var track = endpoints.MapGroup("/api/v1/public/track/{token}").WithTags("Tracking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Public);
 
         track.MapGet("/", async (string token, GetTracking useCase, CancellationToken ct) => (await useCase.HandleAsync(token, ct)).ToHttp())

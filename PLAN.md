@@ -1112,7 +1112,7 @@ Start with **one API instance + managed PostgreSQL**. Add a second instance + Re
 
 ### Phase 2 — AI customer intake (5–6 weeks)
 - [ ] Voice provider bake-off (Telugu/Hindi/English) → selection.
-- [ ] Website/landing pages + public lead API + Meta Lead Ads webhook + UTM capture.
+- [ ] Website/landing pages + public lead API + Meta Lead Ads webhook + UTM capture. *(Landing page and online booking shipped early, Oct 2026: `POST /public/bookings` with an SMS code; bookings wait in NEW for staff to confirm until the qualification agent exists.)*
 - [ ] Outbound qualification agent with agent tools (serviceability, slots, lookup).
 - [ ] Inbound AI line (customer calls the business number → same agent).
 - [ ] Recording storage, transcripts, LLM extraction, composite confidence scoring.
