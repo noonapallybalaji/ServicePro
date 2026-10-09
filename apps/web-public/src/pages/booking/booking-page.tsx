@@ -1,7 +1,6 @@
 import {
   isApiError,
   useBookServiceOnline,
-  useCheckServiceability,
   useGetActiveCatalog,
   useRequestBookingCode,
   type CategoryResponse,
@@ -21,15 +20,14 @@ import {
   RadioGroup,
   Skeleton,
   SpotArt,
-  StepProgress,
+  Stepper,
   StickyActionBar,
   Text,
   Textarea,
   cn,
   formatINR,
-  useNow,
 } from '@servicepro/ui';
-import { ArrowLeft, BadgeIndianRupee, CircleCheck, KeyRound, MapPin, MapPinned, Phone, UserRound } from 'lucide-react';
+import { ArrowLeft, BadgeIndianRupee, CircleCheck, Clock, KeyRound, LocateFixed, MapPin, MapPinned, Phone, UserRound } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
@@ -37,43 +35,21 @@ import { SITE } from '../../site';
 import { SiteLayout } from '../../components/site-layout';
 import { usePageMeta } from '../../seo/head';
 import { PAGES } from '../../seo/pages';
-import { BOOKABLE_DAYS, SLOTS, bookableDays, isSlotAvailable, slotWindow, type SlotId } from './slots';
+import { AddressStep } from './address-step';
+import { EMPTY_DRAFT, addressOneLine, saveAddress, type Draft } from './draft';
+import { SLOTS, bookableDays, slotWindow } from './slots';
+import { TimeStep } from './time-step';
 
-const STEPS = ['What needs repairing?', "What's wrong?", 'Where and when?', 'Your details'] as const;
-const PINCODE = /^[1-9][0-9]{5}$/;
-
-interface Draft {
-  categoryId: string;
-  issueTypeId: string;
-  description: string;
-  pincode: string;
-  line1: string;
-  landmark: string;
-  locality: string;
-  city: string;
-  date: string;
-  slot: SlotId | '';
-  fullName: string;
-  phone: string;
-}
-
-const EMPTY: Draft = {
-  categoryId: '',
-  issueTypeId: '',
-  description: '',
-  pincode: '',
-  line1: '',
-  landmark: '',
-  locality: '',
-  city: '',
-  date: '',
-  slot: '',
-  fullName: '',
-  phone: '',
-};
+const STEPS = [
+  { id: 'appliance', label: 'Appliance', title: 'What needs repairing?' },
+  { id: 'problem', label: 'Problem', title: "What's wrong?" },
+  { id: 'address', label: 'Address', title: 'Where should we come?' },
+  { id: 'time', label: 'Time', title: 'When suits you?' },
+  { id: 'details', label: 'Details', title: 'Your details' },
+] as const;
 
 /**
- * Online booking (USER-FLOWS.md §1): four short steps, one decision each, then the phone is
+ * Online booking (USER-FLOWS.md §1): five short steps, one decision each, then the phone is
  * proven with an SMS code. The job is created as NEW and the office confirms it.
  */
 export function BookingPage() {
@@ -81,7 +57,7 @@ export function BookingPage() {
   const [params] = useSearchParams();
   const catalog = useGetActiveCatalog();
   const [step, setStep] = useState(0);
-  const [draft, setDraft] = useState<Draft>(EMPTY);
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [booked, setBooked] = useState<OnlineBookingResponse | null>(null);
 
   const categories = (catalog.data ?? []).filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
@@ -107,13 +83,20 @@ export function BookingPage() {
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
               <Card padding="lg" className="flex min-w-0 flex-col gap-6 lg:col-span-2">
                 <h1 className="sr-only">Book a repair</h1>
-                <div className="flex flex-col gap-4">
+                <Stepper
+                  label="Booking progress"
+                  steps={[...STEPS]}
+                  current={currentStep}
+                  onStepClick={go}
+                  className="border-b border-border pb-6"
+                />
+                <div className="flex flex-col gap-2">
                   {currentStep > 0 ? (
-                    <button type="button" onClick={() => go(currentStep - 1)} className="link inline-flex items-center gap-1 self-start text-sm">
+                    <button type="button" onClick={() => go(currentStep - 1)} className="link inline-flex min-h-6 items-center gap-1 self-start text-sm">
                       <ArrowLeft aria-hidden className="size-4" /> Back
                     </button>
                   ) : null}
-                  <StepProgress current={currentStep + 1} total={STEPS.length} label={STEPS[currentStep] ?? ''} />
+                  <Heading level={2}>{STEPS[currentStep]?.title}</Heading>
                 </div>
 
                 {catalog.isPending ? (
@@ -129,7 +112,9 @@ export function BookingPage() {
                 ) : currentStep === 1 && category ? (
                   <ProblemStep category={category} draft={draft} update={update} onNext={() => go(2)} />
                 ) : currentStep === 2 ? (
-                  <PlaceStep draft={draft} update={update} onNext={() => go(3)} />
+                  <AddressStep draft={draft} update={update} onNext={() => go(3)} actions={continueButton} />
+                ) : currentStep === 3 ? (
+                  <TimeStep draft={draft} update={update} onNext={() => go(4)} actions={continueButton} />
                 ) : category ? (
                   <DetailsStep draft={draft} update={update} category={category} onBooked={setBooked} />
                 ) : null}
@@ -221,124 +206,7 @@ function ProblemStep({ category, draft, update, onNext }: StepProps & { category
   );
 }
 
-/* ── Step 3 ─────────────────────────────────────────────────────────────── */
-
-function PlaceStep({ draft, update, onNext }: StepProps) {
-  const now = useNow(60_000);
-  const days = bookableDays(now);
-  const pincodeComplete = PINCODE.test(draft.pincode);
-  const serviceability = useCheckServiceability(draft.pincode, { query: { enabled: pincodeComplete, staleTime: 5 * 60_000 } });
-  const covered = serviceability.data?.isServiceable === true;
-  const ready = covered && draft.line1.trim() && draft.locality.trim() && draft.city.trim() && draft.date && draft.slot;
-
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    if (ready) onNext();
-  }
-
-  const pincodeMessage = !pincodeComplete
-    ? undefined
-    : serviceability.isPending
-      ? 'Checking…'
-      : covered
-        ? `Great — we cover ${serviceability.data?.areas.join(', ') || 'your area'}.`
-        : undefined;
-  const pincodeError = pincodeComplete && serviceability.data && !covered ? "Sorry, we don't cover this pincode yet." : undefined;
-
-  return (
-    <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-      <section aria-labelledby="where" className="flex flex-col gap-4">
-        <Heading level={2} size="h3" id="where">
-          Address
-        </Heading>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Field label="Pincode" hint={pincodeMessage} error={pincodeError}>
-            <Input
-              inputMode="numeric"
-              autoComplete="postal-code"
-              maxLength={6}
-              leadingIcon={MapPin}
-              value={draft.pincode}
-              onChange={(e) => {
-                const pincode = e.target.value.replace(/\D/g, '');
-                update({ pincode });
-              }}
-            />
-          </Field>
-          <Field label="City">
-            <Input autoComplete="address-level2" value={draft.city} onChange={(e) => update({ city: e.target.value })} />
-          </Field>
-          <Field label="House / flat, street" className="md:col-span-2">
-            <Input autoComplete="address-line1" value={draft.line1} onChange={(e) => update({ line1: e.target.value })} />
-          </Field>
-          <Field label="Area / locality">
-            <Input autoComplete="address-level3" value={draft.locality} onChange={(e) => update({ locality: e.target.value })} />
-          </Field>
-          <Field label="Landmark" optional hint="Helps the technician find you.">
-            <Input value={draft.landmark} onChange={(e) => update({ landmark: e.target.value })} />
-          </Field>
-        </div>
-      </section>
-
-      <section aria-labelledby="when" className="flex flex-col gap-4">
-        <Heading level={2} size="h3" id="when">
-          Preferred time
-        </Heading>
-        <div role="radiogroup" aria-label="Day" className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {days.map((day) => {
-            const anySlot = SLOTS.some((s) => isSlotAvailable(day.date, s.id, now));
-            const selected = draft.date === day.date;
-            return (
-              <button
-                key={day.date}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={!anySlot}
-                onClick={() => update({ date: day.date, slot: draft.slot && isSlotAvailable(day.date, draft.slot, now) ? draft.slot : '' })}
-                className={cn(
-                  'pressable transition-interactive flex w-20 shrink-0 flex-col items-center gap-1 rounded-card border px-2 py-3 disabled:cursor-not-allowed disabled:opacity-40',
-                  selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-surface text-foreground hover:border-border-strong',
-                )}
-              >
-                <span className="text-caption">{day.weekday}</span>
-                <span className="text-stat-sm tabular-nums">{day.dayOfMonth}</span>
-                <span className="text-caption">{day.month}</span>
-              </button>
-            );
-          })}
-        </div>
-        <RadioGroup
-          value={draft.slot}
-          onValueChange={(slot) => update({ slot: slot as SlotId })}
-          aria-label="Time of day"
-          className="grid grid-cols-1 gap-3 md:grid-cols-3"
-        >
-          {SLOTS.map((slot) => (
-            <RadioCard
-              key={slot.id}
-              value={slot.id}
-              title={slot.label}
-              description={slot.range}
-              disabled={!draft.date || !isSlotAvailable(draft.date, slot.id, now)}
-            />
-          ))}
-        </RadioGroup>
-        <Text variant="caption" tone="muted">
-          We'll confirm the exact time on WhatsApp. Bookings are open for the next {BOOKABLE_DAYS} days.
-        </Text>
-      </section>
-
-      <StepActions>
-        <Button type="submit" size="lg" disabled={!ready}>
-          Continue
-        </Button>
-      </StepActions>
-    </form>
-  );
-}
-
-/* ── Step 4 ─────────────────────────────────────────────────────────────── */
+/* ── Step 5 ─────────────────────────────────────────────────────────────── */
 
 function DetailsStep({
   draft,
@@ -381,19 +249,27 @@ function DetailsStep({
           phone: draft.phone,
           code,
           address: {
+            label: draft.label,
             line1: draft.line1,
-            line2: null,
+            line2: draft.line2 || null,
             landmark: draft.landmark || null,
             locality: draft.locality,
             city: draft.city,
             state: null,
             pincode: draft.pincode,
+            latitude: draft.pin?.latitude ?? null,
+            longitude: draft.pin?.longitude ?? null,
           },
           preferredSlotStart: visit.start,
           preferredSlotEnd: visit.end,
         },
       },
-      { onSuccess: onBooked },
+      {
+        onSuccess: (booking) => {
+          if (draft.rememberAddress) saveAddress(draft);
+          onBooked(booking);
+        },
+      },
     );
   }
 
@@ -431,7 +307,7 @@ function DetailsStep({
       {bookError ? <Alert role="alert" tone="error" title={bookError} /> : null}
 
       <Text variant="caption" tone="muted">
-        You pay only after the visit: the visiting charge is {formatINR(category.baseVisitCharge)}, and any repair cost is explained and approved by you first.
+        You pay only after the visit: the visiting charge is {formatINR(category.baseVisitCharge)}, and the technician explains any repair cost before starting.
       </Text>
 
       <StepActions>
@@ -465,6 +341,14 @@ function StepActions({ children }: { children: ReactNode }) {
   return <StickyActionBar className="md:justify-end md:border-t md:border-border md:pt-6 *:max-md:w-full">{children}</StickyActionBar>;
 }
 
+const continueButton = (ready: boolean) => (
+  <StepActions>
+    <Button type="submit" size="lg" disabled={!ready}>
+      Continue
+    </Button>
+  </StepActions>
+);
+
 /* ── Summary & reassurance ─────────────────────────────────────────────── */
 
 function Summary({ draft, category }: { draft: Draft; category: CategoryResponse | undefined }) {
@@ -495,10 +379,13 @@ function Summary({ draft, category }: { draft: Draft; category: CategoryResponse
         </Text>
       )}
       {draft.locality || draft.pincode ? (
-        <SummaryRow icon={<MapPin aria-hidden className="size-4" />}>{[draft.line1, draft.locality, draft.pincode].filter(Boolean).join(', ')}</SummaryRow>
+        <SummaryRow icon={<MapPin aria-hidden className="size-4" />}>
+          <span className="font-semibold text-foreground">{draft.label}</span> · {addressOneLine(draft)}
+        </SummaryRow>
       ) : null}
+      {draft.pin ? <SummaryRow icon={<LocateFixed aria-hidden className="size-4" />}>Location pinned on map</SummaryRow> : null}
       {day && slot ? (
-        <SummaryRow icon={<CircleCheck aria-hidden className="size-4" />}>
+        <SummaryRow icon={<Clock aria-hidden className="size-4" />}>
           {day.weekday} {day.dayOfMonth} {day.month} · {slot.range}
         </SummaryRow>
       ) : null}
@@ -526,7 +413,7 @@ function SummaryRow({ icon, children }: { icon: ReactNode; children: ReactNode }
 function Promises() {
   const items = [
     { icon: BadgeIndianRupee, text: 'Price explained before any repair' },
-    { icon: MapPinned, text: 'Track your technician live' },
+    { icon: MapPinned, text: 'Track your visit on WhatsApp' },
     { icon: KeyRound, text: 'Job closes only with your code' },
   ];
   return (

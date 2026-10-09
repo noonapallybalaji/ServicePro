@@ -5,11 +5,18 @@
  * Service management & technician dispatch (PLAN.md).
  * OpenAPI spec version: v1
  */
+import type { BookingAddressRequestLabel } from './bookingAddressRequestLabel';
 import type { BookingAddressRequestLine2 } from './bookingAddressRequestLine2';
 import type { BookingAddressRequestLandmark } from './bookingAddressRequestLandmark';
 import type { BookingAddressRequestState } from './bookingAddressRequestState';
+import type { BookingAddressRequestLatitude } from './bookingAddressRequestLatitude';
+import type { BookingAddressRequestLongitude } from './bookingAddressRequestLongitude';
 
+/**
+ * Latitude/longitude come from the customer's device ("Use my current location"), if shared.
+ */
 export interface BookingAddressRequest {
+  label: BookingAddressRequestLabel;
   line1: string;
   line2: BookingAddressRequestLine2;
   landmark: BookingAddressRequestLandmark;
@@ -17,4 +24,6 @@ export interface BookingAddressRequest {
   city: string;
   state: BookingAddressRequestState;
   pincode: string;
+  latitude: BookingAddressRequestLatitude;
+  longitude: BookingAddressRequestLongitude;
 }

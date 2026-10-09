@@ -5880,16 +5880,25 @@
       },
       "BookingAddressRequest": {
         "required": [
+          "label",
           "line1",
           "line2",
           "landmark",
           "locality",
           "city",
           "state",
-          "pincode"
+          "pincode",
+          "latitude",
+          "longitude"
         ],
         "type": "object",
         "properties": {
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "line1": {
             "type": "string"
           },
@@ -5919,8 +5928,23 @@
           },
           "pincode": {
             "type": "string"
+          },
+          "latitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
-        }
+        },
+        "description": "Latitude/longitude come from the customer's device (\"Use my current location\"), if shared."
       },
       "BookingCodeRequest": {
         "required": [

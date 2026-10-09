@@ -125,10 +125,22 @@ internal sealed class CustomerRegistry(DbContext db) : ICustomerRegistry
             a.Pincode == address.Pincode.Trim() &&
             string.Equals(a.Line1, address.Line1.Trim(), StringComparison.OrdinalIgnoreCase));
 
-        var target = existing ?? customer.AddAddress(
-            new AddressDetails(null, address.Line1, address.Line2, address.Landmark, address.Locality, address.City, address.State, address.Pincode, null),
-            makeDefault: false);
+        if (existing is null)
+        {
+            var added = customer.AddAddress(
+                new AddressDetails(address.Label, address.Line1, address.Line2, address.Landmark, address.Locality, address.City, address.State, address.Pincode, address.Location),
+                makeDefault: false);
+            return new CustomerAddressRef(customer.Id, added.Id);
+        }
 
-        return new CustomerAddressRef(customer.Id, target.Id);
+        if (existing.Location is null && address.Location is not null)
+        {
+            customer.UpdateAddress(
+                existing.Id,
+                new AddressDetails(existing.Label, existing.Line1, existing.Line2, existing.Landmark, existing.Locality, existing.City, existing.State, existing.Pincode, address.Location),
+                makeDefault: false);
+        }
+
+        return new CustomerAddressRef(customer.Id, existing.Id);
     }
 }

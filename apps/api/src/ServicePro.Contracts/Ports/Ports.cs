@@ -82,7 +82,17 @@ public sealed record ApplianceInfo(Guid Id, Guid CustomerId, Guid CategoryId, st
 
 public sealed record SelfServiceContact(string FullName, PhoneNumber Phone, RequestChannel Source);
 
-public sealed record SelfServiceAddress(string Line1, string? Line2, string? Landmark, string Locality, string City, string State, string Pincode);
+/// <summary>An address typed by the customer, optionally with the pin their device reported.</summary>
+public sealed record SelfServiceAddress(
+    string? Label,
+    string Line1,
+    string? Line2,
+    string? Landmark,
+    string Locality,
+    string City,
+    string State,
+    string Pincode,
+    GeoLocation? Location);
 
 public sealed record CustomerAddressRef(Guid CustomerId, Guid AddressId);
 
@@ -91,7 +101,8 @@ public interface ICustomerRegistry
 {
     /// <summary>
     /// Finds the customer by phone (creating them if new) and reuses a matching address or adds it.
-    /// Existing names and details are never overwritten by self-service input.
+    /// Existing names and details are never overwritten by self-service input; a matching address
+    /// without a pin gains the one the customer just shared.
     /// </summary>
     Task<Result<CustomerAddressRef>> FindOrCreateAsync(SelfServiceContact contact, SelfServiceAddress address, CancellationToken ct);
 }
