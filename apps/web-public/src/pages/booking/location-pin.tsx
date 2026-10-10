@@ -1,5 +1,5 @@
-import { Button, Text, cn } from '@servicepro/ui';
-import { ExternalLink, LocateFixed, MapPin, RefreshCw, TriangleAlert, X } from 'lucide-react';
+import { Button, Text } from '@servicepro/ui';
+import { CircleCheck, LocateFixed, X } from 'lucide-react';
 import { useState } from 'react';
 
 import type { Pin } from './draft';
@@ -11,19 +11,10 @@ const APPROXIMATE_METRES = 200;
 
 const formatAccuracy = (metres: number) => (metres >= 1000 ? `${(metres / 1000).toFixed(1)} km` : `${Math.round(metres)} m`);
 
-/** OpenStreetMap embed centred on the pin (no API key, no extra script). */
-function mapEmbedUrl({ latitude, longitude }: Pin) {
-  const d = 0.004;
-  const bbox = [longitude - d, latitude - d, longitude + d, latitude + d].map((n) => n.toFixed(6)).join(',');
-  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude.toFixed(6)},${longitude.toFixed(6)}`;
-}
-
-const mapsLink = ({ latitude, longitude }: Pin) => `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
-
 /**
- * "Use my current location": asks the device for its position only when the customer taps the
- * button, shows it on a small map, and lets them refresh or remove it. The pin is optional —
- * the typed address is always required.
+ * Optional: customers who are at the service address can add their device's location so the
+ * technician finds the door easily. People booking for another home (parents, a rented flat) skip
+ * it — the typed address is what we rely on. The device is asked only when the button is tapped.
  */
 export function LocationPin({ pin, onChange }: { pin: Pin | null; onChange: (pin: Pin | null) => void }) {
   const [status, setStatus] = useState<Status>('idle');
@@ -46,74 +37,42 @@ export function LocationPin({ pin, onChange }: { pin: Pin | null; onChange: (pin
   }
 
   if (pin) {
-    const approximate = pin.accuracy > APPROXIMATE_METRES;
     return (
-      <div className="flex flex-col gap-3 rounded-card border border-success-border bg-success-subtle p-3">
-        <div className="overflow-hidden rounded-control border border-border bg-surface">
-          <iframe
-            title="Map showing your pinned location"
-            src={mapEmbedUrl(pin)}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-            className="aspect-square w-full sm:aspect-video"
-          />
-        </div>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-2" role="status">
-            <MapPin aria-hidden className="mt-1 size-5 shrink-0 text-success" />
-            <div className="flex flex-col">
-              <Text weight="semibold">Location pinned</Text>
-              <Text variant="sm" tone="secondary">
-                Accurate to about {formatAccuracy(pin.accuracy)}.{' '}
-                <a href={mapsLink(pin)} target="_blank" rel="noreferrer" className="link inline-flex items-center gap-1">
-                  Check on Google Maps <ExternalLink aria-hidden className="size-3" />
-                </a>
-              </Text>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" loading={status === 'locating'} onClick={locate}>
-              <RefreshCw aria-hidden /> Update
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)}>
-              <X aria-hidden /> Remove
-            </Button>
+      <div className="flex flex-col gap-2 rounded-card border border-success-border bg-success-subtle p-3 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-2" role="status">
+          <CircleCheck aria-hidden className="mt-1 size-5 shrink-0 text-success" />
+          <div className="flex flex-col">
+            <Text weight="semibold">Current location added</Text>
+            <Text variant="sm" tone="secondary">
+              Accurate to about {formatAccuracy(pin.accuracy)}
+              {pin.accuracy > APPROXIMATE_METRES ? ' — approximate, so make sure the address above is complete.' : '.'}
+            </Text>
           </div>
         </div>
-        {approximate ? (
-          <Text variant="sm" className="flex items-start gap-2 text-warning-subtle-foreground">
-            <TriangleAlert aria-hidden className="mt-1 size-4 shrink-0" />
-            This looks approximate. Turn on GPS and tap Update, or make sure your address below is complete.
-          </Text>
-        ) : null}
-        <Text variant="caption" tone="muted">
-          Map © OpenStreetMap contributors. Your pin is saved with this address so the technician can find you.
-        </Text>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onChange(null)} className="self-start sm:self-center">
+          <X aria-hidden /> Remove
+        </Button>
       </div>
     );
   }
 
+  const message =
+    status === 'denied'
+      ? "Location permission is blocked. That's fine — the address above is enough."
+      : status === 'unavailable'
+        ? "We couldn't get your location. That's fine — the address above is enough."
+        : status === 'unsupported'
+          ? "This browser can't share a location. The address above is enough."
+          : null;
+
   return (
     <div className="flex flex-col gap-2">
-      <Button type="button" variant="outline" size="lg" fullWidth loading={status === 'locating'} onClick={locate} className="border-primary text-primary">
+      <Button type="button" variant="outline" loading={status === 'locating'} onClick={locate} className="self-start">
         <LocateFixed aria-hidden /> Use my current location
       </Button>
-      <Text variant="caption" tone="muted" className={cn(status !== 'idle' && status !== 'locating' && 'hidden')}>
-        Optional — a pin helps the technician reach your door. We only ask when you tap the button.
-      </Text>
-      {status === 'denied' ? (
+      {message ? (
         <Text variant="sm" role="alert" className="text-warning-subtle-foreground">
-          Location permission was blocked. Allow it in your browser's site settings, or just type your address below.
-        </Text>
-      ) : null}
-      {status === 'unavailable' ? (
-        <Text variant="sm" role="alert" className="text-warning-subtle-foreground">
-          We couldn't get your location. Check that location is turned on, then try again — or type your address below.
-        </Text>
-      ) : null}
-      {status === 'unsupported' ? (
-        <Text variant="sm" role="alert" className="text-warning-subtle-foreground">
-          This browser can't share a location. Please type your address below.
+          {message}
         </Text>
       ) : null}
     </div>

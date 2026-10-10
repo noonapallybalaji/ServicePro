@@ -81,12 +81,6 @@ export function AddressStep({ draft, update, onNext, actions }: AddressStepProps
         </div>
       ) : null}
 
-      <section aria-labelledby="pin-heading" className="flex flex-col gap-3">
-        <Heading level={3} size="h3" id="pin-heading">
-          Pin your location
-        </Heading>
-        <LocationPin pin={draft.pin} onChange={(pin) => update({ pin })} />
-      </section>
 
       <section aria-labelledby="address-heading" className="flex flex-col gap-4">
         <Heading level={3} size="h3" id="address-heading">
@@ -150,6 +144,16 @@ export function AddressStep({ draft, update, onNext, actions }: AddressStepProps
           label="Remember this address on this device"
           description="Next time you can book with one tap. Stored only in this browser."
         />
+      </section>
+
+      <section aria-labelledby="pin-heading" className="flex flex-col gap-2 rounded-card border border-border bg-surface-sunken p-4">
+        <Heading level={3} size="h3" id="pin-heading">
+          Are you at this address now? <span className="text-sm font-normal text-foreground-muted">(optional)</span>
+        </Heading>
+        <Text variant="sm" tone="secondary">
+          Add your current location to help the technician find the door. Booking for another home? Skip this.
+        </Text>
+        <LocationPin pin={draft.pin} onChange={(pin) => update({ pin })} />
       </section>
 
       {actions(ready)}
