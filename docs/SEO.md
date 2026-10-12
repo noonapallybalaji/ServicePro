@@ -48,6 +48,7 @@ Serve `dist/` as static files with these rules (already in `public/_redirects` a
 | pre-rendered pages (`/`, `/services`, `/ac-repair`, …) | `<path>/index.html` | 200 | |
 | `/book` | `app.html` | 200 | `X-Robots-Tag: noindex` |
 | `/t/*` (tracking) | `app.html` | 200 | `X-Robots-Tag: noindex, nofollow` |
+| `/account` (My bookings) | `app.html` | 200 | `X-Robots-Tag: noindex, nofollow` |
 | `/api/*` | proxy to the API | | API adds `X-Robots-Tag: noindex, nofollow` itself |
 | `/<path>/` | 301 → `/<path>` | 301 | |
 | anything else | `404.html` | **404** | |
@@ -58,6 +59,7 @@ nginx equivalent:
 ```nginx
 location = /book   { add_header X-Robots-Tag "noindex" always; try_files /app.html =404; }
 location ^~ /t/    { add_header X-Robots-Tag "noindex, nofollow" always; try_files /app.html =404; }
+location = /account { add_header X-Robots-Tag "noindex, nofollow" always; try_files /app.html =404; }
 location ^~ /assets/ { add_header Cache-Control "public, max-age=31536000, immutable"; }
 rewrite ^/(.+)/$ /$1 permanent;
 location / { try_files $uri $uri/index.html =404; }
@@ -87,7 +89,7 @@ The staff (`apps/admin`) and technician (`apps/tech`) apps ship `<meta name="rob
 
 | Indexed (in sitemap) | Not indexed |
 |---|---|
-| `/`, `/services`, `/ac-repair`, `/refrigerator-repair`, `/washing-machine-repair`, `/tv-repair`, `/microwave-repair`, `/about`, `/contact`, `/faq` | `/book` (noindex, crawlable so the tag is seen), `/t/*` tracking (noindex + robots-disallowed), `/api/*`, 404, staff and technician apps, any query-string variant (canonical points to the clean URL) |
+| `/`, `/services`, `/ac-repair`, `/refrigerator-repair`, `/washing-machine-repair`, `/tv-repair`, `/microwave-repair`, `/about`, `/contact`, `/faq` | `/book` (noindex, crawlable so the tag is seen), `/t/*` tracking and `/account` (noindex + robots-disallowed), `/api/*`, 404, staff and technician apps, any query-string variant (canonical points to the clean URL) |
 
 ## Audit: 6 Oct 2026
 

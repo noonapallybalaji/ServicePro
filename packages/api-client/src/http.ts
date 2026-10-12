@@ -49,7 +49,7 @@ export function apiUrl(path: string): string {
   return `${baseUrl}${path}`;
 }
 
-const NO_REFRESH_PATHS = ['/api/v1/auth/login', '/api/v1/auth/otp/', '/api/v1/auth/refresh', '/api/v1/auth/logout'];
+const NO_REFRESH_PATHS = ['/api/v1/auth/login', '/api/v1/auth/otp/', '/api/v1/auth/refresh', '/api/v1/auth/logout', '/api/v1/customer-auth/'];
 
 export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<T> {
   const response = await send(url, init);

@@ -48,6 +48,18 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
     }
 }
 
+internal sealed class CustomerRefreshTokenConfiguration : IEntityTypeConfiguration<CustomerRefreshToken>
+{
+    public void Configure(EntityTypeBuilder<CustomerRefreshToken> builder)
+    {
+        builder.ToTable("customer_refresh_tokens", IdentitySchema.Name);
+        builder.Property(t => t.TokenHash).HasMaxLength(64);
+        builder.HasIndex(t => t.TokenHash).IsUnique();
+        builder.HasIndex(t => t.FamilyId);
+        builder.HasIndex(t => t.CustomerId);
+    }
+}
+
 internal sealed class OtpChallengeConfiguration : IEntityTypeConfiguration<OtpChallenge>
 {
     public void Configure(EntityTypeBuilder<OtpChallenge> builder)

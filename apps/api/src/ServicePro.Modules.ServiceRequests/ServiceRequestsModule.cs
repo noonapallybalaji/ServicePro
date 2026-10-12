@@ -188,6 +188,14 @@ public sealed class ServiceRequestsModule : IModule
 
     private static void MapPublicEndpoints(IEndpointRouteBuilder endpoints)
     {
+        // The signed-in customer's bookings (customer site "My bookings").
+        endpoints.MapGet("/api/v1/account/bookings", async (ListMyBookings useCase, CancellationToken ct) => (await useCase.HandleAsync(ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces<IReadOnlyList<MyBookingResponse>>()
+            .WithStandardErrors()
+            .WithName("ListMyBookings");
+
         // Online booking: both steps send SMS or check codes, so they get the strict auth limit.
         var bookings = endpoints.MapGroup("/api/v1/public/bookings").WithTags("Online booking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth);
 
@@ -198,8 +206,21 @@ public sealed class ServiceRequestsModule : IModule
             .WithStandardErrors()
             .WithName("RequestBookingCode");
 
-        bookings.MapPost("/", async (OnlineBookingRequest request, BookServiceOnline useCase, CancellationToken ct) =>
-                (await useCase.HandleAsync(request, ct)).ToHttp())
+        bookings.MapPost("/", async (OnlineBookingRequest request, BookServiceOnline useCase, HttpContext http, CancellationToken ct) =>
+            {
+                var result = await useCase.HandleAsync(request, ct);
+                if (result.IsFailure)
+                {
+                    return result.Error!.ToProblem();
+                }
+
+                if (result.Value.Session is { } session)
+                {
+                    CustomerSessionCookie.Append(http.Response, session.RefreshToken, session.RefreshExpiresAt);
+                }
+
+                return Results.Ok(result.Value.Response);
+            })
             .Validate<OnlineBookingRequest>()
             .Produces<OnlineBookingResponse>()
             .WithStandardErrors()

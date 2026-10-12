@@ -17,6 +17,7 @@ public static class TemplateCodes
     public const string JobOffer = "JOB_OFFER";
     public const string OtpLogin = "OTP_LOGIN";
     public const string OtpBooking = "OTP_BOOKING";
+    public const string OtpCustomerLogin = "OTP_CUSTOMER_LOGIN";
 }
 
 public sealed record TemplateSeed(string Code, NotificationChannel Channel, string Body);
@@ -50,5 +51,7 @@ public static class DefaultTemplates
             "{{code}} is your ServicePro login code. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.OtpBooking, NotificationChannel.Sms,
             "{{code}} is your code to confirm your repair booking. It expires in 5 minutes. Don't share it."),
+        new(TemplateCodes.OtpCustomerLogin, NotificationChannel.Sms,
+            "{{code}} is your code to see your bookings. It expires in 5 minutes. Don't share it."),
     ];
 }

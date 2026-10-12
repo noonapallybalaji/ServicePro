@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using ServicePro.BuildingBlocks.Security;
 using ServicePro.BuildingBlocks.Web;
+using ServicePro.Contracts.Ports;
 using ServicePro.Modules.Identity.Application;
 
 namespace ServicePro.Modules.Identity.Endpoints;
@@ -63,6 +64,8 @@ internal static class IdentityEndpoints
             .Produces<MeResponse>()
             .WithName("GetMe");
 
+        MapCustomerAuth(app);
+
         var users = app.MapGroup("/api/v1/admin/users").WithTags("Users").RequireAuthorization(AuthPolicies.Admin);
 
         users.MapGet("/", async (ListStaffUsers useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(ct)))
@@ -82,6 +85,60 @@ internal static class IdentityEndpoints
             .Produces<UserResponse>()
             .WithStandardErrors()
             .WithName("UpdateStaffUser");
+    }
+
+    /// <summary>Customer sign-in for "My bookings" (bookings sign customers in automatically).</summary>
+    private static void MapCustomerAuth(IEndpointRouteBuilder app)
+    {
+        var customer = app.MapGroup(CustomerSessionCookie.Path).WithTags("Customer sign-in").AllowAnonymous();
+
+        customer.MapPost("/code", async (CustomerCodeRequest request, RequestCustomerSignInCode useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .Validate<CustomerCodeRequest>()
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Produces<OtpRequestedResponse>()
+            .WithStandardErrors()
+            .WithName("RequestCustomerSignInCode");
+
+        customer.MapPost("/verify", async (CustomerVerifyRequest request, VerifyCustomerSignIn useCase, HttpContext http, CancellationToken ct) =>
+                IssueCustomerSession(await useCase.HandleAsync(request, ct), http))
+            .Validate<CustomerVerifyRequest>()
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Produces<CustomerSessionResponse>()
+            .WithStandardErrors()
+            .WithName("VerifyCustomerSignIn");
+
+        customer.MapPost("/refresh", async (RefreshCustomerSession useCase, HttpContext http, CancellationToken ct) =>
+                IssueCustomerSession(await useCase.HandleAsync(CustomerSessionCookie.Read(http.Request), ct), http))
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .Produces<CustomerSessionResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithName("RefreshCustomerSession");
+
+        customer.MapPost("/logout", async (SignOutCustomer useCase, HttpContext http, CancellationToken ct) =>
+            {
+                await useCase.HandleAsync(CustomerSessionCookie.Read(http.Request), ct);
+                CustomerSessionCookie.Delete(http.Response);
+                return Results.NoContent();
+            })
+            .Produces(StatusCodes.Status204NoContent)
+            .WithName("SignOutCustomer");
+    }
+
+    private static IResult IssueCustomerSession(SharedKernel.Results.Result<IssuedCustomerSession> result, HttpContext http)
+    {
+        if (result.IsFailure)
+        {
+            if (result.Error!.Type == SharedKernel.Results.ErrorType.Unauthorized)
+            {
+                CustomerSessionCookie.Delete(http.Response);
+            }
+
+            return result.Error.ToProblem();
+        }
+
+        CustomerSessionCookie.Append(http.Response, result.Value.RefreshToken, result.Value.RefreshExpiresAt);
+        return Results.Ok(result.Value.Response);
     }
 
     private static IResult IssueSession(SharedKernel.Results.Result<IssuedSession> result, HttpContext http)

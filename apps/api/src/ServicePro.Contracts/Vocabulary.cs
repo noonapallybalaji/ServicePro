@@ -65,4 +65,7 @@ public enum OtpPurpose
 
     /// <summary>A customer proving they own the phone number on an online booking.</summary>
     Booking,
+
+    /// <summary>A customer signing in to see their bookings.</summary>
+    CustomerLogin,
 }

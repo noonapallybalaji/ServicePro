@@ -28,6 +28,9 @@ public sealed class AuthOptions
 
     public int TechnicianSessionDays { get; set; } = 30;
 
+    /// <summary>Customers stay signed in on their phone between bookings.</summary>
+    public int CustomerSessionDays { get; set; } = 90;
+
     public int OtpLength { get; set; } = 6;
 
     public int OtpTtlMinutes { get; set; } = 5;
@@ -54,11 +57,29 @@ public sealed record AuthSessionResponse(string AccessToken, DateTimeOffset Expi
 /// <summary>Result of issuing a session: the response body plus the refresh token for the cookie.</summary>
 public sealed record IssuedSession(AuthSessionResponse Response, string RefreshToken, DateTimeOffset RefreshExpiresAt, Guid RefreshTokenId);
 
-/// <summary>Creates access tokens and refresh-token chain links (ADR 0005). One responsibility: session issuance.</summary>
-public sealed class SessionIssuer(DbContext db, IOptions<AuthOptions> options, IClock clock, ITechnicianDirectory technicians)
+/// <summary>Signs short-lived access tokens (ADR 0005) for any kind of session.</summary>
+public sealed class AccessTokenWriter(IOptions<AuthOptions> options)
 {
     private readonly AuthOptions _options = options.Value;
     private readonly JsonWebTokenHandler _handler = new();
+
+    public string Write(IEnumerable<Claim> claims, DateTimeOffset now, DateTimeOffset expires) =>
+        _handler.CreateToken(new SecurityTokenDescriptor
+        {
+            Issuer = _options.Issuer,
+            Audience = _options.Audience,
+            Subject = new ClaimsIdentity(claims),
+            IssuedAt = now.UtcDateTime,
+            NotBefore = now.UtcDateTime,
+            Expires = expires.UtcDateTime,
+            SigningCredentials = new SigningCredentials(_options.CreateSigningKey(), SecurityAlgorithms.HmacSha256),
+        });
+}
+
+/// <summary>Creates access tokens and refresh-token chain links (ADR 0005). One responsibility: session issuance.</summary>
+public sealed class SessionIssuer(DbContext db, IOptions<AuthOptions> options, IClock clock, ITechnicianDirectory technicians, AccessTokenWriter tokens)
+{
+    private readonly AuthOptions _options = options.Value;
 
     public async Task<IssuedSession> IssueAsync(User user, Guid? familyId, CancellationToken ct)
     {
@@ -98,15 +119,6 @@ public sealed class SessionIssuer(DbContext db, IOptions<AuthOptions> options, I
             claims.Add(new Claim(ServiceProClaims.TechnicianId, id.ToString()));
         }
 
-        return _handler.CreateToken(new SecurityTokenDescriptor
-        {
-            Issuer = _options.Issuer,
-            Audience = _options.Audience,
-            Subject = new ClaimsIdentity(claims),
-            IssuedAt = now.UtcDateTime,
-            NotBefore = now.UtcDateTime,
-            Expires = expires.UtcDateTime,
-            SigningCredentials = new SigningCredentials(_options.CreateSigningKey(), SecurityAlgorithms.HmacSha256),
-        });
+        return tokens.Write(claims, now, expires);
     }
 }

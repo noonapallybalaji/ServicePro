@@ -4,6 +4,7 @@ import {
   useGetActiveCatalog,
   useRequestBookingCode,
   type CategoryResponse,
+  useSession,
   type OnlineBookingResponse,
 } from '@servicepro/api-client';
 import {
@@ -27,14 +28,14 @@ import {
   cn,
   formatINR,
 } from '@servicepro/ui';
-import { ArrowLeft, BadgeIndianRupee, CircleCheck, Clock, KeyRound, LocateFixed, MapPin, MapPinned, Phone, UserRound } from 'lucide-react';
+import { ArrowLeft, BadgeIndianRupee, CircleCheck, Clock, KeyRound, ListChecks, LocateFixed, MapPin, MapPinned, Phone, UserRound } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
-import { SITE } from '../../site';
 import { SiteLayout } from '../../components/site-layout';
 import { usePageMeta } from '../../seo/head';
 import { PAGES } from '../../seo/pages';
+import { customerFrom, signInWith } from '../../customer-session';
 import { AddressStep } from './address-step';
 import { EMPTY_DRAFT, addressOneLine, saveAddress, type Draft } from './draft';
 import { SLOTS, bookableDays, slotWindow } from './slots';
@@ -218,6 +219,10 @@ function DetailsStep({
   const [sentTo, setSentTo] = useState<{ phone: string; length: number; developmentCode: string | null | undefined } | null>(null);
   const requestCode = useRequestBookingCode({ mutation: { meta: { silent: true } } });
   const book = useBookServiceOnline({ mutation: { meta: { silent: true } } });
+  // Signed in (from an earlier booking or "My bookings"): book straight away, no code.
+  const customer = customerFrom(useSession());
+  const [useOtherNumber, setUseOtherNumber] = useState(false);
+  const asCustomer = customer && !useOtherNumber ? customer : null;
 
   const phoneDigits = draft.phone.replace(/\D/g, '');
   const codeSent = sentTo !== null && sentTo.phone === draft.phone;
@@ -245,9 +250,9 @@ function DetailsStep({
           categoryId: category.id,
           issueTypeId: draft.issueTypeId || null,
           problemDescription: problemText(draft, category),
-          fullName: draft.fullName,
-          phone: draft.phone,
-          code,
+          fullName: asCustomer ? draft.fullName.trim() || asCustomer.fullName : draft.fullName,
+          phone: asCustomer ? asCustomer.phone : draft.phone,
+          code: asCustomer ? null : code,
           address: {
             label: draft.label,
             line1: draft.line1,
@@ -267,6 +272,8 @@ function DetailsStep({
       {
         onSuccess: (booking) => {
           if (draft.rememberAddress) saveAddress(draft);
+          // A verified booking signs the customer in, so "My bookings" works straight away.
+          if (booking.session) signInWith(booking.session);
           onBooked(booking);
         },
       },
@@ -275,6 +282,39 @@ function DetailsStep({
 
   const phoneError = isApiError(requestCode.error) ? (requestCode.error.fieldError('phone') ?? requestCode.error.message) : undefined;
   const bookError = isApiError(book.error) ? book.error.message : book.isError ? "Couldn't book. Check your connection and try again." : undefined;
+
+  if (asCustomer) {
+    return (
+      <form onSubmit={confirm} className="flex flex-col gap-6" noValidate>
+        <div className="flex flex-col gap-3 rounded-card border border-primary-border bg-primary-subtle p-4 sm:flex-row sm:items-center">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+            <UserRound aria-hidden className="size-5" />
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Text weight="semibold">Booking as {asCustomer.fullName}</Text>
+            <Text variant="sm" tone="secondary" className="tabular-nums">
+              {asCustomer.phone} · signed in
+            </Text>
+          </div>
+          <Button type="button" variant="ghost" size="sm" onClick={() => setUseOtherNumber(true)}>
+            Use a different number
+          </Button>
+        </div>
+
+        {bookError ? <Alert role="alert" tone="error" title={bookError} /> : null}
+
+        <Text variant="caption" tone="muted">
+          You pay only after the visit: the visiting charge is {formatINR(category.baseVisitCharge)}, and the technician explains any repair cost before starting.
+        </Text>
+
+        <StepActions>
+          <Button type="submit" size="lg" loading={book.isPending}>
+            <CircleCheck aria-hidden /> Confirm booking
+          </Button>
+        </StepActions>
+      </form>
+    );
+  }
 
   return (
     <form onSubmit={codeSent ? confirm : sendCode} className="flex flex-col gap-6" noValidate>
@@ -445,13 +485,11 @@ function BookingDone({ booking, draft, category }: { booking: OnlineBookingRespo
         <Button asChild size="lg">
           <Link to={booking.trackingPath}>Track your booking</Link>
         </Button>
-        {SITE.phone ? (
-          <Button asChild size="lg" variant="outline">
-            <a href={`tel:${SITE.phone}`}>
-              <Phone aria-hidden /> Call us
-            </a>
-          </Button>
-        ) : null}
+        <Button asChild size="lg" variant="outline">
+          <Link to="/account">
+            <ListChecks aria-hidden /> My bookings
+          </Link>
+        </Button>
       </div>
     </Card>
   );

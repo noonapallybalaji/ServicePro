@@ -1,5 +1,5 @@
 import { BrandLockup, Button, Container, Text } from '@servicepro/ui';
-import { Mail, MessageCircle, Phone } from 'lucide-react';
+import { Mail, MessageCircle, Phone, UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, NavLink } from 'react-router';
 
@@ -31,8 +31,8 @@ function SiteHeader() {
   return (
     <header className="sticky top-0 z-(--z-header) border-b border-border bg-surface pt-safe">
       <Container className="flex h-header items-center justify-between gap-3">
-        <Link to="/" className="min-w-0 rounded-control" aria-label={`${SITE.name} home`}>
-          <BrandLockup name={SITE.name} nameClassName="truncate max-sm:text-body" />
+        <Link to="/" className="flex min-w-0 rounded-control" aria-label={`${SITE.name} home`}>
+          <BrandLockup name={SITE.name} className="flex" nameClassName="truncate max-sm:text-body" />
         </Link>
         <nav aria-label="Main" className="max-lg:hidden">
           <ul className="flex items-center gap-1">
@@ -49,6 +49,12 @@ function SiteHeader() {
           </ul>
         </nav>
         <div className="flex shrink-0 items-center gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/account">
+              <UserRound aria-hidden />
+              <span className="max-sm:sr-only">My bookings</span>
+            </Link>
+          </Button>
           {SITE.phone ? (
             <Button asChild variant="ghost" size="sm" className="max-sm:hidden">
               <a href={`tel:${SITE.phone}`}>
@@ -117,7 +123,7 @@ function SiteFooter() {
             Company
           </h2>
           <ul className="mt-3 flex flex-col">
-            {[{ to: '/book', label: 'Book a repair' }, ...MAIN_NAV].map((item) => (
+            {[{ to: '/book', label: 'Book a repair' }, { to: '/account', label: 'My bookings' }, ...MAIN_NAV].map((item) => (
               <li key={item.to}>
                 <Link to={item.to} className={footerLink}>
                   {item.label}

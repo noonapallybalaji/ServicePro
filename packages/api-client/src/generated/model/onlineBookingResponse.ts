@@ -5,8 +5,14 @@
  * Service management & technician dispatch (PLAN.md).
  * OpenAPI spec version: v1
  */
+import type { OnlineBookingResponseSession } from './onlineBookingResponseSession';
 
+/**
+ * Session is set when this booking signed the customer in (their phone was just verified);
+it is null when they were already signed in.
+ */
 export interface OnlineBookingResponse {
   srNumber: string;
   trackingPath: string;
+  session: OnlineBookingResponseSession;
 }

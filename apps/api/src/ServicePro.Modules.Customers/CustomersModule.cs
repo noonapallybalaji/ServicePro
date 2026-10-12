@@ -25,6 +25,21 @@ public sealed class CustomersModule : IModule
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
+        // The signed-in customer's own account (customer site).
+        var account = endpoints.MapGroup("/api/v1/account").WithTags("Customer account").RequireAuthorization(AuthPolicies.Customer);
+
+        account.MapGet("/", async (GetMyAccount useCase, CancellationToken ct) => (await useCase.HandleAsync(ct)).ToHttp())
+            .Produces<AccountResponse>()
+            .WithStandardErrors()
+            .WithName("GetMyAccount");
+
+        account.MapPut("/", async (UpdateAccountRequest request, UpdateMyAccount useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .Validate<UpdateAccountRequest>()
+            .Produces<AccountResponse>()
+            .WithStandardErrors()
+            .WithName("UpdateMyAccount");
+
         var customers = endpoints.MapGroup("/api/v1/admin/customers").WithTags("Customers").RequireAuthorization(AuthPolicies.Staff);
 
         customers.MapGet("/", async (string? search, int? page, int? pageSize, SearchCustomers useCase, CancellationToken ct) =>

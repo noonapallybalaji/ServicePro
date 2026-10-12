@@ -1125,6 +1125,69 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.ToTable("technician_assignments", "dispatch");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Identity.Domain.CustomerRefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("family_id");
+
+                    b.Property<Guid?>("ReplacedByTokenId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("replaced_by_token_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_customer_refresh_tokens");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_customer_refresh_tokens_customer_id");
+
+                    b.HasIndex("FamilyId")
+                        .HasDatabaseName("ix_customer_refresh_tokens_family_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_customer_refresh_tokens_tenant_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ix_customer_refresh_tokens_token_hash");
+
+                    b.ToTable("customer_refresh_tokens", "identity");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Identity.Domain.OtpChallenge", b =>
                 {
                     b.Property<Guid>("Id")

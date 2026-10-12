@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 
+import { startCustomerSession } from './customer-session';
 import { routes } from './routes';
 
 /*
@@ -29,3 +30,6 @@ if (rootElement.firstElementChild) {
 } else {
   createRoot(rootElement).render(app);
 }
+
+// After the first render, so pre-rendered markup hydrates against the same (unknown) session state.
+startCustomerSession();

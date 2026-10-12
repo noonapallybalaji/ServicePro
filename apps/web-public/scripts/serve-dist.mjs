@@ -57,8 +57,8 @@ http
       return;
     }
 
-    if (pathname === '/book' || pathname.startsWith('/t/')) {
-      return send(res, path.join(dist, 'app.html'), 200, { 'x-robots-tag': pathname.startsWith('/t/') ? 'noindex, nofollow' : 'noindex' });
+    if (pathname === '/book' || pathname === '/account' || pathname.startsWith('/t/')) {
+      return send(res, path.join(dist, 'app.html'), 200, { 'x-robots-tag': pathname === '/book' ? 'noindex' : 'noindex, nofollow' });
     }
 
     const file = resolveFile(pathname);

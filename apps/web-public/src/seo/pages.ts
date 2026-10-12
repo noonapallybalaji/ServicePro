@@ -94,6 +94,7 @@ export const PAGES = {
 
   // Not indexable: transactional or private.
   book: { path: '/book', title: brand('Book a Repair'), description: `Book an appliance repair visit in ${SITE.city}.`, indexable: false, jsonLd: [] },
+  account: { path: '/account', title: brand('My Bookings'), description: 'Your bookings, addresses and details.', indexable: false, jsonLd: [] },
   tracking: { path: '/t', title: brand('Track Your Service'), description: 'Follow your service request.', indexable: false, jsonLd: [] },
   notFound: { path: '/404', title: brand('Page Not Found'), description: "This page doesn't exist.", indexable: false, jsonLd: [] },
   /** Head of the empty shell that client-only routes load before they set their own tags. */

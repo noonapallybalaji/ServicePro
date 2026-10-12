@@ -1,6 +1,8 @@
 # Netlify / Cloudflare Pages response headers.
 /t/*
   X-Robots-Tag: noindex, nofollow
+/account
+  X-Robots-Tag: noindex, nofollow
 /app.html
   X-Robots-Tag: noindex
 /assets/*

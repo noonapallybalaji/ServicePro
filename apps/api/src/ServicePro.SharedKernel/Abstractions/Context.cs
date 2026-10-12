@@ -31,6 +31,9 @@ public interface ICurrentUser
 
     /// <summary>Present when the caller is a technician.</summary>
     Guid? TechnicianId { get; }
+
+    /// <summary>Present when the caller is a signed-in customer (they have no user account).</summary>
+    Guid? CustomerId { get; }
 }
 
 /// <summary>Who performed a change, recorded in history and audit (PLAN.md §7.7).</summary>

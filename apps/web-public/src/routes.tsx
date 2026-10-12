@@ -33,6 +33,13 @@ export const routes: RouteObject[] = [
         },
       },
       {
+        path: '/account',
+        lazy: async () => {
+          const [{ AccountPage }, { withQueryClient }] = await Promise.all([import('./pages/account/account-page'), import('./query')]);
+          return { Component: withQueryClient(AccountPage) };
+        },
+      },
+      {
         path: '/t/:token',
         lazy: async () => {
           const [{ TrackingPage }, { withQueryClient }] = await Promise.all([import('./pages/tracking-page'), import('./query')]);

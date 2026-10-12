@@ -8,6 +8,8 @@ export * from './generated/endpoints/auth/auth';
 export * from './generated/endpoints/billing/billing';
 export * from './generated/endpoints/catalog/catalog';
 export * from './generated/endpoints/catalog-admin/catalog-admin';
+export * from './generated/endpoints/customer-account/customer-account';
+export * from './generated/endpoints/customer-sign-in/customer-sign-in';
 export * from './generated/endpoints/customers/customers';
 export * from './generated/endpoints/dashboard/dashboard';
 export * from './generated/endpoints/dispatch/dispatch';

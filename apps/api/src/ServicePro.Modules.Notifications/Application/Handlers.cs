@@ -146,9 +146,12 @@ public sealed class SmsOtpSender(NotificationDispatcher dispatcher) : IOtpSender
 {
     public async Task SendAsync(PhoneNumber phone, string code, OtpPurpose purpose, CancellationToken ct)
     {
-        var (template, recipient) = purpose == OtpPurpose.Booking
-            ? (TemplateCodes.OtpBooking, RecipientType.Customer)
-            : (TemplateCodes.OtpLogin, RecipientType.Technician);
+        var (template, recipient) = purpose switch
+        {
+            OtpPurpose.Booking => (TemplateCodes.OtpBooking, RecipientType.Customer),
+            OtpPurpose.CustomerLogin => (TemplateCodes.OtpCustomerLogin, RecipientType.Customer),
+            _ => (TemplateCodes.OtpLogin, RecipientType.Technician),
+        };
         var notification = await dispatcher.SendAsync(new NotificationRequest(
             template, NotificationChannel.Sms, recipient, null, phone.Value,
             NotificationDispatcher.DefaultLanguage, new Dictionary<string, string> { ["code"] = code }, null), ct);

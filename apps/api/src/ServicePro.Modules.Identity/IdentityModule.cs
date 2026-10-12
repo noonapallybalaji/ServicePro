@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -27,7 +28,10 @@ public sealed class IdentityModule : IModule
             .ValidateOnStart();
 
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddScoped<AccessTokenWriter>();
         services.AddScoped<SessionIssuer>();
+        services.AddScoped<CustomerSessionIssuer>();
+        services.AddScoped<ICustomerSessions>(sp => sp.GetRequiredService<CustomerSessionIssuer>());
         services.AddScoped<UserAccounts>();
         services.AddScoped<IUserProvisioning>(sp => sp.GetRequiredService<UserAccounts>());
         services.AddScoped<PhoneVerification>();
@@ -64,7 +68,16 @@ public sealed class IdentityModule : IModule
                 };
             });
 
+        // Plain .RequireAuthorization() means "staff or technician": customer tokens are accepted
+        // only by endpoints that ask for AuthPolicies.Customer explicitly.
+        var accountHolders = new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .RequireRole(nameof(UserRole.Owner), nameof(UserRole.Admin), nameof(UserRole.Dispatcher), nameof(UserRole.Technician))
+            .Build();
+
         services.AddAuthorizationBuilder()
+            .SetDefaultPolicy(accountHolders)
+            .AddPolicy(AuthPolicies.Customer, p => p.RequireRole(CustomerRole.Name).RequireClaim(ServiceProClaims.CustomerId))
             .AddPolicy(AuthPolicies.Staff, p => p.RequireRole(
                 nameof(UserRole.Owner), nameof(UserRole.Admin), nameof(UserRole.Dispatcher)))
             .AddPolicy(AuthPolicies.Admin, p => p.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Admin)))

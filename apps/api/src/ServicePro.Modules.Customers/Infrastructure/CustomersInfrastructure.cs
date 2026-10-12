@@ -76,6 +76,12 @@ internal sealed class CustomerDirectory(DbContext db) : ICustomerDirectory
             .Select(c => new CustomerInfo(c.Id, c.FullName, c.PrimaryPhone, c.PreferredLanguage))
             .FirstOrDefaultAsync(ct);
 
+    public async Task<CustomerInfo?> FindByPhoneAsync(PhoneNumber phone, CancellationToken ct) =>
+        await db.Set<Customer>().AsNoTracking()
+            .Where(c => c.PrimaryPhone == phone && !c.IsBlocked)
+            .Select(c => new CustomerInfo(c.Id, c.FullName, c.PrimaryPhone, c.PreferredLanguage))
+            .FirstOrDefaultAsync(ct);
+
     public async Task<IReadOnlyDictionary<Guid, CustomerInfo>> GetManyAsync(IEnumerable<Guid> customerIds, CancellationToken ct)
     {
         var ids = customerIds.Distinct().ToList();
@@ -130,7 +136,7 @@ internal sealed class CustomerRegistry(DbContext db) : ICustomerRegistry
             var added = customer.AddAddress(
                 new AddressDetails(address.Label, address.Line1, address.Line2, address.Landmark, address.Locality, address.City, address.State, address.Pincode, address.Location),
                 makeDefault: false);
-            return new CustomerAddressRef(customer.Id, added.Id);
+            return new CustomerAddressRef(Info(customer), added.Id);
         }
 
         if (existing.Location is null && address.Location is not null)
@@ -141,6 +147,8 @@ internal sealed class CustomerRegistry(DbContext db) : ICustomerRegistry
                 makeDefault: false);
         }
 
-        return new CustomerAddressRef(customer.Id, existing.Id);
+        return new CustomerAddressRef(Info(customer), existing.Id);
     }
+
+    private static CustomerInfo Info(Customer customer) => new(customer.Id, customer.FullName, customer.PrimaryPhone, customer.PreferredLanguage);
 }

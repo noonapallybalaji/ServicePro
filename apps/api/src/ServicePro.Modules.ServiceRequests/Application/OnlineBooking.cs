@@ -69,12 +69,19 @@ public sealed record OnlineBookingRequest(
     string ProblemDescription,
     string FullName,
     string Phone,
-    string Code,
+    string? Code,
     BookingAddressRequest Address,
     DateTimeOffset PreferredSlotStart,
     DateTimeOffset PreferredSlotEnd);
 
-public sealed record OnlineBookingResponse(string SrNumber, string TrackingPath);
+/// <summary>
+/// Session is set when this booking signed the customer in (their phone was just verified);
+/// it is null when they were already signed in.
+/// </summary>
+public sealed record OnlineBookingResponse(string SrNumber, string TrackingPath, CustomerSessionResponse? Session);
+
+/// <summary>The response plus the refresh token, which the endpoint puts in an HttpOnly cookie.</summary>
+public sealed record OnlineBookingOutcome(OnlineBookingResponse Response, IssuedCustomerSession? Session);
 
 internal sealed class OnlineBookingRequestValidator : AbstractValidator<OnlineBookingRequest>
 {
@@ -84,7 +91,8 @@ internal sealed class OnlineBookingRequestValidator : AbstractValidator<OnlineBo
         RuleFor(r => r.ProblemDescription).NotEmpty().WithMessage("Tell us briefly what's wrong.").MaximumLength(1000);
         RuleFor(r => r.FullName).NotEmpty().WithMessage("Enter your name.").MaximumLength(120);
         RuleFor(r => r.Phone).NotEmpty();
-        RuleFor(r => r.Code).NotEmpty().Matches("^[0-9]{4,8}$").WithMessage("Enter the numeric code from the SMS.");
+        // Required unless the customer is already signed in with this number (checked in the use case).
+        RuleFor(r => r.Code).Matches("^[0-9]{4,8}$").WithMessage("Enter the numeric code from the SMS.").When(r => !string.IsNullOrEmpty(r.Code));
         RuleFor(r => r.Address).NotNull();
         RuleFor(r => r.Address.Line1).NotEmpty().WithMessage("Enter your house or flat number and street.").MaximumLength(200);
         RuleFor(r => r.Address.Line2).MaximumLength(200);
@@ -107,13 +115,16 @@ public sealed class BookServiceOnline(
     SrNumberGenerator srNumbers,
     IPhoneVerification verification,
     ICustomerRegistry customers,
+    ICustomerDirectory customerDirectory,
+    ICustomerSessions sessions,
+    ICurrentUser currentUser,
     ICatalogDirectory catalog,
     IClock clock) : IUseCase
 {
     private static readonly TimeSpan BookingHorizon = TimeSpan.FromDays(30);
     private static readonly TimeSpan LongestSlot = TimeSpan.FromHours(8);
 
-    public async Task<Result<OnlineBookingResponse>> HandleAsync(OnlineBookingRequest request, CancellationToken ct)
+    public async Task<Result<OnlineBookingOutcome>> HandleAsync(OnlineBookingRequest request, CancellationToken ct)
     {
         var phone = PhoneNumber.Create(request.Phone);
         if (phone.IsFailure)
@@ -127,12 +138,22 @@ public sealed class BookServiceOnline(
             return details.Error!;
         }
 
-        // Check the code last, so a typo elsewhere doesn't burn one of the customer's attempts.
-        var verified = await verification.VerifyAsync(phone.Value, OtpPurpose.Booking, request.Code, ct);
-        if (verified.IsFailure)
+        // A customer already signed in with this number has proven it; anyone else verifies now.
+        var signedIn = currentUser.CustomerId is { } signedInId && (await customerDirectory.GetAsync(signedInId, ct))?.Phone == phone.Value;
+        if (!signedIn)
         {
-            await db.SaveChangesAsync(ct); // persist the attempt count
-            return verified.Error!;
+            if (string.IsNullOrEmpty(request.Code))
+            {
+                return Error.Validation("booking.code_required", "Enter the code we sent to your phone.");
+            }
+
+            // Check the code last, so a typo elsewhere doesn't burn one of the customer's attempts.
+            var verified = await verification.VerifyAsync(phone.Value, OtpPurpose.Booking, request.Code, ct);
+            if (verified.IsFailure)
+            {
+                await db.SaveChangesAsync(ct); // persist the attempt count
+                return verified.Error!;
+            }
         }
 
         var address = request.Address;
@@ -156,7 +177,7 @@ public sealed class BookServiceOnline(
         var serviceRequest = ServiceRequest.Create(
             new NewServiceRequest(
                 await srNumbers.NextAsync(ct),
-                customer.Value.CustomerId,
+                customer.Value.Customer.Id,
                 customer.Value.AddressId,
                 ApplianceId: null,
                 request.CategoryId,
@@ -176,8 +197,14 @@ public sealed class BookServiceOnline(
             clock.UtcNow);
 
         db.Set<ServiceRequest>().Add(serviceRequest);
+
+        // The phone was just verified: sign the customer in, in the same save as the booking,
+        // so "My bookings" works straight away without another code.
+        var session = signedIn ? null : await sessions.IssueAsync(customer.Value.Customer, ct);
         await db.SaveChangesAsync(ct);
-        return new OnlineBookingResponse(serviceRequest.SrNumber, $"/t/{serviceRequest.TrackingToken}");
+
+        var response = new OnlineBookingResponse(serviceRequest.SrNumber, $"/t/{serviceRequest.TrackingToken}", session?.Response);
+        return new OnlineBookingOutcome(response, session);
     }
 
     private async Task<Result<CategoryInfo>> ValidateDetailsAsync(OnlineBookingRequest request, CancellationToken ct)

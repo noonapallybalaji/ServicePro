@@ -6,7 +6,7 @@ import { useSyncExternalStore } from 'react';
  * Shapes mirror the API's AuthSessionResponse / MeResponse.
  */
 
-export type SessionRole = 'OWNER' | 'ADMIN' | 'DISPATCHER' | 'TECHNICIAN';
+export type SessionRole = 'OWNER' | 'ADMIN' | 'DISPATCHER' | 'TECHNICIAN' | 'CUSTOMER';
 
 export interface SessionUser {
   id: string;
@@ -32,6 +32,13 @@ interface SessionState {
 }
 
 let state: SessionState = { status: 'unknown', session: null };
+
+/** Staff and technician apps use the defaults; the customer site points these at /api/v1/customer-auth. */
+let endpoints = { refresh: '/api/v1/auth/refresh', logout: '/api/v1/auth/logout' };
+
+export function configureSessionEndpoints(next: { refresh: string; logout: string }) {
+  endpoints = next;
+}
 const listeners = new Set<() => void>();
 let refreshInFlight: Promise<boolean> | null = null;
 
@@ -66,7 +73,7 @@ export const session = {
    * so a burst of 401s triggers a single refresh.
    */
   refresh(): Promise<boolean> {
-    refreshInFlight ??= fetch('/api/v1/auth/refresh', { method: 'POST', credentials: 'same-origin' })
+    refreshInFlight ??= fetch(endpoints.refresh, { method: 'POST', credentials: 'same-origin' })
       .then(async (response) => {
         if (!response.ok) {
           session.clear();
@@ -93,7 +100,7 @@ export const session = {
 
   async signOut() {
     try {
-      await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'same-origin' });
+      await fetch(endpoints.logout, { method: 'POST', credentials: 'same-origin' });
     } finally {
       session.clear();
     }

@@ -45,6 +45,45 @@ public sealed class RefreshToken : TenantOwnedEntity
     }
 }
 
+/// <summary>
+/// One link in a customer's refresh-token chain. Same rotation and replay rules as
+/// <see cref="RefreshToken"/>, but for customers, who have no user account.
+/// </summary>
+public sealed class CustomerRefreshToken : TenantOwnedEntity
+{
+    private CustomerRefreshToken()
+    {
+    }
+
+    public CustomerRefreshToken(Guid customerId, string tokenHash, Guid familyId, DateTimeOffset expiresAt)
+    {
+        CustomerId = customerId;
+        TokenHash = tokenHash;
+        FamilyId = familyId;
+        ExpiresAt = expiresAt;
+    }
+
+    public Guid CustomerId { get; private set; }
+
+    public string TokenHash { get; private set; } = string.Empty;
+
+    public Guid FamilyId { get; private set; }
+
+    public DateTimeOffset ExpiresAt { get; private set; }
+
+    public DateTimeOffset? RevokedAt { get; private set; }
+
+    public Guid? ReplacedByTokenId { get; private set; }
+
+    public bool IsActive(DateTimeOffset now) => RevokedAt is null && ExpiresAt > now;
+
+    public void Revoke(DateTimeOffset now, Guid? replacedBy = null)
+    {
+        RevokedAt ??= now;
+        ReplacedByTokenId ??= replacedBy;
+    }
+}
+
 /// <summary>A one-time code sent to a phone (PLAN.md §7.3 `otp_challenges`).</summary>
 public sealed class OtpChallenge : TenantOwnedEntity
 {

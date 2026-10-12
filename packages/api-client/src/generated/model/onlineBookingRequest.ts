@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { OnlineBookingRequestIssueTypeId } from './onlineBookingRequestIssueTypeId';
+import type { OnlineBookingRequestCode } from './onlineBookingRequestCode';
 import type { BookingAddressRequest } from './bookingAddressRequest';
 
 export interface OnlineBookingRequest {
@@ -14,7 +15,7 @@ export interface OnlineBookingRequest {
   problemDescription: string;
   fullName: string;
   phone: string;
-  code: string;
+  code: OnlineBookingRequestCode;
   address: BookingAddressRequest;
   preferredSlotStart: string;
   preferredSlotEnd: string;

@@ -35,6 +35,23 @@ public interface IPhoneVerification
     Task<Result> VerifyAsync(PhoneNumber phone, OtpPurpose purpose, string code, CancellationToken ct);
 }
 
+/// <summary>Who is signed in on the customer site. Role is always "CUSTOMER".</summary>
+public sealed record CustomerSessionUser(Guid Id, string FullName, string Role, string Phone, string PreferredLanguage);
+
+public sealed record CustomerSessionResponse(string AccessToken, DateTimeOffset ExpiresAt, CustomerSessionUser User);
+
+/// <summary>A new customer session: the response body plus the refresh token for the cookie.</summary>
+public sealed record IssuedCustomerSession(CustomerSessionResponse Response, string RefreshToken, DateTimeOffset RefreshExpiresAt);
+
+/// <summary>
+/// Signs a customer in once their phone is verified (booking, or "My bookings" sign-in).
+/// Participates in the caller's unit of work: it never saves.
+/// </summary>
+public interface ICustomerSessions
+{
+    Task<IssuedCustomerSession> IssueAsync(CustomerInfo customer, CancellationToken ct);
+}
+
 // ── Notifications ───────────────────────────────────────────────────────────
 
 public interface IOtpSender
@@ -94,7 +111,7 @@ public sealed record SelfServiceAddress(
     string Pincode,
     GeoLocation? Location);
 
-public sealed record CustomerAddressRef(Guid CustomerId, Guid AddressId);
+public sealed record CustomerAddressRef(CustomerInfo Customer, Guid AddressId);
 
 /// <summary>Customer records created by customers themselves (online booking).</summary>
 public interface ICustomerRegistry
@@ -110,6 +127,9 @@ public interface ICustomerRegistry
 public interface ICustomerDirectory
 {
     Task<CustomerInfo?> GetAsync(Guid customerId, CancellationToken ct);
+
+    /// <summary>The customer whose primary phone this is (phone is the de-duplication key).</summary>
+    Task<CustomerInfo?> FindByPhoneAsync(PhoneNumber phone, CancellationToken ct);
 
     Task<IReadOnlyDictionary<Guid, CustomerInfo>> GetManyAsync(IEnumerable<Guid> customerIds, CancellationToken ct);
 
