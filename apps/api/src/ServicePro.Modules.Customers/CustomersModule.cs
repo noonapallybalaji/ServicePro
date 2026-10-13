@@ -40,6 +40,13 @@ public sealed class CustomersModule : IModule
             .WithStandardErrors()
             .WithName("UpdateMyAccount");
 
+        account.MapPost("/addresses", async (AddAccountAddressRequest request, AddMyAddress useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .Validate<AddAccountAddressRequest>()
+            .Produces<AccountResponse>()
+            .WithStandardErrors()
+            .WithName("AddMyAddress");
+
         var customers = endpoints.MapGroup("/api/v1/admin/customers").WithTags("Customers").RequireAuthorization(AuthPolicies.Staff);
 
         customers.MapGet("/", async (string? search, int? page, int? pageSize, SearchCustomers useCase, CancellationToken ct) =>

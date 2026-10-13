@@ -19,6 +19,7 @@ export * from './components/feedback';
 export * from './components/field';
 export * from './components/icon-button';
 export * from './components/input';
+export * from './components/menu';
 export * from './components/otp-input';
 export * from './components/table';
 export * from './components/stat-tile';

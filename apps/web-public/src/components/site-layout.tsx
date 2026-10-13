@@ -1,7 +1,10 @@
-import { BrandLockup, Button, Container, Text } from '@servicepro/ui';
+import { useSession } from '@servicepro/api-client';
+import { BrandLockup, Button, Container, Text, getInitials } from '@servicepro/ui';
 import { Mail, MessageCircle, Phone, UserRound } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Suspense, lazy, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router';
+
+import { customerFrom } from '../customer-session';
 
 import { SERVICES, servicePath } from '../content/services';
 import { SITE, whatsappLink } from '../site';
@@ -49,12 +52,7 @@ function SiteHeader() {
           </ul>
         </nav>
         <div className="flex shrink-0 items-center gap-2">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/account">
-              <UserRound aria-hidden />
-              <span className="max-sm:sr-only">My bookings</span>
-            </Link>
-          </Button>
+          <AccountMenu />
           {SITE.phone ? (
             <Button asChild variant="ghost" size="sm" className="max-sm:hidden">
               <a href={`tel:${SITE.phone}`}>
@@ -70,6 +68,31 @@ function SiteHeader() {
     </header>
   );
 }
+
+/** Signed in: avatar with the account menu (loaded on demand). Otherwise a sign-in link to "My bookings". */
+function AccountMenu() {
+  const customer = customerFrom(useSession());
+
+  if (!customer) {
+    return (
+      <Button asChild variant="ghost" size="sm">
+        <Link to="/account">
+          <UserRound aria-hidden />
+          <span className="max-sm:sr-only">Sign in</span>
+        </Link>
+      </Button>
+    );
+  }
+
+  return (
+    <Suspense fallback={<span aria-hidden className="flex size-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">{getInitials(customer.fullName)}</span>}>
+      <SignedInMenu fullName={customer.fullName} phone={customer.phone} />
+    </Suspense>
+  );
+}
+
+// The dropdown (and its positioning code) only loads for signed-in customers.
+const SignedInMenu = lazy(() => import('./account-menu').then((m) => ({ default: m.SignedInMenu })));
 
 const footerLink = 'transition-interactive inline-flex min-h-10 items-center text-sm text-foreground-secondary hover:text-foreground hover:underline';
 

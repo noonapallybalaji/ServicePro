@@ -1,21 +1,12 @@
 import {
-  getGetMyAccountQueryKey,
   isApiError,
-  session,
-  useGetMyAccount,
-  useListMyBookings,
   useRequestCustomerSignInCode,
   useSession,
-  useUpdateMyAccount,
   useVerifyCustomerSignIn,
-  type AccountResponse,
-  type MyBookingResponse,
 } from '@servicepro/api-client';
 import {
-  Alert,
   Button,
   Card,
-  CategoryTile,
   Container,
   EmptyState,
   Field,
@@ -24,14 +15,9 @@ import {
   OtpInput,
   Skeleton,
   SpotArt,
-  StatusBadge,
   Text,
-  formatDateTime,
-  formatINR,
-  formatWindow,
 } from '@servicepro/ui';
-import { useQueryClient } from '@tanstack/react-query';
-import { CalendarCheck, ChevronRight, Home, LocateFixed, LogOut, Mail, Phone, UserRound } from 'lucide-react';
+import { CalendarCheck, Phone } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 
@@ -39,6 +25,7 @@ import { SiteLayout } from '../../components/site-layout';
 import { customerFrom, signInWith } from '../../customer-session';
 import { usePageMeta } from '../../seo/head';
 import { PAGES } from '../../seo/pages';
+import { AccountView } from './account-view';
 
 /**
  * "My bookings": order history, saved addresses and contact details. Customers are signed in
@@ -58,7 +45,7 @@ export function AccountPage() {
             <Skeleton className="h-40 w-full rounded-card" />
           </div>
         ) : customer ? (
-          <AccountView firstName={customer.fullName.split(' ')[0] ?? ''} />
+          <AccountView fullName={customer.fullName} />
         ) : (
           <SignIn />
         )}
@@ -165,218 +152,5 @@ function SignIn() {
         — you'll be signed in when you confirm your number.
       </Text>
     </div>
-  );
-}
-
-/* ── Signed in ──────────────────────────────────────────────────────────── */
-
-function AccountView({ firstName }: { firstName: string }) {
-  const bookings = useListMyBookings();
-  const account = useGetMyAccount();
-
-  return (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex flex-col gap-1">
-          <Heading level={1}>Hi{firstName ? `, ${firstName}` : ''}</Heading>
-          <Text tone="secondary">Your bookings, addresses and details.</Text>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild variant="accent">
-            <Link to="/book">
-              <CalendarCheck aria-hidden /> Book a repair
-            </Link>
-          </Button>
-          <Button variant="outline" onClick={() => void session.signOut()}>
-            <LogOut aria-hidden /> Sign out
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
-        <section aria-labelledby="bookings" className="flex min-w-0 flex-col gap-4 lg:col-span-2">
-          <Heading level={2} size="h2" id="bookings">
-            Your bookings
-          </Heading>
-          {bookings.isPending ? (
-            <div className="flex flex-col gap-3">
-              <Skeleton className="h-24 w-full rounded-card" />
-              <Skeleton className="h-24 w-full rounded-card" />
-            </div>
-          ) : bookings.isError ? (
-            <Alert tone="error" title="Couldn't load your bookings" description="Check your connection and refresh the page." />
-          ) : bookings.data.length === 0 ? (
-            <Card>
-              <EmptyState
-                size="compact"
-                icon={CalendarCheck}
-                illustration={<SpotArt kind="calendar" />}
-                title="No bookings yet"
-                description="When you book a repair it shows up here, with live status and your bill."
-              />
-            </Card>
-          ) : (
-            <ul className="flex flex-col gap-3">
-              {bookings.data.map((booking) => (
-                <li key={booking.id}>
-                  <BookingCard booking={booking} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <aside className="flex min-w-0 flex-col gap-6">
-          {account.data ? (
-            <>
-              <DetailsCard account={account.data} />
-              <AddressesCard account={account.data} />
-            </>
-          ) : account.isError ? (
-            <Alert tone="error" title="Couldn't load your details" />
-          ) : (
-            <Skeleton className="h-48 w-full rounded-card" />
-          )}
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-const DONE = new Set(['COMPLETED', 'CLOSED', 'CLOSED_NO_REPAIR', 'CANCELLED']);
-
-function BookingCard({ booking }: { booking: MyBookingResponse }) {
-  const when = booking.scheduledStart
-    ? `Visit ${formatWindow(booking.scheduledStart, booking.scheduledEnd)}`
-    : booking.preferredSlotStart
-      ? `Preferred ${formatWindow(booking.preferredSlotStart, booking.preferredSlotEnd)}`
-      : `Booked ${formatDateTime(booking.createdAt)}`;
-
-  return (
-    <Link
-      to={booking.trackingPath}
-      className="pressable transition-interactive flex items-center gap-4 rounded-card border border-border bg-surface p-4 hover:border-border-strong hover:shadow-md"
-    >
-      <CategoryTile code={booking.categoryCode} />
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="text-body font-semibold text-foreground">{booking.categoryName}</span>
-          <StatusBadge status={booking.status} audience="customer" size="sm" />
-        </span>
-        <span className="truncate text-sm text-foreground-secondary">{booking.problemDescription}</span>
-        <span className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-foreground-muted">
-          <span className="tabular-nums">{booking.srNumber}</span>
-          <span className="tabular-nums">{when}</span>
-          {booking.technicianName && !DONE.has(booking.status) ? <span>Technician: {booking.technicianName}</span> : null}
-          {booking.finalAmount != null ? <span className="tabular-nums">Bill {formatINR(booking.finalAmount)}</span> : null}
-        </span>
-      </span>
-      <ChevronRight aria-hidden className="size-5 shrink-0 text-foreground-muted" />
-    </Link>
-  );
-}
-
-function DetailsCard({ account }: { account: AccountResponse }) {
-  const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [fullName, setFullName] = useState(account.fullName);
-  const [email, setEmail] = useState(account.email ?? '');
-  const save = useUpdateMyAccount({
-    mutation: {
-      meta: { silent: true },
-      onSuccess: (updated) => {
-        queryClient.setQueryData(getGetMyAccountQueryKey(), updated);
-        setEditing(false);
-      },
-    },
-  });
-
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    save.mutate({ data: { fullName, email: email.trim() || null } });
-  }
-
-  return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
-        <Heading level={2} size="h3">
-          Your details
-        </Heading>
-        {!editing ? (
-          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
-        ) : null}
-      </div>
-      {editing ? (
-        <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-          <Field label="Name" error={isApiError(save.error) ? save.error.fieldError('fullName') : undefined}>
-            <Input autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-          </Field>
-          <Field label="Email" optional error={isApiError(save.error) ? save.error.fieldError('email') : undefined}>
-            <Input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </Field>
-          <div className="flex gap-3">
-            <Button type="submit" loading={save.isPending} disabled={!fullName.trim()}>
-              Save
-            </Button>
-            <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <ul className="flex flex-col gap-3 text-sm">
-          <li className="flex items-center gap-3 text-foreground">
-            <UserRound aria-hidden className="size-4 text-primary" /> {account.fullName}
-          </li>
-          <li className="flex items-center gap-3 text-foreground tabular-nums">
-            <Phone aria-hidden className="size-4 text-primary" /> {account.phone}
-          </li>
-          <li className="flex items-center gap-3 text-foreground-secondary">
-            <Mail aria-hidden className="size-4 text-primary" /> {account.email ?? 'No email added'}
-          </li>
-        </ul>
-      )}
-      <Text variant="caption" tone="muted">
-        Your mobile number is how you sign in, so it can't be changed here. Call us if it has changed.
-      </Text>
-    </Card>
-  );
-}
-
-function AddressesCard({ account }: { account: AccountResponse }) {
-  return (
-    <Card className="flex flex-col gap-4">
-      <Heading level={2} size="h3">
-        Saved addresses
-      </Heading>
-      {account.addresses.length === 0 ? (
-        <Text variant="sm" tone="secondary">
-          Addresses you book with appear here.
-        </Text>
-      ) : (
-        <ul className="flex flex-col divide-y divide-border">
-          {account.addresses.map((address) => (
-            <li key={address.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-              <Home aria-hidden className="mt-1 size-4 shrink-0 text-primary" />
-              <div className="flex min-w-0 flex-col gap-1">
-                <Text variant="sm" weight="semibold">
-                  {address.label ?? 'Address'}
-                </Text>
-                <Text variant="sm" tone="secondary">
-                  {[address.line1, address.line2, address.locality, address.city, address.pincode].filter(Boolean).join(', ')}
-                </Text>
-                {address.hasLocation ? (
-                  <Text variant="caption" tone="muted" className="flex items-center gap-1">
-                    <LocateFixed aria-hidden className="size-3" /> Location saved
-                  </Text>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
   );
 }

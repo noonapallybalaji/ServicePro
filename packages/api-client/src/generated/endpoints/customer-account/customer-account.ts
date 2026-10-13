@@ -26,6 +26,7 @@ import type {
 
 import type {
   AccountResponse,
+  AddAccountAddressRequest,
   HttpValidationProblemDetails,
   MyBookingResponse,
   ProblemDetails,
@@ -190,6 +191,71 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getUpdateMyAccountMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getAddMyAddressUrl = () => {
+
+
+  
+
+  return `/api/v1/account/addresses`
+}
+
+export const addMyAddress = async (addAccountAddressRequest: AddAccountAddressRequest, options?: RequestInit): Promise<AccountResponse> => {
+  
+  return apiFetch<AccountResponse>(getAddMyAddressUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      addAccountAddressRequest,)
+  }
+);}
+
+
+
+
+export const getAddMyAddressMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addMyAddress>>, TError,{data: AddAccountAddressRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addMyAddress>>, TError,{data: AddAccountAddressRequest}, TContext> => {
+
+const mutationKey = ['addMyAddress'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addMyAddress>>, {data: AddAccountAddressRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  addMyAddress(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddMyAddressMutationResult = NonNullable<Awaited<ReturnType<typeof addMyAddress>>>
+    export type AddMyAddressMutationBody = AddAccountAddressRequest
+    export type AddMyAddressMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useAddMyAddress = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addMyAddress>>, TError,{data: AddAccountAddressRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addMyAddress>>,
+        TError,
+        {data: AddAccountAddressRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getAddMyAddressMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

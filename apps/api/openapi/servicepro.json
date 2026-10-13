@@ -1610,6 +1610,76 @@
         }
       }
     },
+    "/api/v1/account/addresses": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "AddMyAddress",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAccountAddressRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/customers": {
       "get": {
         "tags": [
@@ -5821,6 +5891,54 @@
           "AI_AGENT"
         ],
         "description": "Who performed a change, recorded in history and audit (PLAN.md §7.7)."
+      },
+      "AddAccountAddressRequest": {
+        "required": [
+          "label",
+          "line1",
+          "line2",
+          "landmark",
+          "locality",
+          "city",
+          "pincode",
+          "makeDefault"
+        ],
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "landmark": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "makeDefault": {
+            "type": "boolean"
+          }
+        }
       },
       "AddNoteRequest": {
         "required": [

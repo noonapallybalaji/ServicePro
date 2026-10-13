@@ -87,3 +87,58 @@ public sealed class UpdateMyAccount(DbContext db, ICurrentUser currentUser) : IU
         return GetMyAccount.ToResponse(customer);
     }
 }
+
+public sealed record AddAccountAddressRequest(
+    string? Label,
+    string Line1,
+    string? Line2,
+    string? Landmark,
+    string Locality,
+    string City,
+    string Pincode,
+    bool MakeDefault);
+
+internal sealed class AddAccountAddressRequestValidator : AbstractValidator<AddAccountAddressRequest>
+{
+    public AddAccountAddressRequestValidator()
+    {
+        RuleFor(r => r.Label).MaximumLength(40);
+        RuleFor(r => r.Line1).NotEmpty().WithMessage("Enter your house or flat number and street.").MaximumLength(200);
+        RuleFor(r => r.Line2).MaximumLength(200);
+        RuleFor(r => r.Landmark).MaximumLength(120);
+        RuleFor(r => r.Locality).NotEmpty().WithMessage("Enter your area or locality.").MaximumLength(120);
+        RuleFor(r => r.City).NotEmpty().WithMessage("Enter your city.").MaximumLength(80);
+        RuleFor(r => r.Pincode).Matches("^[1-9][0-9]{5}$").WithMessage("Enter a 6-digit pincode.");
+    }
+}
+
+/// <summary>Saves an address to the signed-in customer's account (offered at the next booking).</summary>
+public sealed class AddMyAddress(DbContext db, ICurrentUser currentUser) : IUseCase
+{
+    private const int MaxAddresses = 10;
+
+    public async Task<Result<AccountResponse>> HandleAsync(AddAccountAddressRequest request, CancellationToken ct)
+    {
+        if (currentUser.CustomerId is not { } customerId)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        var customer = await db.Set<Customer>().Include(c => c.Addresses).FirstOrDefaultAsync(c => c.Id == customerId, ct);
+        if (customer is null)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        if (customer.Addresses.Count >= MaxAddresses)
+        {
+            return Error.Conflict("account.too_many_addresses", "You can save up to 10 addresses. Call us to remove old ones.");
+        }
+
+        customer.AddAddress(
+            new AddressDetails(request.Label, request.Line1, request.Line2, request.Landmark, request.Locality, request.City, string.Empty, request.Pincode, null),
+            request.MakeDefault);
+        await db.SaveChangesAsync(ct);
+        return GetMyAccount.ToResponse(customer);
+    }
+}
