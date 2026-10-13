@@ -1651,6 +1651,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("en_route_at");
 
+                    b.Property<string>("ExternalReference")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("external_reference");
+
                     b.Property<decimal?>("FinalAmount")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)")
@@ -1773,6 +1778,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId", "Status")
                         .HasDatabaseName("ix_service_requests_tenant_id_status");
+
+                    b.HasIndex("TenantId", "Channel", "ExternalReference")
+                        .IsUnique()
+                        .HasDatabaseName("ix_service_requests_tenant_id_channel_external_reference")
+                        .HasFilter("external_reference IS NOT NULL");
 
                     b.ToTable("service_requests", "ops");
                 });

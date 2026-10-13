@@ -41,6 +41,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public const string OwnerEmail = "owner@test.local";
     public const string OwnerPassword = "Integration!2026";
 
+    /// <summary>The n8n integration key used by the tests; only its hash is configured, as in production.</summary>
+    public const string IntegrationKey = "sp_n8n_integration-test-key-0123456789abcdefghij";
+
     private readonly PostgreSqlContainer _database = new PostgreSqlBuilder("postgres:17-alpine")
         .WithDatabase("servicepro_tests")
         .Build();
@@ -71,9 +74,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Seed:OwnerEmail", OwnerEmail);
         builder.UseSetting("Seed:OwnerPassword", OwnerPassword);
         builder.UseSetting("Outbox:Enabled", "false");
+        builder.UseSetting("Security:ExposureGuard", "false"); // tests deliberately use echoed OTPs and a seeded password
         builder.UseSetting("Dispatch:OfferExpiryWorker", "false");
         builder.UseSetting("RateLimits:AuthPerMinute", "10000");
         builder.UseSetting("RateLimits:PublicPerMinute", "10000");
+        builder.UseSetting("RateLimits:IntegrationPerMinute", "10000");
+        builder.UseSetting("Integrations:Keys:n8n", ServicePro.BuildingBlocks.Security.SecureTokens.Hash(IntegrationKey));
         builder.UseSetting("Notifications:PublicSiteUrl", "https://track.test");
         builder.UseSetting("Storage:Local:RootPath", Path.Combine(Path.GetTempPath(), "servicepro-tests", Guid.NewGuid().ToString("N")));
 

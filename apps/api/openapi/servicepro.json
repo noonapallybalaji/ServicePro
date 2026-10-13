@@ -3240,6 +3240,86 @@
         }
       }
     },
+    "/api/v1/integrations/bookings": {
+      "post": {
+        "tags": [
+          "Integrations"
+        ],
+        "operationId": "BookViaIntegration",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntegrationBookingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationBookingResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/bookings": {
       "get": {
         "tags": [
@@ -7220,6 +7300,102 @@
           }
         }
       },
+      "IntegrationBookingRequest": {
+        "required": [
+          "idempotencyKey",
+          "customerConfirmed",
+          "categoryId",
+          "issueTypeId",
+          "problemDescription",
+          "fullName",
+          "phone",
+          "address",
+          "preferredSlotStart",
+          "preferredSlotEnd"
+        ],
+        "type": "object",
+        "properties": {
+          "idempotencyKey": {
+            "type": "string"
+          },
+          "customerConfirmed": {
+            "type": "boolean"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "issueTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "problemDescription": {
+            "type": "string"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "address": {
+            "$ref": "#/components/schemas/BookingAddressRequest"
+          },
+          "preferredSlotStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredSlotEnd": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IntegrationBookingResponse": {
+        "required": [
+          "srNumber",
+          "status",
+          "statusText",
+          "appointmentConfirmed",
+          "preferredSlotStart",
+          "preferredSlotEnd",
+          "trackingUrl",
+          "duplicate"
+        ],
+        "type": "object",
+        "properties": {
+          "srNumber": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ServiceRequestStatus"
+          },
+          "statusText": {
+            "type": "string"
+          },
+          "appointmentConfirmed": {
+            "type": "boolean"
+          },
+          "preferredSlotStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredSlotEnd": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trackingUrl": {
+            "type": "string"
+          },
+          "duplicate": {
+            "type": "boolean"
+          }
+        },
+        "description": "What the assistant may tell the customer. bool IntegrationBookingResponse.AppointmentConfirmed is always false at\r\ncreation: the office confirms the visit time later (the customer is told on WhatsApp)."
+      },
       "InvoiceLineInput": {
         "required": [
           "type",
@@ -10175,6 +10351,9 @@
     },
     {
       "name": "Meta"
+    },
+    {
+      "name": "Integrations"
     },
     {
       "name": "Tracking"

@@ -26,6 +26,7 @@ public sealed class ServiceRequestsModule : IModule
         services.AddScoped<IServiceRequestWorkflow, ServiceRequestWorkflowPort>();
         services.AddScoped<ServiceRequestViewBuilder>();
         services.AddScoped<SrNumberGenerator>();
+        services.Configure<PublicSiteOptions>(configuration.GetSection("Notifications"));
         services.AddSetting(OpsSettings.StuckAfterMinutes);
     }
 
@@ -188,6 +189,18 @@ public sealed class ServiceRequestsModule : IModule
 
     private static void MapPublicEndpoints(IEndpointRouteBuilder endpoints)
     {
+        // Server-to-server bookings (n8n WhatsApp assistant): integration key, idempotent, no session.
+        endpoints.MapPost("/api/v1/integrations/bookings", async (IntegrationBookingRequest request, BookViaIntegration useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .WithTags("Integrations")
+            .RequireAuthorization(AuthPolicies.Integration)
+            .RequireRateLimiting(RateLimitPolicies.Integration)
+            .Validate<IntegrationBookingRequest>()
+            .Produces<IntegrationBookingResponse>()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithStandardErrors()
+            .WithName("BookViaIntegration");
+
         // The signed-in customer's bookings (customer site "My bookings").
         endpoints.MapGet("/api/v1/account/bookings", async (ListMyBookings useCase, CancellationToken ct) => (await useCase.HandleAsync(ct)).ToHttp())
             .WithTags("Customer account")

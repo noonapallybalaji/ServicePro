@@ -28,6 +28,7 @@ public sealed class IdentityModule : IModule
             .ValidateOnStart();
 
         services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+        services.AddHostedService<Infrastructure.ExposureGuard>();
         services.AddScoped<AccessTokenWriter>();
         services.AddScoped<SessionIssuer>();
         services.AddScoped<CustomerSessionIssuer>();
@@ -39,6 +40,7 @@ public sealed class IdentityModule : IModule
 
         var options = section.Get<AuthOptions>() ?? new AuthOptions();
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddScheme<IntegrationKeyOptions, IntegrationKeyHandler>(IntegrationKeys.Scheme, o => o.LoadFrom(configuration))
             .AddJwtBearer(jwt =>
             {
                 jwt.MapInboundClaims = false;
@@ -78,6 +80,10 @@ public sealed class IdentityModule : IModule
         services.AddAuthorizationBuilder()
             .SetDefaultPolicy(accountHolders)
             .AddPolicy(AuthPolicies.Customer, p => p.RequireRole(CustomerRole.Name).RequireClaim(ServiceProClaims.CustomerId))
+            .AddPolicy(AuthPolicies.Integration, p => p
+                .AddAuthenticationSchemes(IntegrationKeys.Scheme)
+                .RequireAuthenticatedUser()
+                .RequireRole(IntegrationKeys.Role))
             .AddPolicy(AuthPolicies.Staff, p => p.RequireRole(
                 nameof(UserRole.Owner), nameof(UserRole.Admin), nameof(UserRole.Dispatcher)))
             .AddPolicy(AuthPolicies.Admin, p => p.RequireRole(nameof(UserRole.Owner), nameof(UserRole.Admin)))

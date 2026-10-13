@@ -1,7 +1,7 @@
 // Serves the production build the way the hosting rules do (public/_redirects, public/_headers):
 // pre-rendered files as-is, /book and /t/* via the app shell, everything else 404.html with a 404
 // status. /api is proxied to the local API so booking and tracking work.
-// Usage: node scripts/serve-dist.mjs   (PORT, SERVICEPRO_API override the defaults)
+// Usage: node scripts/serve-dist.mjs   (PORT, HOST, SERVICEPRO_API override the defaults)
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist');
 const port = Number(process.env.PORT ?? 5193);
+// Local only by default: on a public deployment, Cloudflare Tunnel is the way in.
+const host = process.env.HOST ?? '127.0.0.1';
 const api = new URL(process.env.SERVICEPRO_API ?? 'http://localhost:5180');
 
 const TYPES = {
@@ -69,4 +71,4 @@ http
 
     return send(res, path.join(dist, '404.html'), 404);
   })
-  .listen(port, () => console.log(`Production build on http://localhost:${port}`));
+  .listen(port, host, () => console.log(`Production build on http://${host}:${port}`));

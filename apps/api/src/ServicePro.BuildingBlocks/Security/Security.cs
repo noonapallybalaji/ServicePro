@@ -38,6 +38,9 @@ public static class AuthPolicies
 
     /// <summary>A signed-in customer (customer site: account, order history).</summary>
     public const string Customer = "customer";
+
+    /// <summary>A server-to-server integration authenticated by key (n8n WhatsApp assistant).</summary>
+    public const string Integration = "integration";
 }
 
 /// <summary>

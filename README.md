@@ -53,7 +53,7 @@ WhatsApp/SMS messages are written to the API log until a provider is configured 
 cd apps/api
 dotnet test --project tests/ServicePro.UnitTests
 dotnet test --project tests/ServicePro.ArchitectureTests
-dotnet test --project tests/ServicePro.IntegrationTests   # needs Docker
+dotnet test --project tests/ServicePro.IntegrationTests   # needs Docker (Testcontainers)
 
 # After changing an API endpoint: rebuild the API (writes openapi/servicepro.json), then
 pnpm --filter @servicepro/api-client generate
@@ -66,6 +66,10 @@ dotnet ef migrations add <Name> --project src/ServicePro.Infrastructure --startu
 pnpm lint && pnpm typecheck && pnpm build
 ```
 
+## Exposing the API (Cloudflare Tunnel) and the n8n WhatsApp assistant
+
+Run the API in the `Public` environment behind Cloudflare Tunnel, with secrets in a git-ignored file; n8n books through a key-protected, idempotent endpoint. Step-by-step setup, verified endpoints and the n8n node settings: [docs/DEPLOY-CLOUDFLARE-N8N.md](docs/DEPLOY-CLOUDFLARE-N8N.md).
+
 ## Configuration
 
 Secrets never live in the repo. Outside Development, set them as environment variables (`__` separates sections):
@@ -77,5 +81,6 @@ Secrets never live in the repo. Outside Development, set them as environment var
 | `Notifications__PublicSiteUrl` | Base URL for customer tracking links |
 | `Notifications__WhatsApp__PhoneNumberId`, `…__AccessToken` | Meta WhatsApp Cloud API (otherwise messages are logged) |
 | `Seed__OwnerEmail`, `Seed__OwnerPassword` | First owner account on an empty database |
+| `Integrations__Keys__n8n` | SHA-256 hash of the n8n integration key (`apps/api/scripts/new-integration-key.ps1`) |
 
 Business rules (offer timeout, matching weights, GST, stuck threshold…) are edited in the admin app under **Settings → Business rules**.

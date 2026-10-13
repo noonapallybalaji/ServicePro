@@ -83,6 +83,31 @@ public static class RateLimitPolicies
 
     /// <summary>Public, unauthenticated endpoints (tracking page).</summary>
     public const string Public = "public";
+
+    /// <summary>Server-to-server integrations (n8n), partitioned by integration name.</summary>
+    public const string Integration = "integration";
+}
+
+public static class ClientAddress
+{
+    /// <summary>
+    /// The caller's IP for rate limiting. Behind Cloudflare Tunnel every request reaches the API
+    /// from the local cloudflared process, so Cloudflare's CF-Connecting-IP is used — but only
+    /// when the connection itself is from this machine (the API listens on localhost), so a remote
+    /// caller can't pick its own rate-limit bucket by sending the header.
+    /// </summary>
+    public static string For(HttpContext http)
+    {
+        var remote = http.Connection.RemoteIpAddress;
+        if (remote is not null && System.Net.IPAddress.IsLoopback(remote) &&
+            http.Request.Headers["CF-Connecting-IP"].ToString() is { Length: > 0 and <= 45 } forwarded &&
+            System.Net.IPAddress.TryParse(forwarded, out var client))
+        {
+            return client.ToString();
+        }
+
+        return remote?.ToString() ?? "unknown";
+    }
 }
 
 public static class EndpointConventions

@@ -22,11 +22,13 @@ internal sealed class ServiceRequestConfiguration : IEntityTypeConfiguration<Ser
         builder.Property(s => s.FinalAmount).HasPrecision(12, 2);
         builder.Property(s => s.CompletionCodeHash).HasMaxLength(64);
         builder.Property(s => s.TrackingToken).HasMaxLength(40);
+        builder.Property(s => s.ExternalReference).HasMaxLength(128);
         builder.Property(s => s.Version).IsRowVersion();
         builder.Ignore(s => s.IsTerminal);
 
         builder.HasIndex(s => new { s.TenantId, s.SrNumber }).IsUnique();
         builder.HasIndex(s => s.TrackingToken).IsUnique();
+        builder.HasIndex(s => new { s.TenantId, s.Channel, s.ExternalReference }).IsUnique().HasFilter("external_reference IS NOT NULL");
         builder.HasIndex(s => new { s.TenantId, s.Status });
         builder.HasIndex(s => new { s.CurrentTechnicianId, s.Status });
         builder.HasIndex(s => new { s.CustomerId, s.CreatedAt });

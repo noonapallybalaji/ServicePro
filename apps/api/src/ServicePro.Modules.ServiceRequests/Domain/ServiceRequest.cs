@@ -36,7 +36,8 @@ public sealed record NewServiceRequest(
     DateTimeOffset? ScheduledEnd,
     bool IsWarrantyVisit,
     Guid? ParentServiceRequestId,
-    bool AwaitsReview = false);
+    bool AwaitsReview = false,
+    string? ExternalReference = null);
 
 /// <summary>
 /// The job: from request to closure (PLAN.md §7.7, §8). Every status change goes through
@@ -106,6 +107,12 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
     /// <summary>Capability token in the customer's tracking link (/t/{token}).</summary>
     public string TrackingToken { get; private set; } = string.Empty;
 
+    /// <summary>
+    /// The caller's idempotency key for integration bookings (e.g. the WhatsApp message id of the
+    /// customer's confirmation). Unique per channel, so a retried request finds the first booking.
+    /// </summary>
+    public string? ExternalReference { get; private set; }
+
     public DateTimeOffset LastStatusChangeAt { get; private set; }
 
     public DateTimeOffset? AcceptedAt { get; private set; }
@@ -158,6 +165,7 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
             PaymentStatus = details.IsWarrantyVisit ? PaymentStatus.Waived : PaymentStatus.NotDue,
             Status = ServiceRequestStatus.New,
             TrackingToken = SecureTokens.Generate(18),
+            ExternalReference = string.IsNullOrWhiteSpace(details.ExternalReference) ? null : details.ExternalReference.Trim(),
             LastStatusChangeAt = now,
         };
 

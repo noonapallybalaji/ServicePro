@@ -1,0 +1,87 @@
+{
+  "name": "ServicePro API check",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "5b1d0c3e-6c35-4c55-9d0d-0a0e3a1f0001",
+      "name": "Run check",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6f0a3a51-2d6b-4a0e-9c3e-0a0e3a1f0101",
+              "name": "apiBaseUrl",
+              "value": "https://REPLACE-with-your-api-hostname",
+              "type": "string"
+            },
+            {
+              "id": "6f0a3a51-2d6b-4a0e-9c3e-0a0e3a1f0102",
+              "name": "trackingBaseUrl",
+              "value": "https://REPLACE-with-your-website-hostname",
+              "type": "string"
+            },
+            {
+              "id": "6f0a3a51-2d6b-4a0e-9c3e-0a0e3a1f0103",
+              "name": "testPincode",
+              "value": "500081",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5b1d0c3e-6c35-4c55-9d0d-0a0e3a1f0002",
+      "name": "ServicePro Settings",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('ServicePro Settings').first().json.apiBaseUrl }}/api/v1/catalog/categories",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "5b1d0c3e-6c35-4c55-9d0d-0a0e3a1f0003",
+      "name": "get_service_catalog",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('ServicePro Settings').first().json.apiBaseUrl }}/api/v1/catalog/serviceability/{{ $('ServicePro Settings').first().json.testPincode }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "5b1d0c3e-6c35-4c55-9d0d-0a0e3a1f0004",
+      "name": "check_serviceability",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 0],
+      "executeOnce": true
+    }
+  ],
+  "connections": {
+    "Run check": {
+      "main": [[{ "node": "ServicePro Settings", "type": "main", "index": 0 }]]
+    },
+    "ServicePro Settings": {
+      "main": [[{ "node": "get_service_catalog", "type": "main", "index": 0 }]]
+    },
+    "get_service_catalog": {
+      "main": [[{ "node": "check_serviceability", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

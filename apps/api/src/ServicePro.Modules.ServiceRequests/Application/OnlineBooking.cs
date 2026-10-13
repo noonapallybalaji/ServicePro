@@ -121,9 +121,6 @@ public sealed class BookServiceOnline(
     ICatalogDirectory catalog,
     IClock clock) : IUseCase
 {
-    private static readonly TimeSpan BookingHorizon = TimeSpan.FromDays(30);
-    private static readonly TimeSpan LongestSlot = TimeSpan.FromHours(8);
-
     public async Task<Result<OnlineBookingOutcome>> HandleAsync(OnlineBookingRequest request, CancellationToken ct)
     {
         var phone = PhoneNumber.Create(request.Phone);
@@ -132,7 +129,8 @@ public sealed class BookServiceOnline(
             return phone.Error!;
         }
 
-        var details = await ValidateDetailsAsync(request, ct);
+        var details = await BookingRules.ValidateAsync(
+            catalog, clock, request.CategoryId, request.IssueTypeId, request.Address.Pincode, request.PreferredSlotStart, request.PreferredSlotEnd, ct);
         if (details.IsFailure)
         {
             return details.Error!;
@@ -206,18 +204,33 @@ public sealed class BookServiceOnline(
         var response = new OnlineBookingResponse(serviceRequest.SrNumber, $"/t/{serviceRequest.TrackingToken}", session?.Response);
         return new OnlineBookingOutcome(response, session);
     }
+}
 
-    private async Task<Result<CategoryInfo>> ValidateDetailsAsync(OnlineBookingRequest request, CancellationToken ct)
+/// <summary>Checks shared by every self-service booking path (website, WhatsApp assistant).</summary>
+internal static class BookingRules
+{
+    private static readonly TimeSpan BookingHorizon = TimeSpan.FromDays(30);
+    private static readonly TimeSpan LongestSlot = TimeSpan.FromHours(8);
+
+    public static async Task<Result<CategoryInfo>> ValidateAsync(
+        ICatalogDirectory catalog,
+        IClock clock,
+        Guid categoryId,
+        Guid? issueTypeId,
+        string pincode,
+        DateTimeOffset preferredSlotStart,
+        DateTimeOffset preferredSlotEnd,
+        CancellationToken ct)
     {
-        var category = await catalog.GetCategoryAsync(request.CategoryId, ct);
+        var category = await catalog.GetCategoryAsync(categoryId, ct);
         if (category is null)
         {
             return Error.Validation("booking.category_invalid", "Choose what needs repairing.");
         }
 
-        if (request.IssueTypeId is { } issueTypeId)
+        if (issueTypeId is { } id)
         {
-            var issue = await catalog.GetIssueTypeAsync(issueTypeId, ct);
+            var issue = await catalog.GetIssueTypeAsync(id, ct);
             if (issue is null || issue.CategoryId != category.Id)
             {
                 return Error.Validation("booking.issue_invalid", "Choose a problem for this appliance.");
@@ -225,13 +238,13 @@ public sealed class BookServiceOnline(
         }
 
         var now = clock.UtcNow;
-        if (request.PreferredSlotStart < now || request.PreferredSlotStart > now + BookingHorizon ||
-            request.PreferredSlotEnd - request.PreferredSlotStart > LongestSlot)
+        if (preferredSlotStart < now || preferredSlotStart > now + BookingHorizon ||
+            preferredSlotEnd <= preferredSlotStart || preferredSlotEnd - preferredSlotStart > LongestSlot)
         {
             return Error.Validation("booking.slot_invalid", "Choose a time slot in the next 30 days.");
         }
 
-        var areas = await catalog.FindServiceAreaIdsByPincodeAsync(request.Address.Pincode.Trim(), ct);
+        var areas = await catalog.FindServiceAreaIdsByPincodeAsync(pincode.Trim(), ct);
         if (areas.Count == 0)
         {
             return Error.Validation("booking.not_serviceable", "We don't cover this pincode yet. Call us and we'll try to help.");

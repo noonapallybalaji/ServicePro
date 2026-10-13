@@ -25,6 +25,7 @@ if (isDocumentGeneration)
         ["Outbox:Enabled"] = "false",
         ["Dispatch:OfferExpiryWorker"] = "false",
         ["Database:MigrateOnStartup"] = "false",
+        ["Security:ExposureGuard"] = "false",
     });
 }
 
@@ -72,11 +73,14 @@ builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     o.AddPolicy(RateLimitPolicies.Auth, http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        ClientAddress.For(http),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:AuthPerMinute", 20), Window = TimeSpan.FromMinutes(1) }));
     o.AddPolicy(RateLimitPolicies.Public, http => RateLimitPartition.GetFixedWindowLimiter(
-        http.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        ClientAddress.For(http),
         _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:PublicPerMinute", 120), Window = TimeSpan.FromMinutes(1) }));
+    o.AddPolicy(RateLimitPolicies.Integration, http => RateLimitPartition.GetFixedWindowLimiter(
+        ClientAddress.For(http), // runs before authentication, so per caller IP (n8n Cloud egress)
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:IntegrationPerMinute", 60), Window = TimeSpan.FromMinutes(1) }));
 });
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ServiceProDbContext>("database", tags: ["ready"]);

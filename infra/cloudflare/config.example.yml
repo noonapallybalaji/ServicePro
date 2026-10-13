@@ -1,0 +1,25 @@
+# Cloudflare Tunnel for ServicePro (named tunnel, your own domain).
+# Copy to %USERPROFILE%\.cloudflared\config.yml and replace every <...> value.
+# Steps and verification: docs/DEPLOY-CLOUDFLARE-N8N.md
+#
+# Nothing here is secret: the tunnel credentials JSON stays in %USERPROFILE%\.cloudflared and is
+# never committed. The API and site listen on 127.0.0.1 only, so this tunnel is the only way in.
+
+tunnel: <TUNNEL_UUID>                       # from: cloudflared tunnel create servicepro
+credentials-file: C:\Users\<YOU>\.cloudflared\<TUNNEL_UUID>.json
+
+ingress:
+  # API — n8n calls this hostname (apiBaseUrl).
+  - hostname: <api.yourdomain.com>
+    service: http://127.0.0.1:5180
+    originRequest:
+      connectTimeout: 10s
+      noHappyEyeballs: true
+
+  # Customer website — tracking links /t/<token> (trackingBaseUrl). Served by
+  # apps/web-public/scripts/serve-dist.mjs, which also proxies /api to the API.
+  - hostname: <www.yourdomain.com>
+    service: http://127.0.0.1:5193
+
+  # Everything else: nothing.
+  - service: http_status:404
