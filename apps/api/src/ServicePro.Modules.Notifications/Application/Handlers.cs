@@ -113,6 +113,35 @@ public sealed class NotifyCustomerOnStatusChange(CustomerMessageContext messages
     }
 }
 
+/// <summary>Payment link, online payment receipt and refund: money messages to the customer.</summary>
+public sealed class NotifyCustomerAboutMoney(CustomerMessageContext messages, IServiceRequestWorkflow serviceRequests)
+    : IEventHandler<PaymentLinkSent>, IEventHandler<PaymentRecorded>, IEventHandler<RefundProcessed>
+{
+    private static readonly CultureInfo India = CultureInfo.GetCultureInfo("en-IN");
+
+    public Task HandleAsync(PaymentLinkSent e, CancellationToken ct) =>
+        SendAsync(e.ServiceRequestId, TemplateCodes.PaymentLink, e.Amount, new() { ["pay_link"] = e.Url }, ct);
+
+    /// <summary>Only online payments: cash and UPI are handed over in person, with the bill.</summary>
+    public Task HandleAsync(PaymentRecorded e, CancellationToken ct) =>
+        e.Method == "Online" ? SendAsync(e.ServiceRequestId, TemplateCodes.PaymentReceived, e.Amount, [], ct) : Task.CompletedTask;
+
+    public Task HandleAsync(RefundProcessed e, CancellationToken ct) =>
+        SendAsync(e.ServiceRequestId, TemplateCodes.RefundProcessed, e.Amount, [], ct);
+
+    private async Task SendAsync(Guid serviceRequestId, string template, decimal amount, Dictionary<string, string> extra, CancellationToken ct)
+    {
+        var job = await serviceRequests.GetBillingContextAsync(serviceRequestId, ct);
+        if (job.IsFailure)
+        {
+            return;
+        }
+
+        extra["amount"] = amount.ToString("C", India);
+        await messages.SendToCustomerAsync(job.Value.CustomerId, serviceRequestId, job.Value.SrNumber, template, null, extra, ct);
+    }
+}
+
 /// <summary>Messages to a customer's phone, including sign-in codes (which aren't linked to a customer id).</summary>
 public sealed class MessageHistory(DbContext db) : IMessageHistory
 {

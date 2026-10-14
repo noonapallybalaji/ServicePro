@@ -373,6 +373,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("amount");
 
+                    b.Property<decimal>("AmountRefunded")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("amount_refunded");
+
                     b.Property<Guid?>("CollectedByTechnicianId")
                         .HasColumnType("uuid")
                         .HasColumnName("collected_by_technician_id");
@@ -390,6 +395,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("method");
+
+                    b.Property<string>("ProviderPaymentId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("provider_payment_id");
 
                     b.Property<DateTimeOffset>("ReceivedAt")
                         .HasColumnType("timestamp with time zone")
@@ -419,6 +429,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.HasKey("Id")
                         .HasName("pk_payments");
 
+                    b.HasIndex("ProviderPaymentId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payments_provider_payment_id")
+                        .HasFilter("provider_payment_id IS NOT NULL");
+
                     b.HasIndex("ReceivedAt")
                         .HasDatabaseName("ix_payments_received_at");
 
@@ -429,6 +444,169 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_payments_tenant_id");
 
                     b.ToTable("payments", "billing");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Billing.Domain.PaymentLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invoice_id");
+
+                    b.Property<DateTimeOffset?>("PaidAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ProviderLinkId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("provider_link_id");
+
+                    b.Property<Guid>("ServiceRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_request_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_payment_links");
+
+                    b.HasIndex("ProviderLinkId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_payment_links_provider_link_id");
+
+                    b.HasIndex("ServiceRequestId")
+                        .HasDatabaseName("ix_payment_links_service_request_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_payment_links_tenant_id");
+
+                    b.ToTable("payment_links", "billing");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Billing.Domain.Refund", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("FailureReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("failure_reason");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("invoice_id");
+
+                    b.Property<Guid>("PaymentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("payment_id");
+
+                    b.Property<DateTimeOffset?>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("reference");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("requested_at");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("requested_by_user_id");
+
+                    b.Property<Guid>("ServiceRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_request_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refunds");
+
+                    b.HasIndex("Reference")
+                        .HasDatabaseName("ix_refunds_reference");
+
+                    b.HasIndex("ServiceRequestId")
+                        .HasDatabaseName("ix_refunds_service_request_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_refunds_tenant_id");
+
+                    b.ToTable("refunds", "billing");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.Billing.Domain.TechnicianLedgerEntry", b =>

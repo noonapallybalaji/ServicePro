@@ -31,9 +31,14 @@ import type {
   LedgerResponse,
   ListPaymentsParams,
   PagedResultOfPaymentListItem,
+  PayOnlineResponse,
+  PaymentActivityResponse,
   PaymentResponse,
   ProblemDetails,
+  ProcessRefundRequest,
   RecordPaymentRequest,
+  RefundRequest,
+  RefundResponse,
   SaveInvoiceRequest,
   WaivePaymentRequest
 } from '../../model';
@@ -418,6 +423,295 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getWaivePaymentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getSendPaymentLinkUrl = (serviceRequestId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/payment-link`
+}
+
+export const sendPaymentLink = async (serviceRequestId: string, options?: RequestInit): Promise<PayOnlineResponse> => {
+  
+  return apiFetch<PayOnlineResponse>(getSendPaymentLinkUrl(serviceRequestId),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getSendPaymentLinkMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPaymentLink>>, TError,{serviceRequestId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendPaymentLink>>, TError,{serviceRequestId: string}, TContext> => {
+
+const mutationKey = ['sendPaymentLink'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendPaymentLink>>, {serviceRequestId: string}> = (props) => {
+          const {serviceRequestId} = props ?? {};
+
+          return  sendPaymentLink(serviceRequestId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendPaymentLinkMutationResult = NonNullable<Awaited<ReturnType<typeof sendPaymentLink>>>
+    
+    export type SendPaymentLinkMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useSendPaymentLink = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendPaymentLink>>, TError,{serviceRequestId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendPaymentLink>>,
+        TError,
+        {serviceRequestId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getSendPaymentLinkMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getGetPaymentActivityUrl = (serviceRequestId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/payment-activity`
+}
+
+export const getPaymentActivity = async (serviceRequestId: string, options?: RequestInit): Promise<PaymentActivityResponse> => {
+  
+  return apiFetch<PaymentActivityResponse>(getGetPaymentActivityUrl(serviceRequestId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getGetPaymentActivityQueryKey = (serviceRequestId?: string,) => {
+    return [`/api/v1/service-requests/${serviceRequestId}/payment-activity`] as const;
+    }
+
+    
+export const getGetPaymentActivityQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentActivity>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentActivityQueryKey(serviceRequestId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentActivity>>> = ({ signal }) => getPaymentActivity(serviceRequestId, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(serviceRequestId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentActivity>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetPaymentActivityQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentActivity>>>
+export type GetPaymentActivityQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useGetPaymentActivity<TData = Awaited<ReturnType<typeof getPaymentActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentActivity>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentActivity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentActivity<TData = Awaited<ReturnType<typeof getPaymentActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentActivity>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getPaymentActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getPaymentActivity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetPaymentActivity<TData = Awaited<ReturnType<typeof getPaymentActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentActivity>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetPaymentActivity<TData = Awaited<ReturnType<typeof getPaymentActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getPaymentActivity>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetPaymentActivityQueryOptions(serviceRequestId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getRefundPaymentUrl = (serviceRequestId: string,
+    paymentId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/payments/${paymentId}/refunds`
+}
+
+export const refundPayment = async (serviceRequestId: string,
+    paymentId: string,
+    refundRequest: RefundRequest, options?: RequestInit): Promise<RefundResponse> => {
+  
+  return apiFetch<RefundResponse>(getRefundPaymentUrl(serviceRequestId,paymentId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      refundRequest,)
+  }
+);}
+
+
+
+
+export const getRefundPaymentMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refundPayment>>, TError,{serviceRequestId: string;paymentId: string;data: RefundRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof refundPayment>>, TError,{serviceRequestId: string;paymentId: string;data: RefundRequest}, TContext> => {
+
+const mutationKey = ['refundPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refundPayment>>, {serviceRequestId: string;paymentId: string;data: RefundRequest}> = (props) => {
+          const {serviceRequestId,paymentId,data} = props ?? {};
+
+          return  refundPayment(serviceRequestId,paymentId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefundPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof refundPayment>>>
+    export type RefundPaymentMutationBody = RefundRequest
+    export type RefundPaymentMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useRefundPayment = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refundPayment>>, TError,{serviceRequestId: string;paymentId: string;data: RefundRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof refundPayment>>,
+        TError,
+        {serviceRequestId: string;paymentId: string;data: RefundRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getRefundPaymentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getProcessQueuedRefundUrl = (serviceRequestId: string,
+    refundId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/refunds/${refundId}/process`
+}
+
+export const processQueuedRefund = async (serviceRequestId: string,
+    refundId: string,
+    processRefundRequest: ProcessRefundRequest, options?: RequestInit): Promise<RefundResponse> => {
+  
+  return apiFetch<RefundResponse>(getProcessQueuedRefundUrl(serviceRequestId,refundId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      processRefundRequest,)
+  }
+);}
+
+
+
+
+export const getProcessQueuedRefundMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof processQueuedRefund>>, TError,{serviceRequestId: string;refundId: string;data: ProcessRefundRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof processQueuedRefund>>, TError,{serviceRequestId: string;refundId: string;data: ProcessRefundRequest}, TContext> => {
+
+const mutationKey = ['processQueuedRefund'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof processQueuedRefund>>, {serviceRequestId: string;refundId: string;data: ProcessRefundRequest}> = (props) => {
+          const {serviceRequestId,refundId,data} = props ?? {};
+
+          return  processQueuedRefund(serviceRequestId,refundId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ProcessQueuedRefundMutationResult = NonNullable<Awaited<ReturnType<typeof processQueuedRefund>>>
+    export type ProcessQueuedRefundMutationBody = ProcessRefundRequest
+    export type ProcessQueuedRefundMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useProcessQueuedRefund = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof processQueuedRefund>>, TError,{serviceRequestId: string;refundId: string;data: ProcessRefundRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof processQueuedRefund>>,
+        TError,
+        {serviceRequestId: string;refundId: string;data: ProcessRefundRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getProcessQueuedRefundMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

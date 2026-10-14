@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using ServicePro.BuildingBlocks.Messaging;
+using ServicePro.Modules.Billing.Application;
 using ServicePro.Modules.Dispatch.Application;
 using ServicePro.SharedKernel.Abstractions;
 using Testcontainers.PostgreSql;
@@ -81,14 +82,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("RateLimits:IntegrationPerMinute", "10000");
         builder.UseSetting("Integrations:Keys:n8n", ServicePro.BuildingBlocks.Security.SecureTokens.Hash(IntegrationKey));
         builder.UseSetting("Notifications:PublicSiteUrl", "https://track.test");
+        builder.UseSetting("Payments:Razorpay:WebhookSecret", WebhookSecret);
         builder.UseSetting("Storage:Local:RootPath", Path.Combine(Path.GetTempPath(), "servicepro-tests", Guid.NewGuid().ToString("N")));
 
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<IClock>();
             services.AddSingleton<IClock>(Clock);
+            services.RemoveAll<IPaymentGateway>();
+            services.AddSingleton<IPaymentGateway>(Payments);
         });
     }
+
+    public const string WebhookSecret = "integration-test-webhook-secret";
+
+    public FakePaymentGateway Payments { get; } = new();
 
     /// <summary>HTTPS so the Secure refresh cookie is sent back.</summary>
     public HttpClient CreateApiClient() =>

@@ -16,4 +16,5 @@ export const PaymentMethod = {
   UPI_LINK: 'UPI_LINK',
   CARD: 'CARD',
   BANK_TRANSFER: 'BANK_TRANSFER',
+  ONLINE: 'ONLINE',
 } as const;

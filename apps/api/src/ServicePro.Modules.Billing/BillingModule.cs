@@ -24,7 +24,14 @@ public sealed class BillingModule : IModule
 
     public void Register(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<IBillingDirectory, BillingDirectory>();
+        services.AddScoped<BillingDirectory>();
+        services.AddScoped<IBillingDirectory, OnlinePaymentsBillingDirectory>();
+
+        services.Configure<RazorpayOptions>(configuration.GetSection("Payments:Razorpay"));
+        services.Configure<BillingSiteOptions>(configuration.GetSection("Notifications"));
+        services.AddHttpClient<IPaymentGateway, RazorpayGateway>(http => http.Timeout = TimeSpan.FromSeconds(20));
+        services.AddScoped<PaymentLinks>();
+        services.AddScoped<OnlinePaymentPosting>();
         services.AddSetting(BillingSettings.GstRatePercent);
         services.AddSetting(BillingSettings.BusinessName);
         services.AddSetting(BillingSettings.BusinessContact);
@@ -116,6 +123,59 @@ public sealed class BillingModule : IModule
             .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
             .WithStandardErrors()
             .WithName("GetTrackingInvoicePdf");
+
+        // Online payment (customer, by tracking link)
+        var pay = endpoints.MapGroup("/api/v1/public/track/{token}").WithTags("Tracking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Public);
+
+        pay.MapPost("/pay", async (string token, StartOnlinePayment useCase, CancellationToken ct) => (await useCase.HandleAsync(token, ct)).ToHttp())
+            .Produces<PayOnlineResponse>()
+            .WithStandardErrors()
+            .WithName("StartOnlinePayment");
+
+        pay.MapPost("/payment-check", async (string token, CheckOnlinePayment useCase, CancellationToken ct) => (await useCase.HandleAsync(token, ct)).ToHttp())
+            .Produces<PaymentCheckResponse>()
+            .WithStandardErrors()
+            .WithName("CheckOnlinePayment");
+
+        // Gateway webhook: authenticated by its signature, not by a session.
+        endpoints.MapPost("/api/v1/webhooks/razorpay", async (HttpRequest request, HandleRazorpayWebhook useCase, CancellationToken ct) =>
+            {
+                using var reader = new StreamReader(request.Body);
+                var body = await reader.ReadToEndAsync(ct);
+                var result = await useCase.HandleAsync(body, request.Headers["X-Razorpay-Signature"], ct);
+                return result.IsSuccess ? Results.Ok() : result.Error!.ToProblem();
+            })
+            .WithTags("Webhooks")
+            .AllowAnonymous()
+            .ExcludeFromDescription();
+
+        // Staff and the assigned technician
+        job.MapPost("/payment-link", async (Guid serviceRequestId, SendPaymentLink useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
+            .Produces<PayOnlineResponse>()
+            .WithStandardErrors()
+            .WithName("SendPaymentLink");
+
+        job.MapGet("/payment-activity", async (Guid serviceRequestId, GetPaymentActivity useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
+            .Produces<PaymentActivityResponse>()
+            .WithStandardErrors()
+            .WithName("GetPaymentActivity");
+
+        job.MapPost("/payments/{paymentId:guid}/refunds", async (Guid serviceRequestId, Guid paymentId, RefundRequest request, RefundPayment useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, paymentId, request, ct)).ToHttp())
+            .RequireAuthorization(AuthPolicies.Admin)
+            .Validate<RefundRequest>()
+            .Produces<RefundResponse>()
+            .WithStandardErrors()
+            .WithName("RefundPayment");
+
+        job.MapPost("/refunds/{refundId:guid}/process", async (Guid serviceRequestId, Guid refundId, ProcessRefundRequest request, ProcessQueuedRefund useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, refundId, request, ct)).ToHttp())
+            .RequireAuthorization(AuthPolicies.Admin)
+            .Produces<RefundResponse>()
+            .WithStandardErrors()
+            .WithName("ProcessQueuedRefund");
     }
 }
 
@@ -162,8 +222,40 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.ToTable("payments", "billing");
         builder.Property(p => p.Amount).HasPrecision(12, 2);
         builder.Property(p => p.Reference).HasMaxLength(100);
+        builder.Property(p => p.ProviderPaymentId).HasMaxLength(64);
+        builder.Property(p => p.AmountRefunded).HasPrecision(12, 2);
+        builder.Ignore(p => p.Refundable);
         builder.HasIndex(p => p.ServiceRequestId);
         builder.HasIndex(p => p.ReceivedAt);
+        builder.HasIndex(p => p.ProviderPaymentId).IsUnique().HasFilter("provider_payment_id IS NOT NULL");
+    }
+}
+
+internal sealed class PaymentLinkConfiguration : IEntityTypeConfiguration<PaymentLink>
+{
+    public void Configure(EntityTypeBuilder<PaymentLink> builder)
+    {
+        builder.ToTable("payment_links", "billing");
+        builder.Property(l => l.Provider).HasMaxLength(20);
+        builder.Property(l => l.ProviderLinkId).HasMaxLength(64);
+        builder.Property(l => l.Url).HasMaxLength(300);
+        builder.Property(l => l.Amount).HasPrecision(12, 2);
+        builder.HasIndex(l => l.ProviderLinkId).IsUnique();
+        builder.HasIndex(l => l.ServiceRequestId);
+    }
+}
+
+internal sealed class RefundConfiguration : IEntityTypeConfiguration<Refund>
+{
+    public void Configure(EntityTypeBuilder<Refund> builder)
+    {
+        builder.ToTable("refunds", "billing");
+        builder.Property(r => r.Amount).HasPrecision(12, 2);
+        builder.Property(r => r.Reason).HasMaxLength(300);
+        builder.Property(r => r.Reference).HasMaxLength(100);
+        builder.Property(r => r.FailureReason).HasMaxLength(500);
+        builder.HasIndex(r => r.ServiceRequestId);
+        builder.HasIndex(r => r.Reference);
     }
 }
 

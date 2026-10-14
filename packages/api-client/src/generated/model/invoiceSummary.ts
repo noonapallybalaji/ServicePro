@@ -7,10 +7,14 @@
  */
 import type { InvoiceLineSummary } from './invoiceLineSummary';
 
+/**
+ * CanPayOnline: a payment gateway is set up and something is still due.
+ */
 export interface InvoiceSummary {
   invoiceId: string;
   invoiceNumber: string;
   total: number;
   amountPaid: number;
   lines: InvoiceLineSummary[];
+  canPayOnline?: boolean;
 }

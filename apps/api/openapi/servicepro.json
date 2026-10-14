@@ -5646,6 +5646,298 @@
         }
       }
     },
+    "/api/v1/service-requests/{serviceRequestId}/payment-link": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "operationId": "SendPaymentLink",
+        "parameters": [
+          {
+            "name": "serviceRequestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayOnlineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/service-requests/{serviceRequestId}/payment-activity": {
+      "get": {
+        "tags": [
+          "Billing"
+        ],
+        "operationId": "GetPaymentActivity",
+        "parameters": [
+          {
+            "name": "serviceRequestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentActivityResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/service-requests/{serviceRequestId}/payments/{paymentId}/refunds": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "operationId": "RefundPayment",
+        "parameters": [
+          {
+            "name": "serviceRequestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/service-requests/{serviceRequestId}/refunds/{refundId}/process": {
+      "post": {
+        "tags": [
+          "Billing"
+        ],
+        "operationId": "ProcessQueuedRefund",
+        "parameters": [
+          {
+            "name": "serviceRequestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "refundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessRefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/billing/payments": {
       "get": {
         "tags": [
@@ -5780,6 +6072,126 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LedgerResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/track/{token}/pay": {
+      "post": {
+        "tags": [
+          "Tracking"
+        ],
+        "operationId": "StartOnlinePayment",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayOnlineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/track/{token}/payment-check": {
+      "post": {
+        "tags": [
+          "Tracking"
+        ],
+        "operationId": "CheckOnlinePayment",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentCheckResponse"
                 }
               }
             }
@@ -7910,8 +8322,13 @@
             "items": {
               "$ref": "#/components/schemas/InvoiceLineSummary"
             }
+          },
+          "canPayOnline": {
+            "type": "boolean",
+            "default": false
           }
-        }
+        },
+        "description": "CanPayOnline: a payment gateway is set up and something is still due."
       },
       "IssueTypeResponse": {
         "required": [
@@ -8669,6 +9086,105 @@
           }
         }
       },
+      "PaymentActivityResponse": {
+        "required": [
+          "onlinePaymentsAvailable",
+          "payments",
+          "links",
+          "refunds"
+        ],
+        "type": "object",
+        "properties": {
+          "onlinePaymentsAvailable": {
+            "type": "boolean"
+          },
+          "payments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundablePaymentResponse"
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentLinkResponse"
+            }
+          },
+          "refunds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundResponse"
+            }
+          }
+        }
+      },
+      "PaymentCheckResponse": {
+        "required": [
+          "paid",
+          "amountDue"
+        ],
+        "type": "object",
+        "properties": {
+          "paid": {
+            "type": "boolean"
+          },
+          "amountDue": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "PaymentLinkResponse": {
+        "required": [
+          "id",
+          "url",
+          "amount",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "paidAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentLinkStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "paidAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentLinkStatus": {
+        "enum": [
+          "CREATED",
+          "PAID",
+          "CANCELLED",
+          "EXPIRED"
+        ]
+      },
       "PaymentListItem": {
         "required": [
           "payment",
@@ -8694,7 +9210,8 @@
           "UPI_QR",
           "UPI_LINK",
           "CARD",
-          "BANK_TRANSFER"
+          "BANK_TRANSFER",
+          "ONLINE"
         ]
       },
       "PaymentResponse": {
@@ -8756,6 +9273,22 @@
           "PAID",
           "WAIVED"
         ]
+      },
+      "PayOnlineResponse": {
+        "required": [
+          "url",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        }
       },
       "PriceListItemResponse": {
         "required": [
@@ -8844,6 +9377,20 @@
           }
         }
       },
+      "ProcessRefundRequest": {
+        "required": [
+          "reference"
+        ],
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RecipientType": {
         "enum": [
           "CUSTOMER",
@@ -8873,6 +9420,125 @@
             ]
           }
         }
+      },
+      "RefundablePaymentResponse": {
+        "required": [
+          "id",
+          "method",
+          "amount",
+          "refundable",
+          "receivedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundable": {
+            "type": "number",
+            "format": "double"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RefundRequest": {
+        "required": [
+          "amount",
+          "reason",
+          "reference"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RefundResponse": {
+        "required": [
+          "id",
+          "paymentId",
+          "amount",
+          "reason",
+          "status",
+          "reference",
+          "failureReason",
+          "requestedAt",
+          "processedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RefundStatus"
+          },
+          "reference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "failureReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "processedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "RefundStatus": {
+        "enum": [
+          "NEEDS_REVIEW",
+          "PENDING",
+          "PROCESSED",
+          "FAILED"
+        ]
       },
       "ReportLocationRequest": {
         "required": [

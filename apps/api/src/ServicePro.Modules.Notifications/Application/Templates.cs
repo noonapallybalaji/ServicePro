@@ -16,6 +16,9 @@ public static class TemplateCodes
     public const string CustomerMissed = "CUSTOMER_MISSED";
     public const string SrCancelled = "SR_CANCELLED";
     public const string JobOffer = "JOB_OFFER";
+    public const string PaymentLink = "PAYMENT_LINK";
+    public const string PaymentReceived = "PAYMENT_RECEIVED";
+    public const string RefundProcessed = "REFUND_PROCESSED";
     public const string OtpLogin = "OTP_LOGIN";
     public const string OtpBooking = "OTP_BOOKING";
     public const string OtpCustomerLogin = "OTP_CUSTOMER_LOGIN";
@@ -48,6 +51,12 @@ public static class DefaultTemplates
             "We missed you for {{sr}}. Reply here or call us to choose a new time: {{link}}"),
         new(TemplateCodes.SrCancelled, NotificationChannel.WhatsApp,
             "Your service request {{sr}} has been cancelled. If this is unexpected, please call us."),
+        new(TemplateCodes.PaymentLink, NotificationChannel.WhatsApp,
+            "Your bill for {{sr}} is {{amount}}. Pay securely online by UPI, card or net banking: {{pay_link}}"),
+        new(TemplateCodes.PaymentReceived, NotificationChannel.WhatsApp,
+            "We've received your payment of {{amount}} for {{sr}}. Thank you! Your bill: {{link}}"),
+        new(TemplateCodes.RefundProcessed, NotificationChannel.WhatsApp,
+            "We've refunded {{amount}} for {{sr}} to the way you paid. Your bank may take a few days to show it."),
         new(TemplateCodes.JobOffer, NotificationChannel.WhatsApp,
             "New job {{sr}}: {{service}} in {{area}}. Open the app to accept within {{minutes}} minutes."),
         new(TemplateCodes.OtpLogin, NotificationChannel.Sms,

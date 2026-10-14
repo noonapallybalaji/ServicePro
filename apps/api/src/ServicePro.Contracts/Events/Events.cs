@@ -61,3 +61,9 @@ public sealed record TechnicianDutyChanged(
 
 /// <summary>A customer's personal data was erased at their request; other modules scrub what they hold.</summary>
 public sealed record CustomerErased(Guid CustomerId) : IDomainEvent;
+
+/// <summary>Staff sent the customer a link to pay their bill online.</summary>
+public sealed record PaymentLinkSent(Guid ServiceRequestId, decimal Amount, string Url) : IDomainEvent;
+
+/// <summary>A refund reached the customer (gateway confirmed it, or staff returned cash/UPI).</summary>
+public sealed record RefundProcessed(Guid RefundId, Guid ServiceRequestId, decimal Amount) : IDomainEvent;

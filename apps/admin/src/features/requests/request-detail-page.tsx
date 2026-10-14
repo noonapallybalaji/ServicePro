@@ -36,6 +36,7 @@ import { paths } from '../../app/paths';
 import { BackLink, humanize } from '../../components/common';
 import { StuckBadge } from '../../components/request-list';
 import { AssignmentPanel } from '../dispatch/assignment-panel';
+import { OnlinePaymentsPanel } from './online-payments';
 import { AddNoteForm, EditRequestDialog, ReviewBookingAlert, StaffPaymentDialog, StatusChangeDialog, UnassignDialog } from './request-dialogs';
 
 /** Customer site base URL for tracking links (VITE_PUBLIC_SITE_URL). */
@@ -278,6 +279,7 @@ function RequestDetail({ request }: { request: ServiceRequestDetail }) {
                 </Text>
               )}
             </Card>
+            <OnlinePaymentsPanel request={request} />
           </section>
 
           <section aria-labelledby="customer-link" className="flex flex-col gap-3">

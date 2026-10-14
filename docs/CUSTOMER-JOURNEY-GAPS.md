@@ -103,9 +103,9 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 8.1 | Bill and invoice PDF | ✅ | Downloadable from tracking. | — | — |
-| 8.2 | **Pay online** (UPI intent, UPI QR, cards, net banking) | ❌ | Payments are recorded manually by technicians or staff (cash/UPI). Payment-method enum lists UPI link, card, but no gateway (Razorpay/Cashfree/PhonePe PG), webhooks or reconciliation. | **P0** | M |
-| 8.3 | Pay from the tracking page or WhatsApp link | ❌ | Depends on 8.2. | **P0** | S |
-| 8.4 | **Refunds** (cancellation, overpayment, failed repair) | ❌ | No refund records or flow. Payment gateways require a published refund policy. | **P0** | M |
+| 8.2 | **Pay online** (UPI intent, UPI QR, cards, net banking) | 🔌 | Razorpay Payment Links. Recorded only on the gateway's word: signed webhook (`payment_link.paid`) or our own status check when the customer returns; idempotent per gateway payment id. Paying twice queues the extra for refund. Open links are cancelled when the bill is settled another way. Needs `Payments__Razorpay__*` keys and the webhook. | **P0** | M |
+| 8.3 | Pay from the tracking page or WhatsApp link | 🔌 | "Pay ₹X online" on the tracking page once the job is complete; staff (admin job page) and technicians (payment sheet) can send the link on WhatsApp (`PAYMENT_LINK`); receipt message `PAYMENT_RECEIVED`. | **P0** | S |
+| 8.4 | **Refunds** (cancellation, overpayment, failed repair) | ✅ | Admin job page: refund any payment (owner/admin only), never more than was paid. Online payments refund through Razorpay (status via `refund.processed`/`refund.failed` webhooks); cash/UPI refunds are recorded by staff. Customer gets `REFUND_PROCESSED`. Refund policy page exists (13.1). | **P0** | M |
 | 8.5 | Advance or prepaid booking (visiting charge upfront) | ❌ | Reduces no-shows; optional. | P2 | S |
 | 8.6 | Wallet, credits, saved cards | ❌ | | P2 | M |
 | 8.7 | GST-compliant invoices (GSTIN, HSN/SAC codes, tax split) | 🟡 | GST rate is in settings; check invoice format with an accountant before launch. | P1 | S |
@@ -179,7 +179,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 **Phase A: can take real bookings and money (P0)**
 1. ~~Message delivery (11.1, 11.2). This also unlocks sign-in codes (2.2) and step notifications (4.3).~~ Built; waiting on provider accounts.
 2. ~~Legal pages and consent (13.1, 2.3), and account deletion (2.4).~~ Built; pages need the business's legal details and a lawyer's review.
-3. Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).
+3. ~~Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).~~ Built; needs Razorpay keys and webhook.
 4. Customer cancel and reschedule with policy (5.2, 5.3).
 5. Digital estimate approval (7.1).
 6. Ratings and reviews (9.1).

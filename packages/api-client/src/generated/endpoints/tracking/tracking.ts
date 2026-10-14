@@ -6,21 +6,27 @@
  * OpenAPI spec version: v1
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  PayOnlineResponse,
+  PaymentCheckResponse,
   ProblemDetails,
   TrackingResponse
 } from '../../model';
@@ -307,3 +313,132 @@ export function useGetTrackingPhoto<TData = Awaited<ReturnType<typeof getTrackin
 
 
 
+export const getStartOnlinePaymentUrl = (token: string,) => {
+
+
+  
+
+  return `/api/v1/public/track/${token}/pay`
+}
+
+export const startOnlinePayment = async (token: string, options?: RequestInit): Promise<PayOnlineResponse> => {
+  
+  return apiFetch<PayOnlineResponse>(getStartOnlinePaymentUrl(token),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getStartOnlinePaymentMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startOnlinePayment>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startOnlinePayment>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['startOnlinePayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startOnlinePayment>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  startOnlinePayment(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartOnlinePaymentMutationResult = NonNullable<Awaited<ReturnType<typeof startOnlinePayment>>>
+    
+    export type StartOnlinePaymentMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useStartOnlinePayment = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startOnlinePayment>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof startOnlinePayment>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getStartOnlinePaymentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getCheckOnlinePaymentUrl = (token: string,) => {
+
+
+  
+
+  return `/api/v1/public/track/${token}/payment-check`
+}
+
+export const checkOnlinePayment = async (token: string, options?: RequestInit): Promise<PaymentCheckResponse> => {
+  
+  return apiFetch<PaymentCheckResponse>(getCheckOnlinePaymentUrl(token),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getCheckOnlinePaymentMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkOnlinePayment>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof checkOnlinePayment>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['checkOnlinePayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof checkOnlinePayment>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  checkOnlinePayment(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CheckOnlinePaymentMutationResult = NonNullable<Awaited<ReturnType<typeof checkOnlinePayment>>>
+    
+    export type CheckOnlinePaymentMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useCheckOnlinePayment = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof checkOnlinePayment>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof checkOnlinePayment>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getCheckOnlinePaymentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    

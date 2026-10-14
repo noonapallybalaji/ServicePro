@@ -28,6 +28,9 @@ public enum PaymentMethod
     UpiLink,
     Card,
     BankTransfer,
+
+    /// <summary>Paid through the payment gateway (UPI, card, net banking): confirmed by the gateway, not by a person.</summary>
+    Online,
 }
 
 public sealed record InvoiceLineInput(InvoiceLineType Type, string Description, decimal Quantity, decimal UnitPrice);
@@ -206,7 +209,37 @@ public sealed class Payment : TenantOwnedAggregateRoot, IAudited
 
     public DateTimeOffset ReceivedAt { get; private set; }
 
-    public static Payment Record(Invoice invoice, PaymentMethod method, decimal amount, string? reference, Guid? technicianId, Guid? recordedBy, DateTimeOffset now)
+    /// <summary>The gateway's payment id (e.g. Razorpay "pay_…"); unique, so a payment is never recorded twice.</summary>
+    public string? ProviderPaymentId { get; private set; }
+
+    /// <summary>Total refunded from this payment so far (requested refunds that haven't failed).</summary>
+    public decimal AmountRefunded { get; private set; }
+
+    public decimal Refundable => Amount - AmountRefunded;
+
+    internal Result Reserve(decimal amount)
+    {
+        if (amount <= 0 || amount > Refundable)
+        {
+            return Error.Validation("refund.amount_invalid", $"Enter an amount between ₹1 and ₹{Refundable:0.##}.");
+        }
+
+        AmountRefunded += amount;
+        return Result.Success();
+    }
+
+    /// <summary>A refund failed at the gateway: the money is refundable again.</summary>
+    internal void Release(decimal amount) => AmountRefunded = Math.Max(0, AmountRefunded - amount);
+
+    public static Payment Record(
+        Invoice invoice,
+        PaymentMethod method,
+        decimal amount,
+        string? reference,
+        Guid? technicianId,
+        Guid? recordedBy,
+        DateTimeOffset now,
+        string? providerPaymentId = null)
     {
         var payment = new Payment
         {
@@ -218,6 +251,7 @@ public sealed class Payment : TenantOwnedAggregateRoot, IAudited
             CollectedByTechnicianId = technicianId,
             RecordedByUserId = recordedBy,
             ReceivedAt = now,
+            ProviderPaymentId = providerPaymentId,
         };
         payment.Raise(new PaymentRecorded(payment.Id, payment.ServiceRequestId, amount, method.ToString(), technicianId));
         return payment;

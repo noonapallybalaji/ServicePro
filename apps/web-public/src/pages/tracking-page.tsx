@@ -1,4 +1,12 @@
-import { useGetTracking, type ServiceRequestStatus, type TrackingResponse } from '@servicepro/api-client';
+import {
+  getGetTrackingQueryKey,
+  isApiError,
+  useCheckOnlinePayment,
+  useGetTracking,
+  useStartOnlinePayment,
+  type ServiceRequestStatus,
+  type TrackingResponse,
+} from '@servicepro/api-client';
 import {
   Alert,
   Button,
@@ -21,8 +29,10 @@ import {
   formatWindow,
   type TimelineStep,
 } from '@servicepro/ui';
-import { FileDown, Link2Off, MessageCircle, Phone } from 'lucide-react';
-import { useParams } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { CreditCard, FileDown, Link2Off, MessageCircle, Phone } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router';
 
 import { SITE, whatsappLink } from '../site';
 import { SiteLayout } from '../components/site-layout';
@@ -223,6 +233,10 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
                 <Text variant="sm" tone={data.invoice.amountPaid >= data.invoice.total ? 'success' : 'secondary'}>
                   {data.invoice.amountPaid >= data.invoice.total ? 'Paid in full. Thank you!' : `Paid ${formatINR(data.invoice.amountPaid)}`}
                 </Text>
+                <PaymentReturn token={token} />
+                {data.invoice.canPayOnline && data.status === 'COMPLETED' ? (
+                  <PayOnline token={token} amount={data.invoice.total - data.invoice.amountPaid} />
+                ) : null}
                 <Button asChild variant="outline" className="self-start">
                   <a href={`/api/v1/public/track/${encodeURIComponent(token)}/invoice.pdf`} target="_blank" rel="noreferrer">
                     <FileDown aria-hidden /> Download bill ({data.invoice.invoiceNumber})
@@ -286,4 +300,79 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
       </div>
     </Stack>
   );
+}
+
+/** Sends the customer to the gateway's payment page (UPI, card, net banking). */
+function PayOnline({ token, amount }: { token: string; amount: number }) {
+  const start = useStartOnlinePayment({ mutation: { meta: { silent: true } } });
+
+  return (
+    <div className="flex flex-col gap-2">
+      {isApiError(start.error) ? <Alert role="alert" tone="error" title={start.error.message} /> : null}
+      <Button
+        size="lg"
+        loading={start.isPending}
+        onClick={() => start.mutate({ token }, { onSuccess: (link) => window.location.assign(link.url) })}
+      >
+        <CreditCard aria-hidden /> Pay {formatINR(amount)} online
+      </Button>
+      <Text variant="caption" tone="muted">
+        UPI, card or net banking on our payment partner's secure page. Or pay the technician by UPI or cash.
+      </Text>
+    </div>
+  );
+}
+
+/**
+ * Back from the payment page (?payment=done): ask the server, which asks the gateway. The
+ * browser returning is never treated as proof of payment.
+ */
+function PaymentReturn({ token }: { token: string }) {
+  const [params, setParams] = useSearchParams();
+  const returned = params.get('payment') === 'done';
+  const queryClient = useQueryClient();
+  const check = useCheckOnlinePayment({ mutation: { meta: { silent: true } } });
+  const [state, setState] = useState<'checking' | 'paid' | 'pending' | 'idle'>(returned ? 'checking' : 'idle');
+  const attempts = useRef(0);
+
+  useEffect(() => {
+    if (!returned) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const run = () => {
+      attempts.current += 1;
+      check.mutate(
+        { token },
+        {
+          onSuccess: async (result) => {
+            if (result.paid) {
+              setState('paid');
+              await queryClient.invalidateQueries({ queryKey: getGetTrackingQueryKey(token) });
+              setParams({}, { replace: true });
+            } else if (attempts.current < 5) {
+              timer = setTimeout(run, 3000);
+            } else {
+              setState('pending');
+            }
+          },
+          onError: () => setState('pending'),
+        },
+      );
+    };
+    run();
+    return () => clearTimeout(timer);
+    // Runs once per return from the payment page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returned, token]);
+
+  if (state === 'checking') return <Alert tone="info" title="Confirming your payment…" description="This takes a few seconds." />;
+  if (state === 'paid') return <Alert tone="success" title="Payment received. Thank you!" />;
+  if (state === 'pending')
+    return (
+      <Alert
+        tone="warning"
+        title="We haven't received the payment yet"
+        description="If money left your account, don't pay again: it will show here within a few minutes. Otherwise, try again."
+      />
+    );
+  return null;
 }

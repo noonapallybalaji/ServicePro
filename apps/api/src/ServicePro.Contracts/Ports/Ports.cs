@@ -256,7 +256,8 @@ public interface IServiceRequestWorkflow
 
 // ── Billing ─────────────────────────────────────────────────────────────────
 
-public sealed record InvoiceSummary(Guid InvoiceId, string InvoiceNumber, decimal Total, decimal AmountPaid, IReadOnlyList<InvoiceLineSummary> Lines);
+/// <summary>CanPayOnline: a payment gateway is set up and something is still due.</summary>
+public sealed record InvoiceSummary(Guid InvoiceId, string InvoiceNumber, decimal Total, decimal AmountPaid, IReadOnlyList<InvoiceLineSummary> Lines, bool CanPayOnline = false);
 
 /// <summary>Type is VISIT | LABOUR | PART | OTHER.</summary>
 public sealed record InvoiceLineSummary(string Type, string Description, decimal Quantity, decimal UnitPrice, decimal Amount);
