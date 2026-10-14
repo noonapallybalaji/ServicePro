@@ -32,7 +32,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { CreditCard, FileDown, Link2Off, MessageCircle, Phone } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 
 import { SITE, whatsappLink } from '../site';
 import { SiteLayout } from '../components/site-layout';
@@ -41,6 +41,9 @@ import { PAGES } from '../seo/pages';
 
 /** Statuses where something interrupted the normal flow. */
 const ATTENTION: ReadonlySet<ServiceRequestStatus> = new Set(['WAITING_FOR_PARTS', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'UNABLE_TO_REPAIR', 'CANCELLED']);
+
+/** Before the technician sets out, customers can change or cancel from "My bookings". */
+const CHANGEABLE: ReadonlySet<ServiceRequestStatus> = new Set(['NEW', 'READY_FOR_ASSIGNMENT', 'OFFERED', 'ACCEPTED', 'RESCHEDULED']);
 
 /** What's happening, in the customer's words (DESIGN-SYSTEM.md §9). */
 function headline(t: TrackingResponse): { title: string; detail: string } {
@@ -156,6 +159,14 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
           <Text variant="body-lg" tone="secondary">
             {detail}
           </Text>
+          {CHANGEABLE.has(data.status) ? (
+            <Text variant="sm" tone="secondary">
+              Need a different time, or want to cancel?{' '}
+              <Link className="link" to="/account">
+                Manage it in My bookings
+              </Link>
+            </Text>
+          ) : null}
         </div>
       </HeroBand>
 

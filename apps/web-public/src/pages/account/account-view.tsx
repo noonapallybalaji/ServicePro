@@ -49,6 +49,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { forgetSavedAddress } from '../booking/draft';
+import { BookingChanges } from './booking-changes';
 
 const TABS = ['bookings', 'profile'] as const;
 type Tab = (typeof TABS)[number];
@@ -216,26 +217,26 @@ function BookingCard({ booking }: { booking: MyBookingResponse }) {
       : `Booked ${formatDateTime(booking.createdAt)}`;
 
   return (
-    <Link
-      to={booking.trackingPath}
-      className="pressable transition-interactive flex items-center gap-4 rounded-card border border-border bg-surface p-4 hover:border-border-strong hover:shadow-md"
-    >
-      <CategoryTile code={booking.categoryCode} />
-      <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className="text-body font-semibold text-foreground">{booking.categoryName}</span>
-          <StatusBadge status={booking.status} audience="customer" size="sm" />
+    <div className="transition-interactive overflow-hidden rounded-card border border-border bg-surface hover:border-border-strong hover:shadow-md">
+      <Link to={booking.trackingPath} className="pressable flex items-center gap-4 p-4">
+        <CategoryTile code={booking.categoryCode} />
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-body font-semibold text-foreground">{booking.categoryName}</span>
+            <StatusBadge status={booking.status} audience="customer" size="sm" />
+          </span>
+          <span className="truncate text-sm text-foreground-secondary">{booking.problemDescription}</span>
+          <span className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-foreground-muted">
+            <span className="tabular-nums">{booking.srNumber}</span>
+            <span className="tabular-nums">{when}</span>
+            {booking.technicianName && !DONE.has(booking.status) ? <span>Technician: {booking.technicianName}</span> : null}
+            {booking.finalAmount != null ? <span className="tabular-nums">Bill {formatINR(booking.finalAmount)}</span> : null}
+          </span>
         </span>
-        <span className="truncate text-sm text-foreground-secondary">{booking.problemDescription}</span>
-        <span className="flex flex-wrap gap-x-3 gap-y-1 text-caption text-foreground-muted">
-          <span className="tabular-nums">{booking.srNumber}</span>
-          <span className="tabular-nums">{when}</span>
-          {booking.technicianName && !DONE.has(booking.status) ? <span>Technician: {booking.technicianName}</span> : null}
-          {booking.finalAmount != null ? <span className="tabular-nums">Bill {formatINR(booking.finalAmount)}</span> : null}
-        </span>
-      </span>
-      <ChevronRight aria-hidden className="size-5 shrink-0 text-foreground-muted" />
-    </Link>
+        <ChevronRight aria-hidden className="size-5 shrink-0 text-foreground-muted" />
+      </Link>
+      <BookingChanges booking={booking} />
+    </div>
   );
 }
 

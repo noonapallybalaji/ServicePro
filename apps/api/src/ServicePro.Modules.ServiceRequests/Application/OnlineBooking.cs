@@ -239,11 +239,9 @@ internal static class BookingRules
             }
         }
 
-        var now = clock.UtcNow;
-        if (preferredSlotStart < now || preferredSlotStart > now + BookingHorizon ||
-            preferredSlotEnd <= preferredSlotStart || preferredSlotEnd - preferredSlotStart > LongestSlot)
+        if (ValidateSlot(clock, preferredSlotStart, preferredSlotEnd) is { } slotError)
         {
-            return Error.Validation("booking.slot_invalid", "Choose a time slot in the next 30 days.");
+            return slotError;
         }
 
         var areas = await catalog.FindServiceAreaIdsByPincodeAsync(pincode.Trim(), ct);
@@ -253,5 +251,14 @@ internal static class BookingRules
         }
 
         return category;
+    }
+
+    /// <summary>A future window within the next 30 days, at most 8 hours long.</summary>
+    public static Error? ValidateSlot(IClock clock, DateTimeOffset start, DateTimeOffset end)
+    {
+        var now = clock.UtcNow;
+        return start < now || start > now + BookingHorizon || end <= start || end - start > LongestSlot
+            ? Error.Validation("booking.slot_invalid", "Choose a time slot in the next 30 days.")
+            : null;
     }
 }

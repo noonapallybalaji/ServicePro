@@ -244,7 +244,10 @@ export function RefundPolicyPage() {
     >
       <Section title="Cancelling or changing a booking">
         <ul>
-          <li>Contact us by phone or WhatsApp to cancel or move your visit. Tell us your request number (it starts with SR).</li>
+          <li>
+            Until the technician sets out, you can cancel or move your visit yourself in <Link className="link" to="/account">My bookings</Link>. After that,
+            or if you prefer, contact us by phone or WhatsApp with your request number (it starts with SR).
+          </li>
           <li>If a cancellation charge applies, we tell you the amount before the cancellation is confirmed. You never pay a charge you weren't told about.</li>
           <li>If we have to cancel or can't make the visit, we tell you as soon as we know, and you pay nothing.</li>
         </ul>

@@ -72,8 +72,8 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 5.1 | List of my bookings with status | ✅ | With filters. | — | — |
-| 5.2 | **Cancel a booking** (with a clear cancellation policy and fee rules) | ❌ | Only staff can cancel. Customers must call. | **P0** | M |
-| 5.3 | **Reschedule** | ❌ | Staff-only (RESCHEDULED status); customers must call. | **P0** | M |
+| 5.2 | **Cancel a booking** (with a clear cancellation policy and fee rules) | ✅ | "Cancel booking" in My bookings until the technician sets out (signed in; a forwarded tracking link can't cancel). Offer/assignment released, technician told (`TECH_JOB_CANCELLED`). Settings: `booking.customer_can_cancel`, `booking.customer_change_cutoff_minutes`. No cancellation fee: nothing is paid upfront to charge it against (would need 8.5). | **P0** | M |
+| 5.3 | **Reschedule** | ✅ | "Change time" in My bookings (same day/time picker as booking). Before a technician accepts, only the time changes; after, the job goes to RESCHEDULED for the office to reconfirm, and the technician is told (`TECH_JOB_MOVED`). Customer gets `BOOKING_MOVED`. Limit `booking.customer_max_reschedules` (default 2). | **P0** | M |
 | 5.4 | Booking detail page inside the account (not just the public tracking link) | 🟡 | Cards link to `/t/{token}`; no account-scoped detail page, notes or history. | P1 | S |
 | 5.5 | Edit problem details, add notes or photos after booking | ❌ | | P1 | S |
 | 5.6 | Call or message the technician with **masked numbers** | 🟡 | Tracking exposes the technician's real phone (`TrackingTechnician.Phone`). Needs call masking (Exotel/Knowlarity) or in-app chat. | P1 | M |
@@ -180,7 +180,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 1. ~~Message delivery (11.1, 11.2). This also unlocks sign-in codes (2.2) and step notifications (4.3).~~ Built; waiting on provider accounts.
 2. ~~Legal pages and consent (13.1, 2.3), and account deletion (2.4).~~ Built; pages need the business's legal details and a lawyer's review.
 3. ~~Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).~~ Built; needs Razorpay keys and webhook.
-4. Customer cancel and reschedule with policy (5.2, 5.3).
+4. ~~Customer cancel and reschedule with policy (5.2, 5.3).~~ Built.
 5. Digital estimate approval (7.1).
 6. Ratings and reviews (9.1).
 7. Auto-confirmation and auto-assignment (4.2).

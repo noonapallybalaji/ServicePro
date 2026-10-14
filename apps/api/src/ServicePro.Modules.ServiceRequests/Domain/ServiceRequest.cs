@@ -115,6 +115,9 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
 
     public DateTimeOffset LastStatusChangeAt { get; private set; }
 
+    /// <summary>How many times the customer moved the visit themselves (capped by a setting).</summary>
+    public int CustomerRescheduleCount { get; private set; }
+
     public DateTimeOffset? AcceptedAt { get; private set; }
 
     public DateTimeOffset? EnRouteAt { get; private set; }
@@ -264,6 +267,56 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
         }
 
         return result;
+    }
+
+    // ── Customer self-service ──
+
+    public bool CustomerCanChange => ServiceRequestWorkflow.CustomerChangeable.Contains(Status);
+
+    public Result CancelByCustomer(string? reason, DateTimeOffset now)
+    {
+        if (!CustomerCanChange)
+        {
+            return CustomerChangeErrors.TooLate;
+        }
+
+        return Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.Cancelled), ServiceRequestStatus.Cancelled, Actor.Customer,
+            new TransitionInput(ReasonCode: "CUSTOMER_CANCELLED", Note: string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()), now);
+    }
+
+    /// <summary>
+    /// Moves the visit window. Before a technician accepts, only the time changes. Once one has
+    /// accepted, the job goes to RESCHEDULED so the office confirms the new time with them.
+    /// </summary>
+    public Result RescheduleByCustomer(DateTimeOffset slotStart, DateTimeOffset slotEnd, int maxReschedules, DateTimeOffset now)
+    {
+        if (!CustomerCanChange)
+        {
+            return CustomerChangeErrors.TooLate;
+        }
+
+        if (CustomerRescheduleCount >= maxReschedules)
+        {
+            return Error.Conflict("booking.reschedule_limit", "This booking has been moved as many times as we can do online. Please call us to change it.");
+        }
+
+        if (Status == ServiceRequestStatus.Accepted)
+        {
+            var moved = Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.Rescheduled), ServiceRequestStatus.Rescheduled, Actor.Customer,
+                new TransitionInput(ReasonCode: "CUSTOMER_RESCHEDULED"), now);
+            if (moved.IsFailure)
+            {
+                return moved;
+            }
+        }
+
+        PreferredSlotStart = Utc(slotStart);
+        PreferredSlotEnd = Utc(slotEnd);
+        ScheduledStart = null;
+        ScheduledEnd = null;
+        CustomerRescheduleCount++;
+        Raise(new BookingTimeChanged(Id, SrNumber, CustomerId, CurrentTechnicianId, PreferredSlotStart!.Value, PreferredSlotEnd!.Value));
+        return Result.Success();
     }
 
     public Result ApplyPayment(PaymentStatus paymentStatus, decimal finalAmount, Actor actor, DateTimeOffset now)
@@ -444,4 +497,10 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
                 break;
         }
     }
+}
+
+internal static class CustomerChangeErrors
+{
+    public static readonly Error TooLate = Error.Conflict(
+        "booking.too_late_to_change", "Your technician is already on the way, so this can't be changed online. Please call us.");
 }

@@ -26,7 +26,9 @@ public sealed record MyBookingResponse(
     PaymentStatus PaymentStatus,
     decimal VisitCharge,
     decimal? FinalAmount,
-    string TrackingPath);
+    string TrackingPath,
+    bool CanCancel,
+    bool CanReschedule);
 
 /// <summary>The signed-in customer's bookings, newest first. Scoped by the customer id in their token.</summary>
 public sealed class ListMyBookings(
@@ -34,7 +36,8 @@ public sealed class ListMyBookings(
     ICurrentUser currentUser,
     ICatalogDirectory catalog,
     ICustomerDirectory customers,
-    ITechnicianDirectory technicians) : IUseCase
+    ITechnicianDirectory technicians,
+    CustomerChangePolicy policy) : IUseCase
 {
     private const int Limit = 50;
 
@@ -54,6 +57,12 @@ public sealed class ListMyBookings(
         var categories = await catalog.GetCategoriesAsync(requests.Select(r => r.CategoryId), ct);
         var addresses = await customers.GetAddressesAsync(requests.Select(r => r.AddressId), ct);
         var techs = await technicians.GetManyAsync(requests.Where(r => r.CurrentTechnicianId.HasValue).Select(r => r.CurrentTechnicianId!.Value), ct);
+
+        var allowed = new Dictionary<Guid, (bool CanCancel, bool CanReschedule)>();
+        foreach (var r in requests)
+        {
+            allowed[r.Id] = await policy.EvaluateAsync(r, ct);
+        }
 
         return requests.Select(r =>
         {
@@ -76,7 +85,9 @@ public sealed class ListMyBookings(
                 r.PaymentStatus,
                 r.VisitCharge,
                 r.FinalAmount,
-                $"/t/{r.TrackingToken}");
+                $"/t/{r.TrackingToken}",
+                allowed[r.Id].CanCancel,
+                allowed[r.Id].CanReschedule);
         }).ToList();
     }
 }

@@ -17,6 +17,9 @@ public static class TemplateCodes
     public const string SrCancelled = "SR_CANCELLED";
     public const string JobOffer = "JOB_OFFER";
     public const string PaymentLink = "PAYMENT_LINK";
+    public const string BookingMoved = "BOOKING_MOVED";
+    public const string TechJobCancelled = "TECH_JOB_CANCELLED";
+    public const string TechJobMoved = "TECH_JOB_MOVED";
     public const string PaymentReceived = "PAYMENT_RECEIVED";
     public const string RefundProcessed = "REFUND_PROCESSED";
     public const string OtpLogin = "OTP_LOGIN";
@@ -51,6 +54,12 @@ public static class DefaultTemplates
             "We missed you for {{sr}}. Reply here or call us to choose a new time: {{link}}"),
         new(TemplateCodes.SrCancelled, NotificationChannel.WhatsApp,
             "Your service request {{sr}} has been cancelled. If this is unexpected, please call us."),
+        new(TemplateCodes.BookingMoved, NotificationChannel.WhatsApp,
+            "We've noted the new time for {{sr}}: {{window}}. We'll confirm your visit shortly. Track it here: {{link}}"),
+        new(TemplateCodes.TechJobCancelled, NotificationChannel.WhatsApp,
+            "Job {{sr}} was cancelled by the customer. You don't need to go."),
+        new(TemplateCodes.TechJobMoved, NotificationChannel.WhatsApp,
+            "The customer moved job {{sr}} to {{window}}. The office will confirm with you before the visit."),
         new(TemplateCodes.PaymentLink, NotificationChannel.WhatsApp,
             "Your bill for {{sr}} is {{amount}}. Pay securely online by UPI, card or net banking: {{pay_link}}"),
         new(TemplateCodes.PaymentReceived, NotificationChannel.WhatsApp,

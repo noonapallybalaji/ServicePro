@@ -1880,6 +1880,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
 
+                    b.Property<int>("CustomerRescheduleCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("customer_reschedule_count");
+
                     b.Property<DateTimeOffset?>("EnRouteAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("en_route_at");

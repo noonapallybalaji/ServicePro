@@ -28,6 +28,11 @@ public sealed class ServiceRequestsModule : IModule
         services.AddScoped<SrNumberGenerator>();
         services.Configure<PublicSiteOptions>(configuration.GetSection("Notifications"));
         services.AddSetting(OpsSettings.StuckAfterMinutes);
+        services.AddSetting(CustomerChangeSettings.CanCancel);
+        services.AddSetting(CustomerChangeSettings.CanReschedule);
+        services.AddSetting(CustomerChangeSettings.MaxReschedules);
+        services.AddSetting(CustomerChangeSettings.CutoffMinutes);
+        services.AddScoped<CustomerChangePolicy>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -208,6 +213,23 @@ public sealed class ServiceRequestsModule : IModule
             .Produces<IReadOnlyList<MyBookingResponse>>()
             .WithStandardErrors()
             .WithName("ListMyBookings");
+
+        endpoints.MapPost("/api/v1/account/bookings/{id:guid}/cancel", async (Guid id, CancelBookingRequest request, CancelMyBooking useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(id, request, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Validate<CancelBookingRequest>()
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("CancelMyBooking");
+
+        endpoints.MapPost("/api/v1/account/bookings/{id:guid}/reschedule", async (Guid id, RescheduleBookingRequest request, RescheduleMyBooking useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(id, request, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("RescheduleMyBooking");
 
         // Online booking: both steps send SMS or check codes, so they get the strict auth limit.
         var bookings = endpoints.MapGroup("/api/v1/public/bookings").WithTags("Online booking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth);

@@ -208,7 +208,7 @@ public sealed class ServiceRequestTests
 public sealed class ServiceRequestWorkflowTests
 {
     [Fact]
-    public void Every_unfinished_status_can_be_cancelled_by_staff_only()
+    public void Staff_can_cancel_any_unfinished_job_and_customers_only_until_the_technician_sets_out()
     {
         var unfinished = Enum.GetValues<ServiceRequestStatus>()
             .Where(s => !ServiceRequestWorkflow.Terminal.Contains(s) && s != ServiceRequestStatus.Completed);
@@ -216,9 +216,13 @@ public sealed class ServiceRequestWorkflowTests
         foreach (var status in unfinished)
         {
             var rule = ServiceRequestWorkflow.Find(status, ServiceRequestStatus.Cancelled).ShouldNotBeNull();
-            rule.Actors.ShouldBe(TransitionActors.Staff);
+            rule.Actors.HasFlag(TransitionActors.Staff).ShouldBeTrue();
+            rule.Actors.HasFlag(TransitionActors.Customer).ShouldBe(ServiceRequestWorkflow.CustomerChangeable.Contains(status), status.ToString());
+            rule.Actors.HasFlag(TransitionActors.Technician).ShouldBeFalse();
             rule.Requirements.HasFlag(TransitionRequirements.Reason).ShouldBeTrue();
         }
+
+        ServiceRequestWorkflow.CustomerChangeable.ShouldNotContain(ServiceRequestStatus.EnRoute);
     }
 
     [Fact]

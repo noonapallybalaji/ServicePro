@@ -7,6 +7,7 @@ using ServicePro.Contracts.Events;
 using ServicePro.Contracts.Ports;
 using ServicePro.Modules.Notifications.Channels;
 using ServicePro.Modules.Notifications.Domain;
+using ServicePro.SharedKernel.Abstractions;
 using ServicePro.SharedKernel.ValueObjects;
 
 namespace ServicePro.Modules.Notifications.Application;
@@ -107,9 +108,60 @@ public sealed class NotifyCustomerOnStatusChange(CustomerMessageContext messages
             return messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.SrConfirmed, null, null, ct);
         }
 
+        // A customer who moved their own booking gets BOOKING_MOVED (with the new time) instead.
+        if (e.To == ServiceRequestStatus.Rescheduled && e.ActorType == ActorType.Customer)
+        {
+            return Task.CompletedTask;
+        }
+
         return TemplateFor.TryGetValue(e.To, out var template)
             ? messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, template, e.TechnicianId, null, ct)
             : Task.CompletedTask;
+    }
+}
+
+/// <summary>Customers changing their own booking: confirm the new time to them, and tell the technician who had the job.</summary>
+public sealed class NotifyAboutCustomerChanges(CustomerMessageContext messages, ITechnicianDirectory technicians, NotificationDispatcher dispatcher)
+    : IEventHandler<BookingTimeChanged>, IEventHandler<ServiceRequestStatusChanged>
+{
+    private static readonly TimeZoneInfo India = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+
+    public async Task HandleAsync(BookingTimeChanged e, CancellationToken ct)
+    {
+        var window = Window(e.PreferredSlotStart, e.PreferredSlotEnd);
+        await messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.BookingMoved, null,
+            new Dictionary<string, string> { ["window"] = window }, ct);
+        if (e.TechnicianId is { } technicianId)
+        {
+            await SendToTechnicianAsync(technicianId, e.ServiceRequestId, TemplateCodes.TechJobMoved, e.SrNumber, window, ct);
+        }
+    }
+
+    public Task HandleAsync(ServiceRequestStatusChanged e, CancellationToken ct) =>
+        e is { To: ServiceRequestStatus.Cancelled, ActorType: ActorType.Customer, TechnicianId: { } technicianId } &&
+        e.From is ServiceRequestStatus.Offered or ServiceRequestStatus.Accepted or ServiceRequestStatus.Rescheduled
+            ? SendToTechnicianAsync(technicianId, e.ServiceRequestId, TemplateCodes.TechJobCancelled, e.SrNumber, string.Empty, ct)
+            : Task.CompletedTask;
+
+    /// <summary>"Wed 15 Oct, 10:00 to 13:00" in Indian time.</summary>
+    public static string Window(DateTimeOffset start, DateTimeOffset end)
+    {
+        var from = TimeZoneInfo.ConvertTime(start, India);
+        var to = TimeZoneInfo.ConvertTime(end, India);
+        return string.Create(CultureInfo.InvariantCulture, $"{from:ddd d MMM}, {from:HH:mm} to {to:HH:mm}");
+    }
+
+    private async Task SendToTechnicianAsync(Guid technicianId, Guid serviceRequestId, string template, string srNumber, string window, CancellationToken ct)
+    {
+        var technician = await technicians.GetAsync(technicianId, ct);
+        if (technician is null)
+        {
+            return;
+        }
+
+        await dispatcher.SendAsync(new NotificationRequest(
+            template, NotificationChannel.WhatsApp, RecipientType.Technician, technician.Id, technician.Phone.Value,
+            NotificationDispatcher.DefaultLanguage, new Dictionary<string, string> { ["sr"] = srNumber, ["window"] = window }, serviceRequestId), ct);
     }
 }
 

@@ -54,6 +54,19 @@ public static class ServiceRequestWorkflow
         ServiceRequestStatus.Cancelled,
     };
 
+    /// <summary>
+    /// Before the technician sets out, customers can cancel or move their own booking.
+    /// After that, plans are already in motion: they call us.
+    /// </summary>
+    public static readonly IReadOnlySet<ServiceRequestStatus> CustomerChangeable = new HashSet<ServiceRequestStatus>
+    {
+        ServiceRequestStatus.New,
+        ServiceRequestStatus.ReadyForAssignment,
+        ServiceRequestStatus.Offered,
+        ServiceRequestStatus.Accepted,
+        ServiceRequestStatus.Rescheduled,
+    };
+
     /// <summary>Statuses where a technician is physically working on the job.</summary>
     public static readonly IReadOnlySet<ServiceRequestStatus> OnSite = new HashSet<ServiceRequestStatus>
     {
@@ -90,7 +103,7 @@ public static class ServiceRequestWorkflow
             new(ServiceRequestStatus.Accepted, ServiceRequestStatus.ReadyForAssignment, Office, TransitionRequirements.Reason, DispatchOnly: true),
 
             new(ServiceRequestStatus.Accepted, ServiceRequestStatus.EnRoute, Field),
-            new(ServiceRequestStatus.Accepted, ServiceRequestStatus.Rescheduled, Field, TransitionRequirements.Reason),
+            new(ServiceRequestStatus.Accepted, ServiceRequestStatus.Rescheduled, Field | TransitionActors.Customer, TransitionRequirements.Reason),
             new(ServiceRequestStatus.EnRoute, ServiceRequestStatus.Arrived, Field),
             new(ServiceRequestStatus.Arrived, ServiceRequestStatus.Diagnosing, Field),
             new(ServiceRequestStatus.Arrived, ServiceRequestStatus.CustomerUnavailable, Field, TransitionRequirements.Reason),
@@ -108,10 +121,14 @@ public static class ServiceRequestWorkflow
             new(ServiceRequestStatus.UnableToRepair, ServiceRequestStatus.ClosedNoRepair, Office),
         };
 
-        // Staff can cancel anything that isn't finished (PLAN.md §8).
+        // Staff can cancel anything that isn't finished (PLAN.md §8); customers, until the technician sets out.
         var cancellable = Enum.GetValues<ServiceRequestStatus>()
             .Where(s => !Terminal.Contains(s) && s != ServiceRequestStatus.Completed);
-        rules.AddRange(cancellable.Select(s => new TransitionRule(s, ServiceRequestStatus.Cancelled, TransitionActors.Staff, TransitionRequirements.Reason)));
+        rules.AddRange(cancellable.Select(s => new TransitionRule(
+            s,
+            ServiceRequestStatus.Cancelled,
+            CustomerChangeable.Contains(s) ? TransitionActors.Staff | TransitionActors.Customer : TransitionActors.Staff,
+            TransitionRequirements.Reason)));
 
         return rules;
     }

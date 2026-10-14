@@ -67,3 +67,12 @@ public sealed record PaymentLinkSent(Guid ServiceRequestId, decimal Amount, stri
 
 /// <summary>A refund reached the customer (gateway confirmed it, or staff returned cash/UPI).</summary>
 public sealed record RefundProcessed(Guid RefundId, Guid ServiceRequestId, decimal Amount) : IDomainEvent;
+
+/// <summary>The customer moved their visit to a new time window (no status change unless a technician had accepted).</summary>
+public sealed record BookingTimeChanged(
+    Guid ServiceRequestId,
+    string SrNumber,
+    Guid CustomerId,
+    Guid? TechnicianId,
+    DateTimeOffset PreferredSlotStart,
+    DateTimeOffset PreferredSlotEnd) : IDomainEvent;

@@ -3538,6 +3538,144 @@
         }
       }
     },
+    "/api/v1/account/bookings/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "CancelMyBooking",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelBookingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/bookings/{id}/reschedule": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "RescheduleMyBooking",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RescheduleBookingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/tech/me/earnings": {
       "get": {
         "tags": [
@@ -7199,6 +7337,20 @@
           }
         }
       },
+      "CancelBookingRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CandidateResponse": {
         "required": [
           "technicianId",
@@ -8537,7 +8689,9 @@
           "paymentStatus",
           "visitCharge",
           "finalAmount",
-          "trackingPath"
+          "trackingPath",
+          "canCancel",
+          "canReschedule"
         ],
         "type": "object",
         "properties": {
@@ -8617,6 +8771,12 @@
           },
           "trackingPath": {
             "type": "string"
+          },
+          "canCancel": {
+            "type": "boolean"
+          },
+          "canReschedule": {
+            "type": "boolean"
           }
         },
         "description": "One booking as the customer sees it in \"My bookings\". The tracking page has the full detail."
@@ -9567,6 +9727,23 @@
           "MANUAL"
         ],
         "description": "Where a request came from (PLAN.md §7.6 `leads.source`, Phase 1 subset)."
+      },
+      "RescheduleBookingRequest": {
+        "required": [
+          "preferredSlotStart",
+          "preferredSlotEnd"
+        ],
+        "type": "object",
+        "properties": {
+          "preferredSlotStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredSlotEnd": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       },
       "SaveAddressRequest": {
         "required": [
