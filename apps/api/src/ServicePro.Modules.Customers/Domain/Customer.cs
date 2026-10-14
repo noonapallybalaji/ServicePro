@@ -1,5 +1,6 @@
 using ServicePro.BuildingBlocks.Persistence;
 using ServicePro.Contracts;
+using ServicePro.Contracts.Events;
 using ServicePro.SharedKernel.Domain;
 using ServicePro.SharedKernel.Results;
 using ServicePro.SharedKernel.ValueObjects;
@@ -11,6 +12,7 @@ public sealed class Customer : TenantOwnedAggregateRoot, IAudited
 {
     private readonly List<CustomerAddress> _addresses = [];
     private readonly List<CustomerAppliance> _appliances = [];
+    private readonly List<CustomerConsent> _consents = [];
 
     private Customer()
     {
@@ -46,6 +48,14 @@ public sealed class Customer : TenantOwnedAggregateRoot, IAudited
     public IReadOnlyCollection<CustomerAddress> Addresses => _addresses;
 
     public IReadOnlyCollection<CustomerAppliance> Appliances => _appliances;
+
+    /// <summary>Each version of the terms and privacy policy this customer accepted, and where.</summary>
+    public IReadOnlyCollection<CustomerConsent> Consents => _consents;
+
+    /// <summary>Set when the customer's personal data was erased at their request (DPDP Act 2023).</summary>
+    public DateTimeOffset? ErasedAt { get; private set; }
+
+    public const string ErasedName = "Deleted customer";
 
     public static Customer Create(string fullName, PhoneNumber phone, RequestChannel firstSource) =>
         new(fullName, phone, firstSource);
@@ -120,6 +130,53 @@ public sealed class Customer : TenantOwnedAggregateRoot, IAudited
         appliance.Update(details);
         return Result.Success();
     }
+
+    /// <summary>Records acceptance of a policy version once; accepting it again changes nothing.</summary>
+    public void RecordConsent(string policyVersion, RequestChannel source, DateTimeOffset acceptedAt)
+    {
+        if (_consents.Any(c => c.PolicyVersion == policyVersion))
+        {
+            return;
+        }
+
+        _consents.Add(new CustomerConsent(Id, policyVersion, source, acceptedAt));
+    }
+
+    /// <summary>
+    /// Erases personal data but keeps the record, so past jobs and invoices (which tax law
+    /// requires us to keep) still add up. The phone becomes a placeholder no real Indian
+    /// mobile can match (they start with 6-9), so the number can sign up again as a new customer.
+    /// </summary>
+    public void Erase(DateTimeOffset at)
+    {
+        if (ErasedAt is not null)
+        {
+            return;
+        }
+
+        ErasedAt = at;
+        FullName = ErasedName;
+        PrimaryPhone = PhoneNumber.FromTrusted(ErasedPhone(Id));
+        AlternatePhone = null;
+        Email = null;
+        Notes = null;
+        RefreshPhoneDigits();
+        foreach (var address in _addresses)
+        {
+            address.Erase();
+        }
+
+        foreach (var appliance in _appliances)
+        {
+            appliance.Erase();
+        }
+
+        Raise(new CustomerErased(Id));
+    }
+
+    /// <summary>"+910" and 12 digits from the id: unique, and never a valid mobile.</summary>
+    internal static string ErasedPhone(Guid id) =>
+        "+910" + (new System.Numerics.BigInteger(id.ToByteArray(), isUnsigned: true) % 1_000_000_000_000).ToString("D12", System.Globalization.CultureInfo.InvariantCulture);
 
     private void SetDefaultAddress(Guid addressId)
     {
@@ -196,6 +253,17 @@ public sealed class CustomerAddress : TenantOwnedEntity
 
     internal void SetDefault(bool isDefault) => IsDefault = isDefault;
 
+    /// <summary>Keeps only the area (locality, city, pincode), which identifies no one.</summary>
+    internal void Erase()
+    {
+        Label = null;
+        Line1 = "Removed";
+        Line2 = null;
+        Landmark = null;
+        Latitude = null;
+        Longitude = null;
+    }
+
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
@@ -250,4 +318,30 @@ public sealed class CustomerAppliance : TenantOwnedEntity
         PurchaseYear = details.PurchaseYear;
         WarrantyUntil = details.WarrantyUntil;
     }
+
+    internal void Erase() => SerialNumber = null;
+}
+
+/// <summary>A customer's acceptance of one version of the terms and privacy policy.</summary>
+public sealed class CustomerConsent : TenantOwnedEntity
+{
+    private CustomerConsent()
+    {
+    }
+
+    internal CustomerConsent(Guid customerId, string policyVersion, RequestChannel source, DateTimeOffset acceptedAt)
+    {
+        CustomerId = customerId;
+        PolicyVersion = policyVersion;
+        Source = source;
+        AcceptedAt = acceptedAt;
+    }
+
+    public Guid CustomerId { get; private set; }
+
+    public string PolicyVersion { get; private set; } = string.Empty;
+
+    public RequestChannel Source { get; private set; }
+
+    public DateTimeOffset AcceptedAt { get; private set; }
 }

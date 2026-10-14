@@ -8,6 +8,7 @@ using ServicePro.Modules.ServiceRequests.Application;
 
 namespace ServicePro.IntegrationTests;
 
+[Collection(TimeTravelCollection.Name)]
 public sealed class DispatchTests(ApiFactory factory)
 {
     [Fact]

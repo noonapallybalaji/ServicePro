@@ -71,6 +71,12 @@ internal sealed class ServiceRequestWorkflowPort(DbContext db, ICustomerDirector
             .Select(s => s.TrackingToken)
             .FirstOrDefaultAsync(ct);
 
+    public Task<bool> HasOpenRequestsAsync(Guid customerId, CancellationToken ct)
+    {
+        var finished = ServiceRequestWorkflow.Terminal.ToArray();
+        return db.Set<ServiceRequest>().AnyAsync(s => s.CustomerId == customerId && !finished.Contains(s.Status), ct);
+    }
+
     private async Task<Result> MutateAsync(Guid serviceRequestId, Func<ServiceRequest, Result> change, CancellationToken ct)
     {
         var request = await db.Set<ServiceRequest>().FirstOrDefaultAsync(s => s.Id == serviceRequestId, ct);

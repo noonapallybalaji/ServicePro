@@ -36,8 +36,8 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 |---|---|---|---|---|---|
 | 2.1 | Sign in with phone and one-time code | ✅ | At booking (automatic) and on "My bookings". Customer sessions are separate from staff. | — | — |
 | 2.2 | **Codes actually delivered by SMS or WhatsApp** | 🔌 | Codes go by SMS (MSG91) or WhatsApp (authentication template with a copy-code button), whichever is live, preferred channel first (`Notifications__OtpChannel`). If no live channel takes the code, the customer sees "We couldn't send the code" instead of waiting for nothing. Needs MSG91 + DLT templates and/or Meta credentials. | **P0** | S–M |
-| 2.3 | Terms of Service and Privacy Policy acceptance | ❌ | No legal pages; no consent recorded at sign-up or booking. | **P0** | S |
-| 2.4 | Delete account and download my data (DPDP Act 2023) | ❌ | No self-service deletion or export; no retention policy. | **P0** | M |
+| 2.3 | Terms of Service and Privacy Policy acceptance | ✅ | Booking and sign-in say "By confirming, you agree to our terms and privacy policy"; the API refuses without `acceptedPolicies` and records consent per customer with the policy version (`Legal__PolicyVersion`) and channel. WhatsApp bookings via n8n don't record consent yet. | **P0** | S |
+| 2.4 | Delete account and download my data (DPDP Act 2023) | ✅ | Profile → "Download my data" (JSON) and "Delete my account" (also staff: `POST /admin/customers/{id}/erase`, admin only). Blocked while a job is open. Erases name, phones, email, notes, street address, pin, serial numbers, sessions, pending codes, the customer's audit history and the text and number of every message sent to them; keeps invoices and the anonymous job record. No automatic retention purge yet (see 14.x). | **P0** | M |
 | 2.5 | Marketing and WhatsApp opt-in, opt-out | ❌ | Needed for promotional WhatsApp templates and DPDP consent. | P1 | S |
 | 2.6 | Captcha or bot protection on code requests | 🟡 | Rate limits per IP and per-number cooldown exist; no Turnstile/captcha (SMS-pumping fraud risk once SMS is real). | P1 | S |
 | 2.7 | Social sign-in (Google) | ❌ | Optional for this market; phone is the identity. | P2 | S |
@@ -157,7 +157,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
-| 13.1 | **Terms, Privacy, Cancellation and Refund policy pages** | ❌ | Required by payment gateways and the DPDP Act; needs business/legal input. | **P0** | S (pages) |
+| 13.1 | **Terms, Privacy, Cancellation and Refund policy pages** | 🔌 | `/terms`, `/privacy`, `/cancellation-and-refunds`, linked in the footer. Wording describes what the system actually does. Until the business sets `VITE_LEGAL_ENTITY_NAME`, `VITE_GRIEVANCE_OFFICER_NAME`/`_EMAIL`, `VITE_POLICY_EFFECTIVE_DATE` and `VITE_REFUND_WORKING_DAYS`, each page shows a "Draft" notice and is noindex. **Needs a lawyer's review before launch.** | **P0** | S (pages) |
 | 13.2 | Technician verification (ID, police verification) shown to customers | ❌ | Show a "verified" badge only once the process exists (UX rule in the repo). | P1 | M (process) |
 | 13.3 | Phone number masking | ❌ | See 5.6. | P1 | M |
 | 13.4 | Fraud and abuse (fake bookings, SMS pumping, payment fraud) | 🟡 | Rate limits, staff review of new bookings, blocked customers; no captcha, no velocity rules per number. | P1 | S |
@@ -178,7 +178,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 
 **Phase A: can take real bookings and money (P0)**
 1. ~~Message delivery (11.1, 11.2). This also unlocks sign-in codes (2.2) and step notifications (4.3).~~ Built; waiting on provider accounts.
-2. Legal pages and consent (13.1, 2.3), and account deletion (2.4).
+2. ~~Legal pages and consent (13.1, 2.3), and account deletion (2.4).~~ Built; pages need the business's legal details and a lawyer's review.
 3. Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).
 4. Customer cancel and reschedule with policy (5.2, 5.3).
 5. Digital estimate approval (7.1).

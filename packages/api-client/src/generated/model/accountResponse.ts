@@ -7,6 +7,7 @@
  */
 import type { AccountResponseEmail } from './accountResponseEmail';
 import type { AccountAddressResponse } from './accountAddressResponse';
+import type { AccountConsentResponse } from './accountConsentResponse';
 
 export interface AccountResponse {
   id: string;
@@ -14,4 +15,5 @@ export interface AccountResponse {
   phone: string;
   email: AccountResponseEmail;
   addresses: AccountAddressResponse[];
+  consents: AccountConsentResponse[];
 }

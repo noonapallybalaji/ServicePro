@@ -1,4 +1,5 @@
 using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using ServicePro.BuildingBlocks.Messaging;
 using ServicePro.Contracts;
@@ -109,6 +110,31 @@ public sealed class NotifyCustomerOnStatusChange(CustomerMessageContext messages
         return TemplateFor.TryGetValue(e.To, out var template)
             ? messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, template, e.TechnicianId, null, ct)
             : Task.CompletedTask;
+    }
+}
+
+/// <summary>Messages to a customer's phone, including sign-in codes (which aren't linked to a customer id).</summary>
+public sealed class MessageHistory(DbContext db) : IMessageHistory
+{
+    public async Task ForgetRecipientAsync(PhoneNumber phone, CancellationToken ct)
+    {
+        var messages = await db.Set<Notification>()
+            .Where(n => n.RecipientType == RecipientType.Customer && n.RecipientAddress == phone.Value)
+            .ToListAsync(ct);
+        messages.ForEach(n => n.Redact());
+    }
+}
+
+/// <summary>Account deletion: the customer's past messages lose their phone number and text (also any sent to an older number).</summary>
+public sealed class RedactErasedCustomerMessages(DbContext db) : IEventHandler<CustomerErased>
+{
+    public async Task HandleAsync(CustomerErased e, CancellationToken ct)
+    {
+        var messages = await db.Set<Notification>()
+            .Where(n => n.RecipientType == RecipientType.Customer && n.RecipientId == e.CustomerId)
+            .ToListAsync(ct);
+        messages.ForEach(n => n.Redact());
+        await db.SaveChangesAsync(ct);
     }
 }
 

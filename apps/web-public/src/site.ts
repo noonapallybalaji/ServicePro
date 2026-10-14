@@ -46,6 +46,8 @@ export interface SiteConfig {
   twitterHandle?: string;
   /** Google Search Console HTML-tag verification token (content of the meta tag only). */
   googleSiteVerification?: string;
+  /** Facts the policy pages need. Until all are set, those pages show a draft notice and are noindex. */
+  legal: LegalConfig;
   locale: string;
   language: string;
   themeColor: string;
@@ -53,6 +55,32 @@ export interface SiteConfig {
   ogImagePath: string;
   ogImageWidth: number;
   ogImageHeight: number;
+}
+
+export interface LegalConfig {
+  /** Registered name of the business (e.g. the company or proprietorship), as on its invoices. */
+  entityName?: string;
+  /** Grievance Officer required by the DPDP Act and IT Rules: name and email. */
+  grievanceOfficer?: string;
+  grievanceEmail?: string;
+  /** YYYY-MM-DD; keep it equal to the API's Legal__PolicyVersion. */
+  effectiveDate?: string;
+  /** Working days within which an approved refund is sent back. */
+  refundWorkingDays?: number;
+  /** True once every fact above is set and the wording has been reviewed. */
+  ready: boolean;
+}
+
+function legalConfig(): LegalConfig {
+  const days = Number.parseInt(env.VITE_REFUND_WORKING_DAYS ?? '', 10);
+  const legal = {
+    entityName: optional(env.VITE_LEGAL_ENTITY_NAME),
+    grievanceOfficer: optional(env.VITE_GRIEVANCE_OFFICER_NAME),
+    grievanceEmail: optional(env.VITE_GRIEVANCE_OFFICER_EMAIL),
+    effectiveDate: optional(env.VITE_POLICY_EFFECTIVE_DATE),
+    refundWorkingDays: Number.isFinite(days) && days > 0 ? days : undefined,
+  };
+  return { ...legal, ready: Object.values(legal).every((value) => value !== undefined) };
 }
 
 export const SITE: SiteConfig = {
@@ -72,6 +100,7 @@ export const SITE: SiteConfig = {
   socialProfiles: list(env.VITE_SOCIAL_PROFILES),
   twitterHandle: optional(env.VITE_TWITTER_HANDLE),
   googleSiteVerification: optional(env.VITE_GOOGLE_SITE_VERIFICATION),
+  legal: legalConfig(),
   locale: 'en_IN',
   language: 'en-IN',
   themeColor: '#0b6276',

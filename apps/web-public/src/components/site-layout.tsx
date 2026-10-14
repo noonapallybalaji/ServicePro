@@ -96,6 +96,12 @@ const SignedInMenu = lazy(() => import('./account-menu').then((m) => ({ default:
 
 const footerLink = 'transition-interactive inline-flex min-h-10 items-center text-sm text-foreground-secondary hover:text-foreground hover:underline';
 
+const LEGAL_LINKS = [
+  { to: '/terms', label: 'Terms' },
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/cancellation-and-refunds', label: 'Cancellation & refunds' },
+];
+
 function SiteFooter() {
   return (
     <footer data-surface="brand" className="surface-brand">
@@ -124,6 +130,15 @@ function SiteFooter() {
               <Mail aria-hidden className="size-4" /> {SITE.email}
             </a>
           ) : null}
+          <ul className="flex flex-wrap gap-x-4 pt-2">
+            {LEGAL_LINKS.map((item) => (
+              <li key={item.to}>
+                <Link to={item.to} className={footerLink}>
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <nav aria-labelledby="footer-services">

@@ -3,6 +3,7 @@ import { Outlet, ScrollRestoration, type RouteObject } from 'react-router';
 import { SERVICES } from './content/services';
 import { HomePage } from './pages/home-page';
 import { AboutPage, ContactPage, FaqPage, NotFoundPage, ServicesPage } from './pages/info-pages';
+import { PrivacyPage, RefundPolicyPage, TermsPage } from './pages/legal-pages';
 import { ServicePage } from './pages/service-page';
 
 /*
@@ -25,6 +26,9 @@ export const routes: RouteObject[] = [
       { path: '/about', element: <AboutPage /> },
       { path: '/contact', element: <ContactPage /> },
       { path: '/faq', element: <FaqPage /> },
+      { path: '/terms', element: <TermsPage /> },
+      { path: '/privacy', element: <PrivacyPage /> },
+      { path: '/cancellation-and-refunds', element: <RefundPolicyPage /> },
       {
         path: '/book',
         lazy: async () => {

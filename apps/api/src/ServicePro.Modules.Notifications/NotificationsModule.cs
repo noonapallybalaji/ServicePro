@@ -33,6 +33,7 @@ public sealed class NotificationsModule : IModule
         services.AddScoped<NotificationDispatcher>();
         services.AddScoped<CustomerMessageContext>();
         services.AddScoped<IOtpSender, OtpSender>();
+        services.AddScoped<IMessageHistory, MessageHistory>();
 
         // Provider selection is configuration only (ADR 0009).
         if (options.WhatsApp.IsConfigured)

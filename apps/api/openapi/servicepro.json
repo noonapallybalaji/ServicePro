@@ -1608,6 +1608,47 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "DeleteMyAccount",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/account/addresses": {
@@ -2366,6 +2407,60 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportCustomersResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/customers/{customerId}/erase": {
+      "post": {
+        "tags": [
+          "Customers"
+        ],
+        "operationId": "EraseCustomer",
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
                 }
               }
             }
@@ -5868,13 +5963,35 @@
           }
         }
       },
+      "AccountConsentResponse": {
+        "required": [
+          "policyVersion",
+          "acceptedAt",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "policyVersion": {
+            "type": "string"
+          },
+          "acceptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "$ref": "#/components/schemas/RequestChannel"
+          }
+        },
+        "description": "When the customer accepted a version of the terms and privacy policy, and where."
+      },
       "AccountResponse": {
         "required": [
           "id",
           "fullName",
           "phone",
           "email",
-          "addresses"
+          "addresses",
+          "consents"
         ],
         "type": "object",
         "properties": {
@@ -5898,6 +6015,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AccountAddressResponse"
+            }
+          },
+          "consents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AccountConsentResponse"
             }
           }
         }
@@ -7215,6 +7338,10 @@
           },
           "code": {
             "type": "string"
+          },
+          "acceptedPolicies": {
+            "type": "boolean",
+            "default": false
           }
         }
       },
@@ -8356,6 +8483,10 @@
           "preferredSlotEnd": {
             "type": "string",
             "format": "date-time"
+          },
+          "acceptedPolicies": {
+            "type": "boolean",
+            "default": false
           }
         }
       },

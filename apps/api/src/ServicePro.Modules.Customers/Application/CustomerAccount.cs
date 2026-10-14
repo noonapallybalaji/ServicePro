@@ -24,7 +24,16 @@ public sealed record AccountAddressResponse(
     bool HasLocation,
     bool IsDefault);
 
-public sealed record AccountResponse(Guid Id, string FullName, string Phone, string? Email, IReadOnlyList<AccountAddressResponse> Addresses);
+/// <summary>When the customer accepted a version of the terms and privacy policy, and where.</summary>
+public sealed record AccountConsentResponse(string PolicyVersion, DateTimeOffset AcceptedAt, ServicePro.Contracts.RequestChannel Source);
+
+public sealed record AccountResponse(
+    Guid Id,
+    string FullName,
+    string Phone,
+    string? Email,
+    IReadOnlyList<AccountAddressResponse> Addresses,
+    IReadOnlyList<AccountConsentResponse> Consents);
 
 internal static class AccountErrors
 {
@@ -40,7 +49,10 @@ public sealed class GetMyAccount(DbContext db, ICurrentUser currentUser) : IUseC
             return AccountErrors.NotSignedIn;
         }
 
-        var customer = await db.Set<Customer>().AsNoTracking().Include(c => c.Addresses).FirstOrDefaultAsync(c => c.Id == customerId, ct);
+        var customer = await db.Set<Customer>().AsNoTracking()
+            .Include(c => c.Addresses)
+            .Include(c => c.Consents)
+            .FirstOrDefaultAsync(c => c.Id == customerId && c.ErasedAt == null, ct);
         return customer is null ? AccountErrors.NotSignedIn : ToResponse(customer);
     }
 
@@ -52,7 +64,8 @@ public sealed class GetMyAccount(DbContext db, ICurrentUser currentUser) : IUseC
         [.. customer.Addresses
             .OrderByDescending(a => a.IsDefault)
             .ThenByDescending(a => a.CreatedAt)
-            .Select(a => new AccountAddressResponse(a.Id, a.Label, a.Line1, a.Line2, a.Landmark, a.Locality, a.City, a.Pincode, a.Location is not null, a.IsDefault))]);
+            .Select(a => new AccountAddressResponse(a.Id, a.Label, a.Line1, a.Line2, a.Landmark, a.Locality, a.City, a.Pincode, a.Location is not null, a.IsDefault))],
+        [.. customer.Consents.OrderByDescending(c => c.AcceptedAt).Select(c => new AccountConsentResponse(c.PolicyVersion, c.AcceptedAt, c.Source))]);
 }
 
 public sealed record UpdateAccountRequest(string FullName, string? Email);
@@ -76,7 +89,7 @@ public sealed class UpdateMyAccount(DbContext db, ICurrentUser currentUser) : IU
             return AccountErrors.NotSignedIn;
         }
 
-        var customer = await db.Set<Customer>().Include(c => c.Addresses).FirstOrDefaultAsync(c => c.Id == customerId, ct);
+        var customer = await db.Set<Customer>().Include(c => c.Addresses).Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId && c.ErasedAt == null, ct);
         if (customer is null)
         {
             return AccountErrors.NotSignedIn;
@@ -124,7 +137,7 @@ public sealed class AddMyAddress(DbContext db, ICurrentUser currentUser) : IUseC
             return AccountErrors.NotSignedIn;
         }
 
-        var customer = await db.Set<Customer>().Include(c => c.Addresses).FirstOrDefaultAsync(c => c.Id == customerId, ct);
+        var customer = await db.Set<Customer>().Include(c => c.Addresses).Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId && c.ErasedAt == null, ct);
         if (customer is null)
         {
             return AccountErrors.NotSignedIn;

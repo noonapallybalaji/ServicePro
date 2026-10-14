@@ -785,6 +785,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(254)")
                         .HasColumnName("email");
 
+                    b.Property<DateTimeOffset?>("ErasedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("erased_at");
+
                     b.Property<string>("FirstSource")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -1012,6 +1016,57 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_customer_appliances_tenant_id");
 
                     b.ToTable("customer_appliances", "crm");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Customers.Domain.CustomerConsent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("PolicyVersion")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("policy_version");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("source");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_customer_consents");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_customer_consents_tenant_id");
+
+                    b.HasIndex("CustomerId", "PolicyVersion")
+                        .IsUnique()
+                        .HasDatabaseName("ix_customer_consents_customer_id_policy_version");
+
+                    b.ToTable("customer_consents", "crm");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.Dispatch.Domain.TechnicianAssignment", b =>
@@ -2264,6 +2319,16 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_customer_appliances_customer_customer_id");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Customers.Domain.CustomerConsent", b =>
+                {
+                    b.HasOne("ServicePro.Modules.Customers.Domain.Customer", null)
+                        .WithMany("Consents")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_customer_consents_customers_customer_id");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Identity.Domain.RefreshToken", b =>
                 {
                     b.HasOne("ServicePro.Modules.Identity.Domain.User", null)
@@ -2354,6 +2419,8 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.Navigation("Addresses");
 
                     b.Navigation("Appliances");
+
+                    b.Navigation("Consents");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.ServiceRequests.Domain.ServiceRequest", b =>

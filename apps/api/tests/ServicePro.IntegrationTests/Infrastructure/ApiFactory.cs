@@ -94,15 +94,39 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     public HttpClient CreateApiClient() =>
         CreateClient(new WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost"), HandleCookies = true });
 
-    /// <summary>Delivers everything in the outbox (notifications, duty automation, counters).</summary>
+    private readonly SemaphoreSlim _drain = new(1, 1);
+
+    /// <summary>
+    /// Delivers everything in the outbox (notifications, duty automation, counters). Drains run one
+    /// at a time: otherwise a parallel test's drain can lease this test's events, and this drain
+    /// would return before they are handled.
+    /// </summary>
     public async Task DrainOutboxAsync()
     {
-        var processor = Services.GetRequiredService<OutboxProcessor>();
-        for (var i = 0; i < 20 && await processor.ProcessBatchAsync(CancellationToken.None) > 0; i++)
+        await _drain.WaitAsync();
+        try
         {
+            var processor = Services.GetRequiredService<OutboxProcessor>();
+            for (var i = 0; i < 20 && await processor.ProcessBatchAsync(CancellationToken.None) > 0; i++)
+            {
+            }
+        }
+        finally
+        {
+            _drain.Release();
         }
     }
 
     public Task<int> ExpireOffersAsync() =>
         Services.GetRequiredService<OfferExpiryWorker>().ExpireDueOffersAsync(CancellationToken.None);
+}
+
+/// <summary>
+/// Tests that move <see cref="TestClock"/> forward. The clock is shared, so they run on their own,
+/// after the parallel tests: otherwise sessions and offers created meanwhile get future times.
+/// </summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class TimeTravelCollection
+{
+    public const string Name = "Time travel";
 }

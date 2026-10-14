@@ -21,6 +21,8 @@ public sealed class CustomersModule : IModule
     {
         services.AddScoped<ICustomerDirectory, CustomerDirectory>();
         services.AddScoped<ICustomerRegistry, CustomerRegistry>();
+        services.AddScoped<CustomerEraser>();
+        services.Configure<LegalOptions>(configuration.GetSection("Legal"));
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -46,6 +48,11 @@ public sealed class CustomersModule : IModule
             .Produces<AccountResponse>()
             .WithStandardErrors()
             .WithName("AddMyAddress");
+
+        account.MapDelete("/", async (DeleteMyAccount useCase, CancellationToken ct) => (await useCase.HandleAsync(ct)).ToHttp())
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("DeleteMyAccount");
 
         var customers = endpoints.MapGroup("/api/v1/admin/customers").WithTags("Customers").RequireAuthorization(AuthPolicies.Staff);
 
@@ -117,5 +124,12 @@ public sealed class CustomersModule : IModule
             .DisableAntiforgery()
             .Produces<ImportCustomersResponse>()
             .WithName("ImportCustomers");
+
+        customers.MapPost("/{customerId:guid}/erase", async (Guid customerId, EraseCustomer useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(customerId, ct)).ToHttp())
+            .RequireAuthorization(AuthPolicies.Admin)
+            .Produces(StatusCodes.Status204NoContent)
+            .WithStandardErrors()
+            .WithName("EraseCustomer");
     }
 }

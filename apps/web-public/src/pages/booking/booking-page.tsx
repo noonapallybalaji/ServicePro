@@ -35,6 +35,7 @@ import { Link, useSearchParams } from 'react-router';
 import { SiteLayout } from '../../components/site-layout';
 import { usePageMeta } from '../../seo/head';
 import { PAGES } from '../../seo/pages';
+import { PolicyNotice } from '../../components/policy-notice';
 import { customerFrom, signInWith } from '../../customer-session';
 import { AddressStep } from './address-step';
 import { EMPTY_DRAFT, addressOneLine, saveAddress, type Draft } from './draft';
@@ -267,6 +268,7 @@ function DetailsStep({
           },
           preferredSlotStart: visit.start,
           preferredSlotEnd: visit.end,
+          acceptedPolicies: true,
         },
       },
       {
@@ -306,6 +308,7 @@ function DetailsStep({
         <Text variant="caption" tone="muted">
           You pay only after the visit: the visiting charge is {formatINR(category.baseVisitCharge)}, and the technician explains any repair cost before starting.
         </Text>
+        <PolicyNotice action="confirming this booking" />
 
         <StepActions>
           <Button type="submit" size="lg" loading={book.isPending}>
@@ -349,6 +352,7 @@ function DetailsStep({
       <Text variant="caption" tone="muted">
         You pay only after the visit: the visiting charge is {formatINR(category.baseVisitCharge)}, and the technician explains any repair cost before starting.
       </Text>
+      <PolicyNotice action="confirming this booking" />
 
       <StepActions>
         {codeSent ? (

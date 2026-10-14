@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.Extensions.Options;
 using ServicePro.BuildingBlocks.Persistence;
+using ServicePro.Contracts;
 using ServicePro.Contracts.Ports;
 using ServicePro.Modules.Customers.Domain;
+using ServicePro.SharedKernel.Abstractions;
 using ServicePro.SharedKernel.Results;
 using ServicePro.SharedKernel.ValueObjects;
 
@@ -34,6 +37,19 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.HasMany(c => c.Appliances).WithOne().HasForeignKey(a => a.CustomerId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(c => c.Addresses).UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.Navigation(c => c.Appliances).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.HasMany(c => c.Consents).WithOne().HasForeignKey(c => c.CustomerId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(c => c.Consents).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+internal sealed class CustomerConsentConfiguration : IEntityTypeConfiguration<CustomerConsent>
+{
+    public void Configure(EntityTypeBuilder<CustomerConsent> builder)
+    {
+        builder.ToTable("customer_consents", CustomersSchema.Name);
+        builder.Property(c => c.PolicyVersion).HasMaxLength(40);
+        builder.Property(c => c.Source).HasMaxLength(32);
+        builder.HasIndex(c => new { c.CustomerId, c.PolicyVersion }).IsUnique();
     }
 }
 
@@ -109,9 +125,40 @@ internal sealed class CustomerDirectory(DbContext db) : ICustomerDirectory
             .FirstOrDefaultAsync(ct);
 }
 
-internal sealed class CustomerRegistry(DbContext db) : ICustomerRegistry
+/// <summary>
+/// The terms and privacy policy version in force. Change it whenever the published wording
+/// changes, so consent records show which version each customer accepted.
+/// </summary>
+public sealed class LegalOptions
 {
+    public string PolicyVersion { get; set; } = "unpublished-draft";
+}
+
+internal sealed class CustomerRegistry(DbContext db, IOptions<LegalOptions> legal, IClock clock) : ICustomerRegistry
+{
+    public async Task RecordConsentAsync(Guid customerId, RequestChannel source, CancellationToken ct)
+    {
+        var customer = await db.Set<Customer>().Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId, ct);
+        customer?.RecordConsent(legal.Value.PolicyVersion, source, clock.UtcNow);
+    }
+
     public async Task<Result<CustomerAddressRef>> FindOrCreateAsync(SelfServiceContact contact, SelfServiceAddress address, CancellationToken ct)
+    {
+        var result = await FindOrCreateCoreAsync(contact, address, ct);
+        if (result.IsSuccess && contact.AcceptedPolicies)
+        {
+            var customer = db.Set<Customer>().Local.First(c => c.Id == result.Value.Customer.Id);
+            if (db.Entry(customer).State != EntityState.Added)
+            {
+                await db.Entry(customer).Collection(c => c.Consents).LoadAsync(ct);
+            }
+            customer.RecordConsent(legal.Value.PolicyVersion, contact.Source, clock.UtcNow);
+        }
+
+        return result;
+    }
+
+    private async Task<Result<CustomerAddressRef>> FindOrCreateCoreAsync(SelfServiceContact contact, SelfServiceAddress address, CancellationToken ct)
     {
         var customer = await db.Set<Customer>()
             .Include(c => c.Addresses)

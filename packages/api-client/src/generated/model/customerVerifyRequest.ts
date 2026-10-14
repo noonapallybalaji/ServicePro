@@ -9,4 +9,5 @@
 export interface CustomerVerifyRequest {
   phone: string;
   code: string;
+  acceptedPolicies?: boolean;
 }

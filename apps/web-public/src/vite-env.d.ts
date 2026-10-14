@@ -16,6 +16,11 @@ interface ImportMetaEnv {
   readonly VITE_SOCIAL_PROFILES?: string;
   readonly VITE_TWITTER_HANDLE?: string;
   readonly VITE_GOOGLE_SITE_VERIFICATION?: string;
+  readonly VITE_LEGAL_ENTITY_NAME?: string;
+  readonly VITE_GRIEVANCE_OFFICER_NAME?: string;
+  readonly VITE_GRIEVANCE_OFFICER_EMAIL?: string;
+  readonly VITE_POLICY_EFFECTIVE_DATE?: string;
+  readonly VITE_REFUND_WORKING_DAYS?: string;
 }
 
 interface ImportMeta {

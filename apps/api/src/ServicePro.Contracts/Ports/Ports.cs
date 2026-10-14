@@ -50,9 +50,19 @@ public sealed record IssuedCustomerSession(CustomerSessionResponse Response, str
 public interface ICustomerSessions
 {
     Task<IssuedCustomerSession> IssueAsync(CustomerInfo customer, CancellationToken ct);
+
+    /// <summary>Account deletion: ends every session and drops pending sign-in codes for the phone.</summary>
+    Task ForgetCustomerAsync(Guid customerId, PhoneNumber phone, CancellationToken ct);
 }
 
 // ── Notifications ───────────────────────────────────────────────────────────
+
+/// <summary>Account deletion: removes the number and text from every message sent to this customer phone.</summary>
+public interface IMessageHistory
+{
+    /// <summary>Participates in the caller's unit of work: it never saves.</summary>
+    Task ForgetRecipientAsync(PhoneNumber phone, CancellationToken ct);
+}
 
 public interface IOtpSender
 {
@@ -98,7 +108,8 @@ public sealed record AddressInfo(
 
 public sealed record ApplianceInfo(Guid Id, Guid CustomerId, Guid CategoryId, string? Brand, string? ModelNumber);
 
-public sealed record SelfServiceContact(string FullName, PhoneNumber Phone, RequestChannel Source);
+/// <summary>AcceptedPolicies: the customer agreed to the current terms and privacy policy (recorded as consent).</summary>
+public sealed record SelfServiceContact(string FullName, PhoneNumber Phone, RequestChannel Source, bool AcceptedPolicies = false);
 
 /// <summary>An address typed by the customer, optionally with the pin their device reported.</summary>
 public sealed record SelfServiceAddress(
@@ -123,6 +134,9 @@ public interface ICustomerRegistry
     /// without a pin gains the one the customer just shared.
     /// </summary>
     Task<Result<CustomerAddressRef>> FindOrCreateAsync(SelfServiceContact contact, SelfServiceAddress address, CancellationToken ct);
+
+    /// <summary>Records that the customer accepted the current terms and privacy policy (once per version).</summary>
+    Task RecordConsentAsync(Guid customerId, RequestChannel source, CancellationToken ct);
 }
 
 public interface ICustomerDirectory
@@ -235,6 +249,9 @@ public interface IServiceRequestWorkflow
 
     /// <summary>The token for the customer's tracking link, used in messages.</summary>
     Task<string?> GetTrackingTokenAsync(Guid serviceRequestId, CancellationToken ct);
+
+    /// <summary>Whether the customer has a job that isn't closed or cancelled yet (blocks account deletion).</summary>
+    Task<bool> HasOpenRequestsAsync(Guid customerId, CancellationToken ct);
 }
 
 // ── Billing ─────────────────────────────────────────────────────────────────

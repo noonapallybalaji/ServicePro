@@ -1,8 +1,10 @@
 import {
   getGetMyAccountQueryKey,
   isApiError,
+  listMyBookings,
   session,
   useAddMyAddress,
+  useDeleteMyAccount,
   useGetMyAccount,
   useListMyBookings,
   useUpdateMyAccount,
@@ -42,9 +44,11 @@ import {
   getInitials,
 } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { Briefcase, CalendarCheck, ChevronRight, Home, LocateFixed, LogOut, Mail, MapPinned, Pencil, Phone, Plus, Search } from 'lucide-react';
+import { Briefcase, CalendarCheck, ChevronRight, Download, Home, LocateFixed, LogOut, Mail, MapPinned, Pencil, Phone, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
+
+import { forgetSavedAddress } from '../booking/draft';
 
 const TABS = ['bookings', 'profile'] as const;
 type Tab = (typeof TABS)[number];
@@ -252,12 +256,111 @@ function ProfileTab() {
     <div className="flex flex-col gap-10">
       <ProfileCard account={account.data} />
       <SavedAddresses account={account.data} />
+      <YourData account={account.data} />
       <div className="border-t border-border pt-6">
         <Button variant="outline" onClick={() => void session.signOut()}>
           <LogOut aria-hidden /> Sign out
         </Button>
       </div>
     </div>
+  );
+}
+
+/* ── Your data: download and delete (DPDP Act) ──────────────────────────── */
+
+function YourData({ account }: { account: AccountResponse }) {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadFailed, setDownloadFailed] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  async function download() {
+    setDownloading(true);
+    setDownloadFailed(false);
+    try {
+      const bookings = await listMyBookings();
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), account, bookings }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setDownloadFailed(true);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <section aria-labelledby="your-data" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <Heading level={2} size="h3" id="your-data">
+          Your data
+        </Heading>
+        <Text variant="sm" tone="secondary">
+          See what we hold about you, or delete your account. Read our{' '}
+          <Link className="link" to="/privacy">
+            privacy policy
+          </Link>
+          .
+        </Text>
+      </div>
+      {downloadFailed ? <Alert tone="error" title="Couldn't prepare your data" description="Check your connection and try again." /> : null}
+      <div className="flex flex-wrap gap-3">
+        <Button variant="outline" loading={downloading} onClick={() => void download()}>
+          <Download aria-hidden /> Download my data
+        </Button>
+        <Button variant="ghost" className="text-error" onClick={() => setDeleting(true)}>
+          <Trash2 aria-hidden /> Delete my account
+        </Button>
+      </div>
+      <DeleteAccountDialog open={deleting} onOpenChange={setDeleting} />
+    </section>
+  );
+}
+
+function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [understood, setUnderstood] = useState(false);
+  const remove = useDeleteMyAccount({
+    mutation: {
+      meta: { silent: true },
+      onSuccess: async () => {
+        forgetSavedAddress();
+        await session.signOut();
+      },
+    },
+  });
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) setUnderstood(false);
+        onOpenChange(next);
+      }}
+    >
+      <DialogContent>
+        <DialogHeader title="Delete your account?" description="This can't be undone." />
+        <DialogBody className="flex flex-col gap-4">
+          {isApiError(remove.error) ? <Alert role="alert" tone="error" title={remove.error.message} /> : remove.isError ? <Alert role="alert" tone="error" title="Couldn't delete your account. Check your connection and try again." /> : null}
+          <ul className="ml-5 flex list-disc flex-col gap-2 text-body text-foreground-secondary">
+            <li>We remove your name, phone number, email, saved addresses and the messages we sent you.</li>
+            <li>We keep your bills and payment records, because tax law requires it, and the record that each job took place.</li>
+            <li>You'll be signed out. You can book again any time with the same number, as a new customer.</li>
+          </ul>
+          <Checkbox checked={understood} onCheckedChange={(checked) => setUnderstood(checked === true)} label="I understand, delete my account" />
+        </DialogBody>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            Keep my account
+          </Button>
+          <Button type="button" variant="destructive" disabled={!understood} loading={remove.isPending} onClick={() => remove.mutate()}>
+            Delete my account
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

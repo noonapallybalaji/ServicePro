@@ -787,4 +787,68 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
+    export const getEraseCustomerUrl = (customerId: string,) => {
+
+
+  
+
+  return `/api/v1/admin/customers/${customerId}/erase`
+}
+
+export const eraseCustomer = async (customerId: string, options?: RequestInit): Promise<void> => {
+  
+  return apiFetch<void>(getEraseCustomerUrl(customerId),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getEraseCustomerMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eraseCustomer>>, TError,{customerId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof eraseCustomer>>, TError,{customerId: string}, TContext> => {
+
+const mutationKey = ['eraseCustomer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof eraseCustomer>>, {customerId: string}> = (props) => {
+          const {customerId} = props ?? {};
+
+          return  eraseCustomer(customerId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EraseCustomerMutationResult = NonNullable<Awaited<ReturnType<typeof eraseCustomer>>>
+    
+    export type EraseCustomerMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useEraseCustomer = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof eraseCustomer>>, TError,{customerId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof eraseCustomer>>,
+        TError,
+        {customerId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getEraseCustomerMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
     

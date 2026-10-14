@@ -21,6 +21,7 @@ import { CalendarCheck, Phone } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 
+import { PolicyNotice } from '../../components/policy-notice';
 import { SiteLayout } from '../../components/site-layout';
 import { customerFrom, signInWith } from '../../customer-session';
 import { usePageMeta } from '../../seo/head';
@@ -79,7 +80,7 @@ function SignIn() {
   function confirm(event: FormEvent) {
     event.preventDefault();
     if (!sent) return;
-    verify.mutate({ data: { phone: sent.phone, code } }, { onSuccess: signInWith });
+    verify.mutate({ data: { phone: sent.phone, code, acceptedPolicies: true } }, { onSuccess: signInWith });
   }
 
   const noAccount = isApiError(verify.error) && verify.error.status === 404;
@@ -118,6 +119,7 @@ function SignIn() {
             >
               <OtpInput length={sent.length} value={code} onValueChange={setCode} />
             </Field>
+            <PolicyNotice action="signing in" />
             <Button type="submit" size="lg" fullWidth loading={verify.isPending} disabled={code.length !== sent.length}>
               Sign in
             </Button>

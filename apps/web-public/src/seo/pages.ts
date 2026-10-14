@@ -92,6 +92,32 @@ export const PAGES = {
     sitemap: { changefreq: 'monthly', priority: 0.6 },
   }),
 
+  // Policies: indexable only once the business has filled in the legal details (see site.ts).
+  terms: withBreadcrumbs({
+    path: '/terms',
+    title: brand('Terms of Service'),
+    description: `The terms for booking a doorstep appliance repair with ${SITE.name} in ${SITE.city}: booking, prices, payment and your account.`,
+    indexable: SITE.legal.ready,
+    crumbs: [HOME, { name: 'Terms of service', path: '/terms' }],
+    sitemap: { changefreq: 'yearly', priority: 0.2 },
+  }),
+  privacy: withBreadcrumbs({
+    path: '/privacy',
+    title: brand('Privacy Policy'),
+    description: `What ${SITE.name} collects when you book a repair, why, who sees it, and how to download or delete your data.`,
+    indexable: SITE.legal.ready,
+    crumbs: [HOME, { name: 'Privacy policy', path: '/privacy' }],
+    sitemap: { changefreq: 'yearly', priority: 0.2 },
+  }),
+  refunds: withBreadcrumbs({
+    path: '/cancellation-and-refunds',
+    title: brand('Cancellation and Refund Policy'),
+    description: `How to cancel or change an appliance repair booking with ${SITE.name}, and how refunds work.`,
+    indexable: SITE.legal.ready,
+    crumbs: [HOME, { name: 'Cancellation and refunds', path: '/cancellation-and-refunds' }],
+    sitemap: { changefreq: 'yearly', priority: 0.2 },
+  }),
+
   // Not indexable: transactional or private.
   book: { path: '/book', title: brand('Book a Repair'), description: `Book an appliance repair visit in ${SITE.city}.`, indexable: false, jsonLd: [] },
   account: { path: '/account', title: brand('My Bookings'), description: 'Your bookings, addresses and details.', indexable: false, jsonLd: [] },
@@ -105,5 +131,8 @@ export const SERVICE_PAGES: ReadonlyMap<string, PageMeta> = new Map(SERVICES.map
 
 /** Every indexable page, in sitemap order. */
 export function indexablePages(): PageMeta[] {
-  return [PAGES.home, PAGES.services, ...SERVICES.map(servicePage), PAGES.about, PAGES.contact, PAGES.faq].filter((page) => page.indexable);
+  return [PAGES.home, PAGES.services, ...SERVICES.map(servicePage), PAGES.about, PAGES.contact, PAGES.faq, ...LEGAL_PAGES].filter((page) => page.indexable);
 }
+
+/** Policy pages are always pre-rendered, even while they are drafts (and noindex). */
+export const LEGAL_PAGES: PageMeta[] = [PAGES.terms, PAGES.privacy, PAGES.refunds];

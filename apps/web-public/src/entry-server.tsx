@@ -5,7 +5,7 @@ import { createStaticHandler, createStaticRouter, StaticRouterProvider } from 'r
 import { routes } from './routes';
 import { buildRobots, buildSitemap } from './seo/crawl';
 import { renderHeadHtml } from './seo/head';
-import { PAGES, indexablePages, type PageMeta } from './seo/pages';
+import { LEGAL_PAGES, PAGES, indexablePages, type PageMeta } from './seo/pages';
 import { SITE } from './site';
 
 /*
@@ -31,7 +31,11 @@ export async function render(url: string): Promise<{ html: string; status: numbe
 /** Pages written to disk: every indexable page plus the 404 page. */
 export function prerenderTargets(): { url: string; meta: PageMeta; file: string }[] {
   return [
-    ...indexablePages().map((meta) => ({ url: meta.path, meta, file: meta.path === '/' ? 'index.html' : `${meta.path.slice(1)}/index.html` })),
+    ...[...indexablePages(), ...LEGAL_PAGES.filter((meta) => !meta.indexable)].map((meta) => ({
+      url: meta.path,
+      meta,
+      file: meta.path === '/' ? 'index.html' : `${meta.path.slice(1)}/index.html`,
+    })),
     { url: '/__not-found__', meta: PAGES.notFound, file: '404.html' },
   ];
 }

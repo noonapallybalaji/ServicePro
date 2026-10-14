@@ -29,6 +29,18 @@ public sealed class CustomerSessionIssuer(DbContext db, IOptions<AuthOptions> op
 
     public Task<IssuedCustomerSession> IssueAsync(CustomerInfo customer, CancellationToken ct) => Task.FromResult(Issue(customer, familyId: null).Session);
 
+    public async Task ForgetCustomerAsync(Guid customerId, PhoneNumber phone, CancellationToken ct)
+    {
+        var now = clock.UtcNow;
+        var active = await db.Set<CustomerRefreshToken>().Where(t => t.CustomerId == customerId && t.RevokedAt == null).ToListAsync(ct);
+        active.ForEach(t => t.Revoke(now));
+
+        var codes = await db.Set<OtpChallenge>()
+            .Where(c => c.Phone == phone && (c.Purpose == OtpPurpose.Booking || c.Purpose == OtpPurpose.CustomerLogin))
+            .ToListAsync(ct);
+        db.Set<OtpChallenge>().RemoveRange(codes);
+    }
+
     internal (IssuedCustomerSession Session, Guid TokenId) Issue(CustomerInfo customer, Guid? familyId)
     {
         var now = clock.UtcNow;
@@ -95,7 +107,7 @@ public sealed class RequestCustomerSignInCode(DbContext db, PhoneVerification ve
     }
 }
 
-public sealed record CustomerVerifyRequest(string Phone, string Code);
+public sealed record CustomerVerifyRequest(string Phone, string Code, bool AcceptedPolicies = false);
 
 internal sealed class CustomerVerifyRequestValidator : AbstractValidator<CustomerVerifyRequest>
 {
@@ -103,10 +115,16 @@ internal sealed class CustomerVerifyRequestValidator : AbstractValidator<Custome
     {
         RuleFor(r => r.Phone).NotEmpty();
         RuleFor(r => r.Code).NotEmpty().Matches("^[0-9]{4,8}$").WithMessage("Enter the numeric code from the SMS.");
+        RuleFor(r => r.AcceptedPolicies).Equal(true).WithMessage("Please agree to the terms and privacy policy to sign in.");
     }
 }
 
-public sealed class VerifyCustomerSignIn(DbContext db, PhoneVerification verification, ICustomerDirectory customers, CustomerSessionIssuer sessions) : IUseCase
+public sealed class VerifyCustomerSignIn(
+    DbContext db,
+    PhoneVerification verification,
+    ICustomerDirectory customers,
+    ICustomerRegistry registry,
+    CustomerSessionIssuer sessions) : IUseCase
 {
     public async Task<Result<IssuedCustomerSession>> HandleAsync(CustomerVerifyRequest request, CancellationToken ct)
     {
@@ -130,6 +148,7 @@ public sealed class VerifyCustomerSignIn(DbContext db, PhoneVerification verific
             return CustomerAuthErrors.NoAccount;
         }
 
+        await registry.RecordConsentAsync(customer.Id, RequestChannel.Website, ct);
         var (session, _) = sessions.Issue(customer, familyId: null);
         await db.SaveChangesAsync(ct);
         return session;

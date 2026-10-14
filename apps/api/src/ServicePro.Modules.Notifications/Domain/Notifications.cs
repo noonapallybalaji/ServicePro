@@ -138,4 +138,11 @@ public sealed class Notification : TenantOwnedEntity
         Status = NotificationStatus.Failed;
         Error = error.Length > 1000 ? error[..1000] : error;
     }
+
+    /// <summary>The recipient deleted their account: keep that a message was sent, not what or to whom.</summary>
+    public void Redact()
+    {
+        RecipientAddress = "removed";
+        RenderedBody = "[removed at the customer's request]";
+    }
 }

@@ -19,4 +19,5 @@ export interface OnlineBookingRequest {
   address: BookingAddressRequest;
   preferredSlotStart: string;
   preferredSlotEnd: string;
+  acceptedPolicies?: boolean;
 }

@@ -194,6 +194,70 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
+    export const getDeleteMyAccountUrl = () => {
+
+
+  
+
+  return `/api/v1/account`
+}
+
+export const deleteMyAccount = async ( options?: RequestInit): Promise<void> => {
+  
+  return apiFetch<void>(getDeleteMyAccountUrl(),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getDeleteMyAccountMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyAccount>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteMyAccount>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteMyAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteMyAccount>>, void> = () => {
+          
+
+          return  deleteMyAccount(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteMyAccountMutationResult = NonNullable<Awaited<ReturnType<typeof deleteMyAccount>>>
+    
+    export type DeleteMyAccountMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useDeleteMyAccount = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteMyAccount>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteMyAccount>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteMyAccountMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
     export const getAddMyAddressUrl = () => {
 
 

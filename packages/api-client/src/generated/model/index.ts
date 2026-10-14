@@ -10,6 +10,7 @@ export * from './accountAddressResponse';
 export * from './accountAddressResponseLabel';
 export * from './accountAddressResponseLandmark';
 export * from './accountAddressResponseLine2';
+export * from './accountConsentResponse';
 export * from './accountResponse';
 export * from './accountResponseEmail';
 export * from './actorType';

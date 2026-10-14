@@ -72,7 +72,8 @@ public sealed record OnlineBookingRequest(
     string? Code,
     BookingAddressRequest Address,
     DateTimeOffset PreferredSlotStart,
-    DateTimeOffset PreferredSlotEnd);
+    DateTimeOffset PreferredSlotEnd,
+    bool AcceptedPolicies = false);
 
 /// <summary>
 /// Session is set when this booking signed the customer in (their phone was just verified);
@@ -88,6 +89,7 @@ internal sealed class OnlineBookingRequestValidator : AbstractValidator<OnlineBo
     public OnlineBookingRequestValidator()
     {
         RuleFor(r => r.CategoryId).NotEmpty().WithMessage("Choose what needs repairing.");
+        RuleFor(r => r.AcceptedPolicies).Equal(true).WithMessage("Please agree to the terms and privacy policy to book.");
         RuleFor(r => r.ProblemDescription).NotEmpty().WithMessage("Tell us briefly what's wrong.").MaximumLength(1000);
         RuleFor(r => r.FullName).NotEmpty().WithMessage("Enter your name.").MaximumLength(120);
         RuleFor(r => r.Phone).NotEmpty();
@@ -162,7 +164,7 @@ public sealed class BookServiceOnline(
         }
 
         var customer = await customers.FindOrCreateAsync(
-            new SelfServiceContact(request.FullName.Trim(), phone.Value, RequestChannel.Website),
+            new SelfServiceContact(request.FullName.Trim(), phone.Value, RequestChannel.Website, request.AcceptedPolicies),
             new SelfServiceAddress(
                 address.Label, address.Line1, address.Line2, address.Landmark, address.Locality, address.City,
                 address.State ?? string.Empty, address.Pincode, pin?.Value),

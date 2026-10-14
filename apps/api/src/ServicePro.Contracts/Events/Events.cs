@@ -58,3 +58,6 @@ public sealed record PaymentRecorded(
 public sealed record TechnicianDutyChanged(
     Guid TechnicianId,
     TechnicianDutyStatus DutyStatus) : IDomainEvent;
+
+/// <summary>A customer's personal data was erased at their request; other modules scrub what they hold.</summary>
+public sealed record CustomerErased(Guid CustomerId) : IDomainEvent;
