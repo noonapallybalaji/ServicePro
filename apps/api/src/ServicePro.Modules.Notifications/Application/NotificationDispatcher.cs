@@ -45,7 +45,10 @@ public sealed class NotificationDispatcher(DbContext db, IEnumerable<INotificati
         }
 
         var result = await channel.SendAsync(
-            new OutgoingMessage(request.To, template.Code, template.ProviderTemplateName, template.Language, template.OrderedParameters(request.Values), rendered),
+            new OutgoingMessage(request.To, template.Code, template.ProviderTemplateName, template.Language, template.OrderedParameters(request.Values), rendered)
+            {
+                Variables = template.Variables.ToDictionary(name => name, name => request.Values.GetValueOrDefault(name, string.Empty)),
+            },
             ct);
 
         if (result.Succeeded)

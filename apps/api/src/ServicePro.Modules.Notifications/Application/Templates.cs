@@ -6,6 +6,7 @@ namespace ServicePro.Modules.Notifications.Application;
 public static class TemplateCodes
 {
     public const string SrCreated = "SR_CREATED";
+    public const string SrConfirmed = "SR_CONFIRMED";
     public const string TechAssigned = "TECH_ASSIGNED";
     public const string TechEnRoute = "TECH_EN_ROUTE";
     public const string CompletionCode = "COMPLETION_CODE";
@@ -28,7 +29,9 @@ public static class DefaultTemplates
     public static readonly IReadOnlyList<TemplateSeed> All =
     [
         new(TemplateCodes.SrCreated, NotificationChannel.WhatsApp,
-            "Hi {{customer}}, your request {{sr}} for {{service}} is confirmed. Visiting charge: {{visit_charge}}. Track it here: {{link}}"),
+            "Hi {{customer}}, we've received your request {{sr}} for {{service}}. We'll confirm your visit time shortly. Visiting charge: {{visit_charge}}. Track it here: {{link}}"),
+        new(TemplateCodes.SrConfirmed, NotificationChannel.WhatsApp,
+            "Your request {{sr}} for {{service}} is confirmed. We're assigning a technician now. Track it here: {{link}}"),
         new(TemplateCodes.TechAssigned, NotificationChannel.WhatsApp,
             "{{technician}} will handle your service {{sr}}. You can follow every step here: {{link}}"),
         new(TemplateCodes.TechEnRoute, NotificationChannel.WhatsApp,
@@ -53,5 +56,22 @@ public static class DefaultTemplates
             "{{code}} is your code to confirm your repair booking. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.OtpCustomerLogin, NotificationChannel.Sms,
             "{{code}} is your code to see your bookings. It expires in 5 minutes. Don't share it."),
+
+        // WhatsApp "authentication" templates (used when Notifications:OtpChannel = WhatsApp).
+        // Meta fixes their wording; set each one's approved name under Settings > Messages.
+        new(TemplateCodes.OtpLogin, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
+        new(TemplateCodes.OtpBooking, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
+        new(TemplateCodes.OtpCustomerLogin, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
     ];
+
+    /// <summary>
+    /// Earlier default wording that was wrong, keyed by code. The seeder replaces it only if staff
+    /// never edited the template (the body still matches exactly).
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> Superseded = new Dictionary<string, string>
+    {
+        // Said "confirmed" for bookings that still await review.
+        [TemplateCodes.SrCreated] =
+            "Hi {{customer}}, your request {{sr}} for {{service}} is confirmed. Visiting charge: {{visit_charge}}. Track it here: {{link}}",
+    };
 }

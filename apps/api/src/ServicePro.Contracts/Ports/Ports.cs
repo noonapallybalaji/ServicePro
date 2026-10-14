@@ -56,7 +56,8 @@ public interface ICustomerSessions
 
 public interface IOtpSender
 {
-    Task SendAsync(PhoneNumber phone, string code, OtpPurpose purpose, CancellationToken ct);
+    /// <summary>Sends the code; false when no channel could deliver it (the caller tells the user to retry).</summary>
+    Task<bool> SendAsync(PhoneNumber phone, string code, OtpPurpose purpose, CancellationToken ct);
 }
 
 // ── Catalog ─────────────────────────────────────────────────────────────────

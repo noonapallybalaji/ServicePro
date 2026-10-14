@@ -5088,6 +5088,26 @@
         }
       }
     },
+    "/api/v1/admin/notifications/channels": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "operationId": "ListNotificationChannels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannelsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/notifications/templates": {
       "get": {
         "tags": [
@@ -6773,6 +6793,29 @@
           }
         }
       },
+      "ChannelStatusResponse": {
+        "required": [
+          "channel",
+          "live",
+          "provider"
+        ],
+        "type": "object",
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          },
+          "live": {
+            "type": "boolean"
+          },
+          "provider": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "Whether a channel really delivers (Live) or only writes to the log."
+      },
       "CommissionType": {
         "enum": [
           "PERCENT",
@@ -8103,6 +8146,25 @@
           "WHATS_APP",
           "SMS"
         ]
+      },
+      "NotificationChannelsResponse": {
+        "required": [
+          "channels",
+          "otpChannel"
+        ],
+        "type": "object",
+        "properties": {
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChannelStatusResponse"
+            }
+          },
+          "otpChannel": {
+            "$ref": "#/components/schemas/NotificationChannel"
+          }
+        },
+        "description": "Channel status, plus which channel one-time codes try first."
       },
       "NotificationResponse": {
         "required": [

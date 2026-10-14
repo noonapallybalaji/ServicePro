@@ -32,12 +32,12 @@ public sealed class NotificationsModule : IModule
 
         services.AddScoped<NotificationDispatcher>();
         services.AddScoped<CustomerMessageContext>();
-        services.AddScoped<IOtpSender, SmsOtpSender>();
+        services.AddScoped<IOtpSender, OtpSender>();
 
         // Provider selection is configuration only (ADR 0009).
         if (options.WhatsApp.IsConfigured)
         {
-            services.AddHttpClient<MetaWhatsAppChannel>();
+            services.AddHttpClient<MetaWhatsAppChannel>(c => c.Timeout = TimeSpan.FromSeconds(15));
             services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<MetaWhatsAppChannel>());
         }
         else
@@ -45,8 +45,16 @@ public sealed class NotificationsModule : IModule
             services.AddScoped<INotificationChannel>(sp => new LoggingChannel(NotificationChannel.WhatsApp, sp.GetRequiredService<ILogger<LoggingChannel>>()));
         }
 
-        // SMS vendor is chosen after DLT registration (ADR 0009).
-        services.AddScoped<INotificationChannel>(sp => new LoggingChannel(NotificationChannel.Sms, sp.GetRequiredService<ILogger<LoggingChannel>>()));
+        // SMS: MSG91 flows (DLT-registered templates) once configured; otherwise logged (ADR 0009).
+        if (options.Sms.IsConfigured)
+        {
+            services.AddHttpClient<Msg91SmsChannel>(c => c.Timeout = TimeSpan.FromSeconds(15));
+            services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<Msg91SmsChannel>());
+        }
+        else
+        {
+            services.AddScoped<INotificationChannel>(sp => new LoggingChannel(NotificationChannel.Sms, sp.GetRequiredService<ILogger<LoggingChannel>>()));
+        }
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -57,6 +65,13 @@ public sealed class NotificationsModule : IModule
                 Results.Ok(await useCase.HandleAsync(serviceRequestId, take ?? 50, ct)))
             .Produces<IReadOnlyList<NotificationResponse>>()
             .WithName("ListNotifications");
+
+        admin.MapGet("/channels", (IEnumerable<INotificationChannel> channels, Microsoft.Extensions.Options.IOptions<NotificationOptions> options) =>
+                Results.Ok(new NotificationChannelsResponse(
+                    [.. channels.Select(c => new ChannelStatusResponse(c.Channel, c.IsLive, c.IsLive ? c.GetType().Name.Replace("Channel", string.Empty, StringComparison.Ordinal) : null))],
+                    options.Value.OtpChannel)))
+            .Produces<NotificationChannelsResponse>()
+            .WithName("ListNotificationChannels");
 
         admin.MapGet("/templates", async (ManageTemplates useCase, CancellationToken ct) => Results.Ok(await useCase.ListAsync(ct)))
             .Produces<IReadOnlyList<TemplateResponse>>()
@@ -73,6 +88,12 @@ public sealed class NotificationsModule : IModule
 }
 
 // ── Admin read/write ────────────────────────────────────────────────────────
+
+/// <summary>Whether a channel really delivers (Live) or only writes to the log.</summary>
+public sealed record ChannelStatusResponse(NotificationChannel Channel, bool Live, string? Provider);
+
+/// <summary>Channel status, plus which channel one-time codes try first.</summary>
+public sealed record NotificationChannelsResponse(IReadOnlyList<ChannelStatusResponse> Channels, NotificationChannel OtpChannel);
 
 public sealed record NotificationResponse(
     Guid Id,
@@ -145,6 +166,16 @@ public sealed class NotificationTemplateSeeder(DbContext db) : IDataSeeder
         foreach (var seed in DefaultTemplates.All.Where(s => !existing.Contains((s.Code, s.Channel, NotificationDispatcher.DefaultLanguage))))
         {
             db.Set<NotificationTemplate>().Add(new NotificationTemplate(seed.Code, seed.Channel, NotificationDispatcher.DefaultLanguage, seed.Body, null));
+        }
+
+        // Correct default wording we later found misleading, unless staff have edited it.
+        var outdated = await db.Set<NotificationTemplate>()
+            .Where(t => DefaultTemplates.Superseded.Keys.Contains(t.Code) && t.Language == NotificationDispatcher.DefaultLanguage)
+            .ToListAsync(ct);
+        foreach (var template in outdated.Where(t => DefaultTemplates.Superseded[t.Code] == t.Body))
+        {
+            var current = DefaultTemplates.All.First(s => s.Code == template.Code && s.Channel == template.Channel);
+            template.Update(current.Body, template.ProviderTemplateName, template.IsActive);
         }
 
         await db.SaveChangesAsync(ct);

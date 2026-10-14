@@ -169,7 +169,7 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
             LastStatusChangeAt = now,
         };
 
-        request.Raise(new ServiceRequestCreated(request.Id, request.SrNumber, request.CustomerId));
+        request.Raise(new ServiceRequestCreated(request.Id, request.SrNumber, request.CustomerId, details.AwaitsReview));
 
         // Self-service bookings stay NEW until staff check them; staff-created jobs are ready at once.
         if (!details.AwaitsReview)

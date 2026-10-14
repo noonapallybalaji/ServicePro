@@ -78,7 +78,7 @@ public sealed class JobLifecycleTests(ApiFactory factory)
 
         var messages = await owner.GetAsync<List<NotificationResponse>>($"/api/v1/admin/notifications?serviceRequestId={jobId}");
         messages.Select(m => m.TemplateCode).ShouldBe(
-            ["SR_CREATED", "JOB_OFFER", "TECH_ASSIGNED", "TECH_EN_ROUTE", "COMPLETION_CODE", "JOB_COMPLETED"],
+            ["SR_CONFIRMED", "JOB_OFFER", "TECH_ASSIGNED", "TECH_EN_ROUTE", "COMPLETION_CODE", "JOB_COMPLETED"],
             ignoreOrder: true);
         var customerPhone = customer.PrimaryPhone;
         messages.Where(m => m.RecipientType == Modules.Notifications.Domain.RecipientType.Customer)

@@ -6,6 +6,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 - ✅ built
 - 🟡 partly built: exists for staff or in the data model, but not usable by the customer
 - ❌ missing
+- 🔌 built; works as soon as the business adds its provider account details (nothing else to code)
 
 **Priority:**
 - **P0:** needed before taking real customers' money at scale
@@ -34,7 +35,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 2.1 | Sign in with phone and one-time code | ✅ | At booking (automatic) and on "My bookings". Customer sessions are separate from staff. | — | — |
-| 2.2 | **Codes actually delivered by SMS or WhatsApp** | 🟡 | Messages are **only written to the API log**: no SMS provider (DLT-registered templates needed in India) and no WhatsApp Cloud API credentials. In production, nobody can receive a code. | **P0** | S–M |
+| 2.2 | **Codes actually delivered by SMS or WhatsApp** | 🔌 | Codes go by SMS (MSG91) or WhatsApp (authentication template with a copy-code button), whichever is live, preferred channel first (`Notifications__OtpChannel`). If no live channel takes the code, the customer sees "We couldn't send the code" instead of waiting for nothing. Needs MSG91 + DLT templates and/or Meta credentials. | **P0** | S–M |
 | 2.3 | Terms of Service and Privacy Policy acceptance | ❌ | No legal pages; no consent recorded at sign-up or booking. | **P0** | S |
 | 2.4 | Delete account and download my data (DPDP Act 2023) | ❌ | No self-service deletion or export; no retention policy. | **P0** | M |
 | 2.5 | Marketing and WhatsApp opt-in, opt-out | ❌ | Needed for promotional WhatsApp templates and DPDP consent. | P1 | S |
@@ -62,7 +63,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 |---|---|---|---|---|---|
 | 4.1 | Booking received screen and tracking link | ✅ | | — | — |
 | 4.2 | **Automatic confirmation and technician assignment** | 🟡 | Online and WhatsApp bookings wait in NEW for **manual** staff review; dispatch is "suggest" mode. Customers expect "Technician assigned" within minutes. The matching engine and offers exist; AUTO_OFFER is planned (PLAN Phase 3). | **P0** | M |
-| 4.3 | **Customer notified at each step** (confirmed, assigned, on the way, done) | 🟡 | Templates and event handlers exist, but **nothing is sent** (no WhatsApp provider; see 11.1). | **P0** | S (after 11.1) |
+| 4.3 | **Customer notified at each step** (confirmed, assigned, on the way, done) | 🔌 | Self-booked requests get "received" and then a separate "confirmed" message when staff confirm (the old "is confirmed" wording at booking was wrong). Staff-created jobs get one "confirmed" message. Sends once 11.1 or 11.2 is live. | **P0** | S (after 11.1) |
 | 4.4 | Technician profile: photo, rating, jobs done, verified badge | 🟡 | Tracking shows name, rating and job count when available. No photo upload; "verified" needs a real ID-check process first. | P1 | S |
 | 4.5 | Promised arrival time (ETA) | ❌ | Only the preferred window. | P1 | M |
 
@@ -136,8 +137,8 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
-| 11.1 | **WhatsApp messages actually delivered** | 🟡 | Templates, dispatcher and delivery records exist; no Meta WhatsApp Cloud API credentials or **approved templates**. Everything is logged only. | **P0** | S (+ Meta approval time) |
-| 11.2 | **SMS delivery** (DLT registration in India) | 🟡 | Same: logged only. | **P0** | S (+ DLT approval) |
+| 11.1 | **WhatsApp messages actually delivered** | 🔌 | Cloud API channel is built. Add `Notifications__WhatsApp__*` and each approved template name in Admin → Settings → Messages, which also shows whether each channel is live. Delivery/read receipts are not tracked: Meta allows one webhook per app and n8n already uses it. | **P0** | S (+ Meta approval time) |
+| 11.2 | **SMS delivery** (DLT registration in India) | 🔌 | MSG91 flow API channel is built. Add `Notifications__Sms__Provider=Msg91`, `Notifications__Sms__AuthKey`, and each template's MSG91 flow ID in Admin → Settings → Messages. | **P0** | S (+ DLT approval) |
 | 11.3 | Email (receipts, invoices) | ❌ | | P2 | S |
 | 11.4 | Web or app push | ❌ | See 1.8, 6.4. | P1 | M |
 | 11.5 | Notification preferences | ❌ | See 2.5. | P2 | S |
@@ -176,7 +177,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 ## Suggested order of work
 
 **Phase A: can take real bookings and money (P0)**
-1. Message delivery (11.1, 11.2). This also unlocks sign-in codes (2.2) and step notifications (4.3).
+1. ~~Message delivery (11.1, 11.2). This also unlocks sign-in codes (2.2) and step notifications (4.3).~~ Built; waiting on provider accounts.
 2. Legal pages and consent (13.1, 2.3), and account deletion (2.4).
 3. Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).
 4. Customer cancel and reschedule with policy (5.2, 5.3).

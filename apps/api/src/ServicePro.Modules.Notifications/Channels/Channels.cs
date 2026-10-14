@@ -15,7 +15,11 @@ public sealed record OutgoingMessage(
     string? ProviderTemplateName,
     string Language,
     IReadOnlyList<string> Parameters,
-    string RenderedBody);
+    string RenderedBody)
+{
+    /// <summary>The same values by placeholder name (SMS providers address variables by name).</summary>
+    public IReadOnlyDictionary<string, string> Variables { get; init; } = new Dictionary<string, string>();
+}
 
 public sealed record SendResult(bool Succeeded, string? ProviderMessageId, string? Error)
 {
@@ -29,6 +33,9 @@ public interface INotificationChannel
 {
     NotificationChannel Channel { get; }
 
+    /// <summary>False for the logging stand-in: the message reaches no one.</summary>
+    bool IsLive { get; }
+
     Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct);
 }
 
@@ -40,6 +47,28 @@ public sealed class NotificationOptions
     public string PublicSiteUrl { get; set; } = "http://localhost:5175";
 
     public WhatsAppOptions WhatsApp { get; set; } = new();
+
+    public SmsOptions Sms { get; set; } = new();
+
+    /// <summary>
+    /// Where one-time codes go first: "WhatsApp" (authentication templates; no DLT needed) or "Sms".
+    /// If the first channel fails, the code is sent by the other one when it is configured.
+    /// </summary>
+    public NotificationChannel OtpChannel { get; set; } = NotificationChannel.Sms;
+}
+
+/// <summary>SMS provider. India requires DLT-registered templates; MSG91 "flows" carry the DLT template.</summary>
+public sealed class SmsOptions
+{
+    /// <summary>"Msg91" to send for real; empty to only log.</summary>
+    public string? Provider { get; set; }
+
+    public string? AuthKey { get; set; }
+
+    public string BaseUrl { get; set; } = "https://control.msg91.com";
+
+    public bool IsConfigured =>
+        string.Equals(Provider, "Msg91", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(AuthKey);
 }
 
 public sealed class WhatsAppOptions
@@ -61,6 +90,8 @@ public sealed partial class LoggingChannel(NotificationChannel channel, ILogger<
 {
     public NotificationChannel Channel => channel;
 
+    public bool IsLive => false;
+
     public Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct)
     {
         LogMessage(channel, message.To, message.TemplateCode, message.RenderedBody);
@@ -79,6 +110,8 @@ public sealed partial class LoggingChannel(NotificationChannel channel, ILogger<
 public sealed class MetaWhatsAppChannel(HttpClient http, IOptions<NotificationOptions> options) : INotificationChannel
 {
     public NotificationChannel Channel => NotificationChannel.WhatsApp;
+
+    public bool IsLive => true;
 
     public async Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct)
     {
@@ -109,20 +142,99 @@ public sealed class MetaWhatsAppChannel(HttpClient http, IOptions<NotificationOp
     }
 
     /// <summary>Cloud API template payload. Public for unit tests of the request shape.</summary>
-    public static object BuildPayload(OutgoingMessage message) => new
+    public static object BuildPayload(OutgoingMessage message)
     {
-        messaging_product = "whatsapp",
-        to = message.To.TrimStart('+'),
-        type = "template",
-        template = new
+        var components = new List<object>();
+        if (message.Parameters.Count > 0)
         {
-            name = message.ProviderTemplateName,
-            language = new { code = message.Language },
-            components = message.Parameters.Count == 0
-                ? Array.Empty<object>()
-                : [new { type = "body", parameters = message.Parameters.Select(p => new { type = "text", text = p }).ToArray() }],
-        },
-    };
+            components.Add(new { type = "body", parameters = message.Parameters.Select(p => new { type = "text", text = p }).ToArray() });
+        }
+
+        // One-time codes use Meta "authentication" templates: the code also fills the copy-code button.
+        if (IsOneTimeCode(message.TemplateCode) && message.Parameters.Count > 0)
+        {
+            components.Add(new
+            {
+                type = "button",
+                sub_type = "url",
+                index = "0",
+                parameters = new[] { new { type = "text", text = message.Parameters[0] } },
+            });
+        }
+
+        return new
+        {
+            messaging_product = "whatsapp",
+            to = message.To.TrimStart('+'),
+            type = "template",
+            template = new
+            {
+                name = message.ProviderTemplateName,
+                language = new { code = message.Language },
+                components = components.ToArray(),
+            },
+        };
+    }
+
+    public static bool IsOneTimeCode(string templateCode) => templateCode.StartsWith("OTP_", StringComparison.Ordinal);
 
     private static readonly JsonSerializerOptions Json = new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+}
+
+/// <summary>
+/// MSG91 Flow API (SMS with a DLT-registered template). The flow id goes in the template's
+/// "provider template name"; MSG91 flow variables must be named like our placeholders
+/// (e.g. ##code## for {{code}}).
+/// </summary>
+public sealed class Msg91SmsChannel(HttpClient http, IOptions<NotificationOptions> options) : INotificationChannel
+{
+    public NotificationChannel Channel => NotificationChannel.Sms;
+
+    public bool IsLive => true;
+
+    public async Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct)
+    {
+        if (message.ProviderTemplateName is null)
+        {
+            return SendResult.Fail($"Template '{message.TemplateCode}' has no MSG91 flow id (DLT template).");
+        }
+
+        var sms = options.Value.Sms;
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{sms.BaseUrl.TrimEnd('/')}/api/v5/flow")
+        {
+            Content = JsonContent.Create(BuildPayload(message, message.Variables)),
+        };
+        request.Headers.Add("authkey", sms.AuthKey);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await http.SendAsync(request, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            return SendResult.Fail($"MSG91 {(int)response.StatusCode}: {body}");
+        }
+
+        using var document = JsonDocument.Parse(body);
+        var root = document.RootElement;
+        var ok = root.TryGetProperty("type", out var type) && type.GetString() == "success";
+        var id = root.TryGetProperty("message", out var idElement) ? idElement.GetString() : null;
+        return ok ? SendResult.Ok(id) : SendResult.Fail($"MSG91: {body}");
+    }
+
+    /// <summary>Flow payload: one recipient, variables by name. Public for unit tests.</summary>
+    public static Dictionary<string, object> BuildPayload(OutgoingMessage message, IReadOnlyDictionary<string, string> variables)
+    {
+        var recipient = new Dictionary<string, string> { ["mobiles"] = message.To.TrimStart('+') };
+        foreach (var (name, value) in variables)
+        {
+            recipient[name] = value;
+        }
+
+        return new Dictionary<string, object>
+        {
+            ["template_id"] = message.ProviderTemplateName!,
+            ["short_url"] = "0",
+            ["recipients"] = new[] { recipient },
+        };
+    }
 }

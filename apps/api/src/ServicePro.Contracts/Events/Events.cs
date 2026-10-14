@@ -12,7 +12,8 @@ namespace ServicePro.Contracts.Events;
 public sealed record ServiceRequestCreated(
     Guid ServiceRequestId,
     string SrNumber,
-    Guid CustomerId) : IDomainEvent;
+    Guid CustomerId,
+    bool AwaitsReview = false) : IDomainEvent;
 
 public sealed record ServiceRequestStatusChanged(
     Guid ServiceRequestId,

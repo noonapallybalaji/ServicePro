@@ -72,10 +72,16 @@ public sealed class CustomerMessageContext(
     }
 }
 
+/// <summary>
+/// "We've received it" goes only to bookings that wait for review. Staff-created jobs are confirmed
+/// at once, so their customer gets the single SR_CONFIRMED message from the status change instead.
+/// </summary>
 public sealed class NotifyCustomerOnCreated(CustomerMessageContext messages) : IEventHandler<ServiceRequestCreated>
 {
     public Task HandleAsync(ServiceRequestCreated e, CancellationToken ct) =>
-        messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.SrCreated, null, null, ct);
+        e.AwaitsReview
+            ? messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.SrCreated, null, null, ct)
+            : Task.CompletedTask;
 }
 
 /// <summary>Status → customer message. Adding a message is a new row, not new code (open/closed).</summary>
@@ -92,10 +98,18 @@ public sealed class NotifyCustomerOnStatusChange(CustomerMessageContext messages
         [ServiceRequestStatus.Cancelled] = TemplateCodes.SrCancelled,
     };
 
-    public Task HandleAsync(ServiceRequestStatusChanged e, CancellationToken ct) =>
-        TemplateFor.TryGetValue(e.To, out var template)
+    public Task HandleAsync(ServiceRequestStatusChanged e, CancellationToken ct)
+    {
+        // NEW → READY: staff confirmed a reviewed booking, or created the job. Returning a job to the queue later must not repeat it.
+        if (e.From == ServiceRequestStatus.New && e.To == ServiceRequestStatus.ReadyForAssignment)
+        {
+            return messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.SrConfirmed, null, null, ct);
+        }
+
+        return TemplateFor.TryGetValue(e.To, out var template)
             ? messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, template, e.TechnicianId, null, ct)
             : Task.CompletedTask;
+    }
 }
 
 public sealed class SendCompletionCode(CustomerMessageContext messages, IServiceRequestWorkflow serviceRequests) : IEventHandler<CompletionCodeIssued>
@@ -141,10 +155,13 @@ public sealed class NotifyTechnicianOfOffer(
     }
 }
 
-/// <summary>Implements the Identity module's OTP port over SMS.</summary>
-public sealed class SmsOtpSender(NotificationDispatcher dispatcher) : IOtpSender
+/// <summary>
+/// Implements the Identity module's OTP port. Sends on the configured first channel
+/// (Notifications:OtpChannel) and falls back to the other channel if the first one fails.
+/// </summary>
+public sealed class OtpSender(NotificationDispatcher dispatcher, IEnumerable<INotificationChannel> channels, IOptions<NotificationOptions> options) : IOtpSender
 {
-    public async Task SendAsync(PhoneNumber phone, string code, OtpPurpose purpose, CancellationToken ct)
+    public async Task<bool> SendAsync(PhoneNumber phone, string code, OtpPurpose purpose, CancellationToken ct)
     {
         var (template, recipient) = purpose switch
         {
@@ -152,13 +169,34 @@ public sealed class SmsOtpSender(NotificationDispatcher dispatcher) : IOtpSender
             OtpPurpose.CustomerLogin => (TemplateCodes.OtpCustomerLogin, RecipientType.Customer),
             _ => (TemplateCodes.OtpLogin, RecipientType.Technician),
         };
-        var notification = await dispatcher.SendAsync(new NotificationRequest(
-            template, NotificationChannel.Sms, recipient, null, phone.Value,
-            NotificationDispatcher.DefaultLanguage, new Dictionary<string, string> { ["code"] = code }, null), ct);
 
-        if (notification.Status == NotificationStatus.Failed)
+        foreach (var channel in DeliveryOrder(options.Value.OtpChannel, channels))
         {
-            throw new InvalidOperationException($"Couldn't send the one-time code: {notification.Error}");
+            var notification = await dispatcher.SendAsync(new NotificationRequest(
+                template, channel, recipient, null, phone.Value,
+                NotificationDispatcher.DefaultLanguage, new Dictionary<string, string> { ["code"] = code }, null), ct);
+            if (notification.Status != NotificationStatus.Failed)
+            {
+                return true;
+            }
         }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Channels that really deliver, preferred one first. Only when none does (development) is the
+    /// preferred channel used as-is, which logs the code. A logging channel never counts as a fallback:
+    /// that would report "sent" for a code nobody received.
+    /// </summary>
+    public static IReadOnlyList<NotificationChannel> DeliveryOrder(NotificationChannel preferred, IEnumerable<INotificationChannel> channels)
+    {
+        var live = channels.Where(c => c.IsLive).Select(c => c.Channel).Distinct().ToList();
+        if (live.Count == 0)
+        {
+            return [preferred];
+        }
+
+        return [.. live.OrderBy(c => c == preferred ? 0 : 1)];
     }
 }

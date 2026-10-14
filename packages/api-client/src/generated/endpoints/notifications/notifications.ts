@@ -27,6 +27,7 @@ import type {
 import type {
   HttpValidationProblemDetails,
   ListNotificationsParams,
+  NotificationChannelsResponse,
   NotificationResponse,
   ProblemDetails,
   TemplateResponse,
@@ -126,6 +127,95 @@ export function useListNotifications<TData = Awaited<ReturnType<typeof listNotif
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getListNotificationChannelsUrl = () => {
+
+
+  
+
+  return `/api/v1/admin/notifications/channels`
+}
+
+export const listNotificationChannels = async ( options?: RequestInit): Promise<NotificationChannelsResponse> => {
+  
+  return apiFetch<NotificationChannelsResponse>(getListNotificationChannelsUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getListNotificationChannelsQueryKey = () => {
+    return [`/api/v1/admin/notifications/channels`] as const;
+    }
+
+    
+export const getListNotificationChannelsQueryOptions = <TData = Awaited<ReturnType<typeof listNotificationChannels>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotificationChannels>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListNotificationChannelsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listNotificationChannels>>> = ({ signal }) => listNotificationChannels({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listNotificationChannels>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListNotificationChannelsQueryResult = NonNullable<Awaited<ReturnType<typeof listNotificationChannels>>>
+export type ListNotificationChannelsQueryError = unknown
+
+
+export function useListNotificationChannels<TData = Awaited<ReturnType<typeof listNotificationChannels>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotificationChannels>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNotificationChannels>>,
+          TError,
+          Awaited<ReturnType<typeof listNotificationChannels>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListNotificationChannels<TData = Awaited<ReturnType<typeof listNotificationChannels>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotificationChannels>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listNotificationChannels>>,
+          TError,
+          Awaited<ReturnType<typeof listNotificationChannels>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListNotificationChannels<TData = Awaited<ReturnType<typeof listNotificationChannels>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotificationChannels>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListNotificationChannels<TData = Awaited<ReturnType<typeof listNotificationChannels>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listNotificationChannels>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListNotificationChannelsQueryOptions(options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

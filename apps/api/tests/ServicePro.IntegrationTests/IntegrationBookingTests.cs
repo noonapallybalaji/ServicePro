@@ -2,7 +2,9 @@ using System.Net;
 using System.Net.Http.Json;
 using ServicePro.Contracts;
 using ServicePro.IntegrationTests.Infrastructure;
+using ServicePro.Modules.Notifications;
 using ServicePro.Modules.ServiceRequests.Application;
+using ServicePro.SharedKernel;
 
 namespace ServicePro.IntegrationTests;
 
@@ -110,5 +112,24 @@ public sealed class IntegrationBookingTests(ApiFactory factory)
             request.Headers.Add(KeyHeader, ApiFactory.IntegrationKey);
             (await api.Client.SendAsync(request)).StatusCode.ShouldBe(HttpStatusCode.Unauthorized, adminPath);
         }
+    }
+
+    [Fact]
+    public async Task The_customer_hears_received_at_booking_and_confirmed_only_when_staff_confirm()
+    {
+        var api = new TestApi(factory);
+        var body = await BookingAsync(api, $"wamid.{Guid.NewGuid():N}", TestApi.RandomPhone());
+        var booking = (await (await api.Client.SendAsync(Post(body))).Content.ReadFromJsonAsync<IntegrationBookingResponse>(TestApi.Json))!;
+
+        var owner = await new TestApi(factory).AsOwnerAsync();
+        var job = (await owner.GetAsync<PagedResult<ServiceRequestCard>>($"/api/v1/admin/service-requests?srNumber={booking.SrNumber}")).Items.ShouldHaveSingleItem();
+        await factory.DrainOutboxAsync();
+        var path = $"/api/v1/admin/notifications?serviceRequestId={job.Id}";
+        (await owner.GetAsync<List<NotificationResponse>>(path)).Select(m => m.TemplateCode).ShouldBe(["SR_CREATED"]);
+
+        await owner.PostAsync($"/api/v1/admin/service-requests/{job.Id}/transitions",
+            new TransitionRequest(ServiceRequestStatus.ReadyForAssignment, null, null, null, null, null));
+        await factory.DrainOutboxAsync();
+        (await owner.GetAsync<List<NotificationResponse>>(path)).Select(m => m.TemplateCode).ShouldBe(["SR_CREATED", "SR_CONFIRMED"], ignoreOrder: true);
     }
 }

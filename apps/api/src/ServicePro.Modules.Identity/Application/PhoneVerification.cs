@@ -30,8 +30,12 @@ public sealed class PhoneVerification(DbContext db, IOtpSender sender, IOptions<
         var expiresAt = now.AddMinutes(_options.OtpTtlMinutes);
         db.Set<OtpChallenge>().Add(new OtpChallenge(phone, purpose, SecureTokens.Hash(code), expiresAt));
 
-        // Send first: if delivery throws, the caller never saves the challenge.
-        await sender.SendAsync(phone, code, purpose, ct);
+        // Send first: if no channel delivers, the caller doesn't save, so the customer can retry at once.
+        if (!await sender.SendAsync(phone, code, purpose, ct))
+        {
+            return Error.Conflict("otp.delivery_failed", "We couldn't send the code right now. Please try again in a minute, or call us.");
+        }
+
         return new IssuedOtp(expiresAt, _options.OtpLength, _options.ExposeOtpInResponse ? code : null);
     }
 

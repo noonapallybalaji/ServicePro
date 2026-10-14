@@ -65,3 +65,72 @@ public sealed class MetaWhatsAppChannelTests
         result.Error!.ShouldContain("approved");
     }
 }
+
+public sealed class OneTimeCodeDeliveryTests
+{
+    [Fact]
+    public void Whatsapp_code_templates_carry_the_copy_code_button()
+    {
+        var payload = MetaWhatsAppChannel.BuildPayload(new OutgoingMessage(
+            "+919876543210", "OTP_BOOKING", "otp_booking_v1", "en", ["482913"], "ignored"));
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(payload));
+        var components = json.RootElement.GetProperty("template").GetProperty("components");
+        components.GetArrayLength().ShouldBe(2);
+        var button = components[1];
+        button.GetProperty("type").GetString().ShouldBe("button");
+        button.GetProperty("sub_type").GetString().ShouldBe("url");
+        button.GetProperty("parameters")[0].GetProperty("text").GetString().ShouldBe("482913");
+    }
+
+    [Fact]
+    public void Msg91_flow_payload_sends_variables_by_name()
+    {
+        var payload = Msg91SmsChannel.BuildPayload(
+            new OutgoingMessage("+919876543210", "OTP_LOGIN", "dlt-flow-id", "en", ["482913"], "ignored"),
+            new Dictionary<string, string> { ["code"] = "482913" });
+
+        using var json = JsonDocument.Parse(JsonSerializer.Serialize(payload));
+        var root = json.RootElement;
+        root.GetProperty("template_id").GetString().ShouldBe("dlt-flow-id");
+        var recipient = root.GetProperty("recipients")[0];
+        recipient.GetProperty("mobiles").GetString().ShouldBe("919876543210");
+        recipient.GetProperty("code").GetString().ShouldBe("482913");
+    }
+
+    [Fact]
+    public void Preferred_live_channel_is_tried_first_then_other_live_channels()
+    {
+        var order = OtpSender.DeliveryOrder(NotificationChannel.WhatsApp,
+            [new StubChannel(NotificationChannel.Sms, live: true), new StubChannel(NotificationChannel.WhatsApp, live: true)]);
+
+        order.ShouldBe([NotificationChannel.WhatsApp, NotificationChannel.Sms]);
+    }
+
+    [Fact]
+    public void A_log_only_channel_is_never_used_as_a_fallback()
+    {
+        var order = OtpSender.DeliveryOrder(NotificationChannel.WhatsApp,
+            [new StubChannel(NotificationChannel.Sms, live: true), new StubChannel(NotificationChannel.WhatsApp, live: false)]);
+
+        order.ShouldBe([NotificationChannel.Sms]);
+    }
+
+    [Fact]
+    public void With_nothing_live_the_preferred_channel_logs_the_code_for_development()
+    {
+        var order = OtpSender.DeliveryOrder(NotificationChannel.Sms,
+            [new StubChannel(NotificationChannel.Sms, live: false), new StubChannel(NotificationChannel.WhatsApp, live: false)]);
+
+        order.ShouldBe([NotificationChannel.Sms]);
+    }
+
+    private sealed class StubChannel(NotificationChannel channel, bool live) : INotificationChannel
+    {
+        public NotificationChannel Channel => channel;
+
+        public bool IsLive => live;
+
+        public Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct) => Task.FromResult(SendResult.Ok(null));
+    }
+}
