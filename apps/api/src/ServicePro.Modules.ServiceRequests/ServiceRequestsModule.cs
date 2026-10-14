@@ -29,6 +29,8 @@ public sealed class ServiceRequestsModule : IModule
         services.Configure<PublicSiteOptions>(configuration.GetSection("Notifications"));
         services.AddSetting(OpsSettings.StuckAfterMinutes);
         services.AddSetting(OpsSettings.EstimateRequiredBeforeRepair);
+        services.AddSetting(OpsSettings.AutoConfirmWebsiteBookings);
+        services.AddSetting(OpsSettings.AutoConfirmWhatsAppBookings);
         services.AddSetting(CustomerChangeSettings.CanCancel);
         services.AddSetting(CustomerChangeSettings.CanReschedule);
         services.AddSetting(CustomerChangeSettings.MaxReschedules);

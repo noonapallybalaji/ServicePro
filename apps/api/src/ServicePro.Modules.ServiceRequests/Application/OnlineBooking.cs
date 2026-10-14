@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Application;
+using ServicePro.BuildingBlocks.Settings;
 using ServicePro.Contracts;
 using ServicePro.Contracts.Ports;
 using ServicePro.Modules.ServiceRequests.Domain;
@@ -121,6 +122,7 @@ public sealed class BookServiceOnline(
     ICustomerSessions sessions,
     ICurrentUser currentUser,
     ICatalogDirectory catalog,
+    ISettingsStore settings,
     IClock clock) : IUseCase
 {
     public async Task<Result<OnlineBookingOutcome>> HandleAsync(OnlineBookingRequest request, CancellationToken ct)
@@ -192,7 +194,7 @@ public sealed class BookServiceOnline(
                 ScheduledEnd: null,
                 IsWarrantyVisit: false,
                 ParentServiceRequestId: null,
-                AwaitsReview: true),
+                AwaitsReview: !await settings.GetAsync(OpsSettings.AutoConfirmWebsiteBookings, ct)),
             Actor.Customer,
             clock.UtcNow);
 

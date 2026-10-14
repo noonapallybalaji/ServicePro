@@ -147,19 +147,15 @@ internal sealed class AssignTechnicianRequestValidator : AbstractValidator<Assig
 }
 
 /// <summary>
-/// Offers a job to a technician (PLAN.md §4.3, suggest mode: the owner picks). Reassigning
-/// cancels the current assignment first. "Mark accepted" is for when the owner already agreed
-/// the job with the technician by phone.
+/// Offers a job to a technician (PLAN.md §4.3). Shared by the owner picking someone (suggest
+/// mode) and automatic dispatch. Reassigning cancels the current assignment first. "Mark
+/// accepted" is for when the owner already agreed the job with the technician by phone.
+/// Participates in the caller's unit of work: it never saves.
 /// </summary>
-public sealed class AssignTechnician(
-    DbContext db,
-    IServiceRequestWorkflow workflow,
-    GetCandidates candidates,
-    ISettingsStore settings,
-    ICurrentUser currentUser,
-    IClock clock) : IUseCase
+public sealed class JobOffers(DbContext db, IServiceRequestWorkflow workflow, GetCandidates candidates, ISettingsStore settings, IClock clock)
 {
-    public async Task<Result<AssignmentResponse>> HandleAsync(Guid serviceRequestId, AssignTechnicianRequest request, CancellationToken ct)
+    public async Task<Result<TechnicianAssignment>> OfferAsync(
+        Guid serviceRequestId, Guid technicianId, string? overrideReason, bool markAccepted, Actor actor, CancellationToken ct)
     {
         var job = await workflow.GetDispatchContextAsync(serviceRequestId, ct);
         if (job.IsFailure)
@@ -168,21 +164,19 @@ public sealed class AssignTechnician(
         }
 
         var ranked = await candidates.HandleAsync(serviceRequestId, ct);
-        var candidate = ranked.IsSuccess ? ranked.Value.FirstOrDefault(c => c.TechnicianId == request.TechnicianId) : null;
+        var candidate = ranked.IsSuccess ? ranked.Value.FirstOrDefault(c => c.TechnicianId == technicianId) : null;
         if (candidate is null)
         {
             return Error.Validation("dispatch.not_a_candidate", "This technician doesn't have the skill for this appliance.");
         }
 
-        if (!candidate.IsRecommended && string.IsNullOrWhiteSpace(request.OverrideReason))
+        if (!candidate.IsRecommended && string.IsNullOrWhiteSpace(overrideReason))
         {
             return Error.Validation("dispatch.override_reason_required",
                 $"{candidate.FullName} isn't recommended ({string.Join("; ", candidate.Reasons)}). Add a reason to assign anyway.");
         }
 
-        var actor = currentUser.ToActor();
         var now = clock.UtcNow;
-
         var open = await db.Set<TechnicianAssignment>()
             .Where(a => a.ServiceRequestId == serviceRequestId && (a.Status == AssignmentStatus.Offered || a.Status == AssignmentStatus.Accepted))
             .ToListAsync(ct);
@@ -198,27 +192,42 @@ public sealed class AssignTechnician(
 
         var timeout = TimeSpan.FromMinutes(await settings.GetAsync(DispatchSettings.OfferTimeoutMinutes, ct));
         var score = new CandidateScore(candidate.Rank, candidate.MatchScore, candidate.Breakdown, candidate.DistanceKm);
-        var assignment = TechnicianAssignment.Offer(serviceRequestId, request.TechnicianId, job.Value.CustomerId, actor, score, request.OverrideReason, now, timeout);
+        var assignment = TechnicianAssignment.Offer(serviceRequestId, technicianId, job.Value.CustomerId, actor, score, overrideReason, now, timeout);
         db.Set<TechnicianAssignment>().Add(assignment);
 
-        var offered = await workflow.OfferAsync(serviceRequestId, request.TechnicianId, assignment.Id, actor, ct);
+        var offered = await workflow.OfferAsync(serviceRequestId, technicianId, assignment.Id, actor, ct);
         if (offered.IsFailure)
         {
             return offered.Error!;
         }
 
-        if (request.MarkAccepted)
+        if (markAccepted)
         {
             assignment.Accept(now);
-            var accepted = await workflow.AcceptOfferAsync(serviceRequestId, request.TechnicianId, actor, ct);
+            var accepted = await workflow.AcceptOfferAsync(serviceRequestId, technicianId, actor, ct);
             if (accepted.IsFailure)
             {
                 return accepted.Error!;
             }
         }
 
+        return assignment;
+    }
+}
+
+/// <summary>The owner picks the technician (suggest mode).</summary>
+public sealed class AssignTechnician(DbContext db, JobOffers offers, ICurrentUser currentUser) : IUseCase
+{
+    public async Task<Result<AssignmentResponse>> HandleAsync(Guid serviceRequestId, AssignTechnicianRequest request, CancellationToken ct)
+    {
+        var assignment = await offers.OfferAsync(serviceRequestId, request.TechnicianId, request.OverrideReason, request.MarkAccepted, currentUser.ToActor(), ct);
+        if (assignment.IsFailure)
+        {
+            return assignment.Error!;
+        }
+
         await db.SaveChangesAsync(ct);
-        return assignment.ToResponse();
+        return assignment.Value.ToResponse();
     }
 }
 

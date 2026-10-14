@@ -10,6 +10,16 @@ public static class OpsSettings
         180,
         "Flag a job as stuck when its status hasn't changed for this many minutes.");
 
+    public static readonly SettingDefinition<bool> AutoConfirmWebsiteBookings = new(
+        "booking.auto_confirm_website",
+        false,
+        "Confirm website bookings straight away (the customer verified their phone) instead of waiting for staff review.");
+
+    public static readonly SettingDefinition<bool> AutoConfirmWhatsAppBookings = new(
+        "booking.auto_confirm_whatsapp",
+        false,
+        "Confirm bookings made through the WhatsApp assistant straight away instead of waiting for staff review.");
+
     public static readonly SettingDefinition<bool> EstimateRequiredBeforeRepair = new(
         "estimates.required_before_repair",
         false,

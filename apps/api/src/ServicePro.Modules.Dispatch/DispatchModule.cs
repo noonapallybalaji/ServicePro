@@ -25,6 +25,9 @@ public sealed class DispatchModule : IModule
     {
         services.AddScoped<MatchContextBuilder>();
         services.AddScoped<MatchingEngine>();
+        services.AddScoped<JobOffers>();
+        services.AddSetting(AutoDispatchSettings.AutoOffer);
+        services.AddSetting(AutoDispatchSettings.MaxAutoOffers);
 
         // Add or remove a rule/factor here — the engine itself never changes (open/closed).
         services.AddSingleton<IEligibilityRule, HasRequiredSkillRule>();

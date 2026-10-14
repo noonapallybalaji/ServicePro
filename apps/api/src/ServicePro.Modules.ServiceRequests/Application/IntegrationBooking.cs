@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using ServicePro.BuildingBlocks.Application;
+using ServicePro.BuildingBlocks.Settings;
 using ServicePro.Contracts;
 using ServicePro.Contracts.Ports;
 using ServicePro.Modules.ServiceRequests.Domain;
@@ -89,6 +90,7 @@ public sealed class BookViaIntegration(
     ICustomerRegistry customers,
     ICatalogDirectory catalog,
     IOptions<PublicSiteOptions> site,
+    ISettingsStore settings,
     IClock clock) : IUseCase
 {
     private const RequestChannel Channel = RequestChannel.WhatsApp;
@@ -154,7 +156,7 @@ public sealed class BookViaIntegration(
                 ScheduledEnd: null,
                 IsWarrantyVisit: false,
                 ParentServiceRequestId: null,
-                AwaitsReview: true,
+                AwaitsReview: !await settings.GetAsync(OpsSettings.AutoConfirmWhatsAppBookings, ct),
                 ExternalReference: key),
             Assistant,
             clock.UtcNow);

@@ -62,7 +62,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 4.1 | Booking received screen and tracking link | ✅ | | — | — |
-| 4.2 | **Automatic confirmation and technician assignment** | 🟡 | Online and WhatsApp bookings wait in NEW for **manual** staff review; dispatch is "suggest" mode. Customers expect "Technician assigned" within minutes. The matching engine and offers exist; AUTO_OFFER is planned (PLAN Phase 3). | **P0** | M |
+| 4.2 | **Automatic confirmation and technician assignment** | ✅ (off by default) | Owner settings: `booking.auto_confirm_website` / `booking.auto_confirm_whatsapp` skip staff review; `dispatch.auto_offer` offers each queued job to the best recommended technician on shift at the job time, moving to the next on decline or timeout, never the same technician twice, up to `dispatch.auto_offer_max_attempts` (3), then it waits for staff. Jobs staff unassigned or reassigned are left to staff. Visit time is still confirmed by the office (`appointmentConfirmed` stays false). | **P0** | M |
 | 4.3 | **Customer notified at each step** (confirmed, assigned, on the way, done) | 🔌 | Self-booked requests get "received" and then a separate "confirmed" message when staff confirm (the old "is confirmed" wording at booking was wrong). Staff-created jobs get one "confirmed" message. Sends once 11.1 or 11.2 is live. | **P0** | S (after 11.1) |
 | 4.4 | Technician profile: photo, rating, jobs done, verified badge | 🟡 | Tracking shows name, rating and job count when available. No photo upload; "verified" needs a real ID-check process first. | P1 | S |
 | 4.5 | Promised arrival time (ETA) | ❌ | Only the preferred window. | P1 | M |
@@ -183,7 +183,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 4. ~~Customer cancel and reschedule with policy (5.2, 5.3).~~ Built.
 5. ~~Digital estimate approval (7.1).~~ Built.
 6. ~~Ratings and reviews (9.1).~~ Built.
-7. Auto-confirmation and auto-assignment (4.2).
+7. ~~Auto-confirmation and auto-assignment (4.2).~~ Built, off until the owner turns it on.
 8. Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).
 9. Real slot availability (3.2).
 10. Production hosting and backups (14.1, 14.2).
