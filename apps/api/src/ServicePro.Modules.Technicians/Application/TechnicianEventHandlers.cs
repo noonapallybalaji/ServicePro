@@ -68,3 +68,18 @@ public sealed class CompletedJobsCounter(DbContext db) : IEventHandler<ServiceRe
         technician?.RecordJobClosed();
     }
 }
+
+/// <summary>Customer ratings feed the technician's average (shown to customers, used by dispatch).</summary>
+public sealed class TechnicianRatingUpdater(DbContext db) : IEventHandler<ReviewSubmitted>
+{
+    public async Task HandleAsync(ReviewSubmitted domainEvent, CancellationToken ct)
+    {
+        if (domainEvent.TechnicianId is not { } technicianId)
+        {
+            return;
+        }
+
+        var technician = await db.Set<Technician>().FirstOrDefaultAsync(t => t.Id == technicianId, ct);
+        technician?.AddRating(domainEvent.Rating);
+    }
+}

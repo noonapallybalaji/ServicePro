@@ -115,6 +115,9 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
 
     public DateTimeOffset LastStatusChangeAt { get; private set; }
 
+    /// <summary>When we asked the customer to rate the visit (once per job).</summary>
+    public DateTimeOffset? FeedbackRequestedAt { get; private set; }
+
     /// <summary>How many times the customer moved the visit themselves (capped by a setting).</summary>
     public int CustomerRescheduleCount { get; private set; }
 
@@ -300,6 +303,17 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
                 new TransitionInput(ReasonCode: "ESTIMATE_APPROVED"), now)
             : Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.UnableToRepair), ServiceRequestStatus.UnableToRepair, actor,
                 new TransitionInput(ReasonCode: "ESTIMATE_DECLINED"), now);
+
+    public void RequestFeedback(DateTimeOffset now)
+    {
+        if (FeedbackRequestedAt is not null)
+        {
+            return;
+        }
+
+        FeedbackRequestedAt = now;
+        Raise(new FeedbackRequested(Id, SrNumber, CustomerId, CurrentTechnicianId));
+    }
 
     // ── Customer self-service ──
 

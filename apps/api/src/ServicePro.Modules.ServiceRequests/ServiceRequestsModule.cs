@@ -34,6 +34,13 @@ public sealed class ServiceRequestsModule : IModule
         services.AddSetting(CustomerChangeSettings.MaxReschedules);
         services.AddSetting(CustomerChangeSettings.CutoffMinutes);
         services.AddScoped<CustomerChangePolicy>();
+        services.AddSetting(FeedbackSettings.RequestsEnabled);
+        services.AddSetting(FeedbackSettings.RequestDelayMinutes);
+        services.AddSingleton<FeedbackRequestWorker>();
+        if (configuration.GetValue("Feedback:RequestWorker", defaultValue: true))
+        {
+            services.AddHostedService(sp => sp.GetRequiredService<FeedbackRequestWorker>());
+        }
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -214,6 +221,23 @@ public sealed class ServiceRequestsModule : IModule
             .Produces<IReadOnlyList<MyBookingResponse>>()
             .WithStandardErrors()
             .WithName("ListMyBookings");
+
+        endpoints.MapPost("/api/v1/public/track/{token}/review", async (string token, SubmitReviewRequest request, SubmitReview useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(token, request, ct)).ToHttp())
+            .WithTags("Tracking")
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .Validate<SubmitReviewRequest>()
+            .Produces<ReviewResponse>()
+            .WithStandardErrors()
+            .WithName("SubmitReview");
+
+        endpoints.MapGet("/api/v1/admin/reviews", async (int? maxRating, int? take, ListReviews useCase, CancellationToken ct) =>
+                Results.Ok(await useCase.HandleAsync(maxRating, take ?? 50, ct)))
+            .WithTags("Service requests")
+            .RequireAuthorization(AuthPolicies.Staff)
+            .Produces<IReadOnlyList<ReviewListItem>>()
+            .WithName("ListReviews");
 
         endpoints.MapPost("/api/v1/account/bookings/{id:guid}/cancel", async (Guid id, CancelBookingRequest request, CancelMyBooking useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, request, ct)).ToHttp())

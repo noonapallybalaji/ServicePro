@@ -81,3 +81,14 @@ internal sealed class OpsModelContributor : ServicePro.BuildingBlocks.Persistenc
     public void Configure(ModelBuilder modelBuilder) =>
         modelBuilder.HasSequence<long>(OpsSchema.SrNumberSequence, OpsSchema.Name).StartsAt(10001);
 }
+
+internal sealed class ReviewConfiguration : IEntityTypeConfiguration<Review>
+{
+    public void Configure(EntityTypeBuilder<Review> builder)
+    {
+        builder.ToTable("reviews", OpsSchema.Name);
+        builder.Property(r => r.Comment).HasMaxLength(Review.MaxCommentLength);
+        builder.HasIndex(r => r.ServiceRequestId).IsUnique();
+        builder.HasIndex(r => new { r.TechnicianId, r.SubmittedAt });
+    }
+}

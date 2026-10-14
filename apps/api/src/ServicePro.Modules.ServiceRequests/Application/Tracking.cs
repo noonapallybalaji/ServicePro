@@ -41,7 +41,9 @@ public sealed record TrackingResponse(
     TrackingTechnician? Technician,
     IReadOnlyList<TrackingPhoto> Photos,
     IReadOnlyList<string> Messages,
-    InvoiceSummary? Invoice);
+    InvoiceSummary? Invoice,
+    ReviewResponse? Review = null,
+    bool CanReview = false);
 
 internal static class TrackingRules
 {
@@ -107,6 +109,7 @@ public sealed class GetTracking(
             ? await technicians.GetAsync(technicianId, ct)
             : null;
         var invoice = await billing.GetInvoiceForServiceRequestAsync(request.Id, ct);
+        var review = await db.Set<Review>().AsNoTracking().FirstOrDefaultAsync(r => r.ServiceRequestId == request.Id, ct);
 
         return new TrackingResponse(
             request.SrNumber,
@@ -138,7 +141,9 @@ public sealed class GetTracking(
             [.. request.Attachments.Where(a => a.IsCustomerVisible).OrderBy(a => a.CreatedAt)
                 .Select(a => new TrackingPhoto(a.Id, a.Kind, $"/api/v1/public/track/{token}/photos/{a.Id}", a.CreatedAt))],
             [.. request.Notes.Where(n => n.Visibility == NoteVisibility.Customer).OrderBy(n => n.CreatedAt).Select(n => n.Body)],
-            invoice);
+            invoice,
+            review is null ? null : new ReviewResponse(review.Rating, review.Comment, review.SubmittedAt),
+            review is null && Reviews.Finished.Contains(request.Status));
     }
 }
 

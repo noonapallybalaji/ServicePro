@@ -18,7 +18,7 @@ public sealed class OnlinePaymentTests(ApiFactory factory)
     private const decimal BillTotal = 2149m;
 
     /// <summary>A completed AC job with a ₹2,149 bill, not yet paid.</summary>
-    private async Task<(TestApi Owner, TestApi Technician, Guid JobId, string Token)> CompletedJobAsync()
+    internal static async Task<(TestApi Owner, TestApi Technician, Guid JobId, string Token)> CompletedJobAsync(ApiFactory factory)
     {
         var owner = await new TestApi(factory).AsOwnerAsync();
         var (_, jobId) = await owner.NewAcJobAsync();
@@ -76,7 +76,7 @@ public sealed class OnlinePaymentTests(ApiFactory factory)
     [Fact]
     public async Task The_customer_pays_online_and_only_the_signed_webhook_records_it_once()
     {
-        var (owner, _, jobId, token) = await CompletedJobAsync();
+        var (owner, _, jobId, token) = await CompletedJobAsync(factory);
         var anonymous = new TestApi(factory);
 
         var pay = await anonymous.PostAsync<PayOnlineResponse>($"/api/v1/public/track/{token}/pay", null);
@@ -107,7 +107,7 @@ public sealed class OnlinePaymentTests(ApiFactory factory)
     [Fact]
     public async Task Returning_from_the_payment_page_checks_with_the_gateway_when_the_webhook_is_late()
     {
-        var (owner, _, jobId, token) = await CompletedJobAsync();
+        var (owner, _, jobId, token) = await CompletedJobAsync(factory);
         var anonymous = new TestApi(factory);
         var pay = await anonymous.PostAsync<PayOnlineResponse>($"/api/v1/public/track/{token}/pay", null);
 
@@ -121,7 +121,7 @@ public sealed class OnlinePaymentTests(ApiFactory factory)
     [Fact]
     public async Task Paying_twice_queues_the_extra_for_a_refund_that_staff_send_back_through_the_gateway()
     {
-        var (owner, technician, jobId, token) = await CompletedJobAsync();
+        var (owner, technician, jobId, token) = await CompletedJobAsync(factory);
         var pay = await new TestApi(factory).PostAsync<PayOnlineResponse>($"/api/v1/public/track/{token}/pay", null);
         var linkId = factory.Payments.LinkIdFromUrl(pay.Url);
 
@@ -156,7 +156,7 @@ public sealed class OnlinePaymentTests(ApiFactory factory)
     [Fact]
     public async Task Cash_refunds_are_recorded_by_staff_and_can_never_exceed_what_was_paid()
     {
-        var (owner, technician, jobId, _) = await CompletedJobAsync();
+        var (owner, technician, jobId, _) = await CompletedJobAsync(factory);
         var cash = await technician.PostAsync<PaymentResponse>($"/api/v1/service-requests/{jobId}/payments", new RecordPaymentRequest(PaymentMethod.Cash, BillTotal, null));
 
         var refund = await owner.PostAsync<RefundResponse>($"/api/v1/service-requests/{jobId}/payments/{cash.Id}/refunds",
@@ -177,7 +177,7 @@ public sealed class OnlinePaymentTests(ApiFactory factory)
     [Fact]
     public async Task Staff_send_the_link_on_whatsapp()
     {
-        var (owner, _, jobId, _) = await CompletedJobAsync();
+        var (owner, _, jobId, _) = await CompletedJobAsync(factory);
 
         var sent = await owner.PostAsync<PayOnlineResponse>($"/api/v1/service-requests/{jobId}/payment-link", null);
         await factory.DrainOutboxAsync();

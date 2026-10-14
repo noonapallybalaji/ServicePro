@@ -165,6 +165,13 @@ public sealed class NotifyAboutCustomerChanges(CustomerMessageContext messages, 
     }
 }
 
+/// <summary>Asks the customer to rate the visit (sent once, a while after the job closes).</summary>
+public sealed class AskForFeedback(CustomerMessageContext messages) : IEventHandler<FeedbackRequested>
+{
+    public Task HandleAsync(FeedbackRequested e, CancellationToken ct) =>
+        messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.FeedbackRequest, e.TechnicianId, null, ct);
+}
+
 /// <summary>Estimates: the customer is asked to review; the technician hears the answer.</summary>
 public sealed class NotifyAboutEstimates(
     CustomerMessageContext messages,

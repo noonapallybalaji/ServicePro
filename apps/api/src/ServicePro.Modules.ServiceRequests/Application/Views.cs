@@ -78,7 +78,11 @@ public sealed record ServiceRequestDetail(
     IReadOnlyList<NoteResponse> Notes,
     IReadOnlyList<AttachmentResponse> Attachments,
     IReadOnlyList<AvailableTransition> AvailableTransitions,
-    InvoiceSummary? Invoice);
+    InvoiceSummary? Invoice,
+    ReviewResponse? Review = null);
+
+/// <summary>The customer's rating of the job.</summary>
+public sealed record ReviewResponse(int Rating, string? Comment, DateTimeOffset SubmittedAt);
 
 /// <summary>
 /// Joins service requests with names from other modules through their ports, in batches

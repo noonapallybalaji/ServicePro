@@ -33,6 +33,8 @@ import type {
   PayOnlineResponse,
   PaymentCheckResponse,
   ProblemDetails,
+  ReviewResponse,
+  SubmitReviewRequest,
   TrackingResponse
 } from '../../model';
 
@@ -43,7 +45,73 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-export const getGetTrackingInvoicePdfUrl = (token: string,) => {
+export const getSubmitReviewUrl = (token: string,) => {
+
+
+  
+
+  return `/api/v1/public/track/${token}/review`
+}
+
+export const submitReview = async (token: string,
+    submitReviewRequest: SubmitReviewRequest, options?: RequestInit): Promise<ReviewResponse> => {
+  
+  return apiFetch<ReviewResponse>(getSubmitReviewUrl(token),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      submitReviewRequest,)
+  }
+);}
+
+
+
+
+export const getSubmitReviewMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitReview>>, TError,{token: string;data: SubmitReviewRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitReview>>, TError,{token: string;data: SubmitReviewRequest}, TContext> => {
+
+const mutationKey = ['submitReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitReview>>, {token: string;data: SubmitReviewRequest}> = (props) => {
+          const {token,data} = props ?? {};
+
+          return  submitReview(token,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitReviewMutationResult = NonNullable<Awaited<ReturnType<typeof submitReview>>>
+    export type SubmitReviewMutationBody = SubmitReviewRequest
+    export type SubmitReviewMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useSubmitReview = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitReview>>, TError,{token: string;data: SubmitReviewRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof submitReview>>,
+        TError,
+        {token: string;data: SubmitReviewRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getSubmitReviewMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getGetTrackingInvoicePdfUrl = (token: string,) => {
 
 
   

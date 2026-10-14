@@ -77,6 +77,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("Outbox:Enabled", "false");
         builder.UseSetting("Security:ExposureGuard", "false"); // tests deliberately use echoed OTPs and a seeded password
         builder.UseSetting("Dispatch:OfferExpiryWorker", "false");
+        builder.UseSetting("Feedback:RequestWorker", "false");
         builder.UseSetting("RateLimits:AuthPerMinute", "10000");
         builder.UseSetting("RateLimits:PublicPerMinute", "10000");
         builder.UseSetting("RateLimits:IntegrationPerMinute", "10000");
@@ -124,6 +125,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             _drain.Release();
         }
     }
+
+    public Task<int> SendFeedbackRequestsAsync() =>
+        Services.GetRequiredService<ServicePro.Modules.ServiceRequests.Application.FeedbackRequestWorker>().SendDueRequestsAsync(CancellationToken.None);
 
     public Task<int> ExpireOffersAsync() =>
         Services.GetRequiredService<OfferExpiryWorker>().ExpireDueOffersAsync(CancellationToken.None);

@@ -82,3 +82,9 @@ public sealed record EstimateSent(Guid EstimateId, Guid ServiceRequestId, Guid C
 
 /// <summary>The customer (or staff on their behalf) approved or declined an estimate.</summary>
 public sealed record EstimateAnswered(Guid EstimateId, Guid ServiceRequestId, bool Approved, decimal Total) : IDomainEvent;
+
+/// <summary>A customer rated a finished job (1 to 5).</summary>
+public sealed record ReviewSubmitted(Guid ReviewId, Guid ServiceRequestId, string SrNumber, Guid? TechnicianId, int Rating) : IDomainEvent;
+
+/// <summary>Time to ask the customer how the visit went.</summary>
+public sealed record FeedbackRequested(Guid ServiceRequestId, string SrNumber, Guid CustomerId, Guid? TechnicianId) : IDomainEvent;

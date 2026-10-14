@@ -24,6 +24,7 @@ if (isDocumentGeneration)
         ["Auth:SigningKey"] = "openapi-generation-placeholder-signing-key",
         ["Outbox:Enabled"] = "false",
         ["Dispatch:OfferExpiryWorker"] = "false",
+        ["Feedback:RequestWorker"] = "false",
         ["Database:MigrateOnStartup"] = "false",
         ["Security:ExposureGuard"] = "false",
     });

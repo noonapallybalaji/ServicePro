@@ -217,6 +217,14 @@ public sealed class Technician : TenantOwnedAggregateRoot, IAudited
 
     /// <summary>Cached KPI, maintained from service-request events.</summary>
     public void RecordJobClosed() => CompletedJobsCount++;
+
+    /// <summary>Folds one customer rating (1–5) into the running average.</summary>
+    public void AddRating(int rating)
+    {
+        var total = (RatingAverage ?? 0) * RatingCount + rating;
+        RatingCount++;
+        RatingAverage = Math.Round(total / RatingCount, 2, MidpointRounding.AwayFromZero);
+    }
 }
 
 public sealed class TechnicianSkill

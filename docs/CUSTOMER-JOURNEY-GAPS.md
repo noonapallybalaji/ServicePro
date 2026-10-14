@@ -114,7 +114,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
-| 9.1 | **Rate and review the technician and service** | 🟡 | `Technician.RatingAverage/RatingCount` exist but **nothing writes them**: no feedback request, screen or endpoint. | **P0** | S |
+| 9.1 | **Rate and review the technician and service** | ✅ | 1–5 stars and a comment on the tracking page once the job is finished (once per job). `FEEDBACK_REQUEST` on WhatsApp after the job closes (`feedback.request_delay_minutes`, default 120; `feedback.requests_enabled`). Ratings update the technician's average (shown to customers, used by dispatch). Staff see the rating on the job page; `GET /admin/reviews?maxRating=2` lists poor ones for follow-up. Not yet shown on public pages (1.3). | **P0** | S |
 | 9.2 | Complaint or "problem came back" request (re-visit under warranty) | 🟡 | Warranty visits exist for staff (`IsWarrantyVisit`, parent job); customer can't raise one. | P1 | M |
 | 9.3 | Warranty card per repair (period, what's covered) | ❌ | No warranty terms stored per job. | P1 | S |
 | 9.4 | Invoices list in the account | ❌ | Only per booking via tracking. | P1 | S |
@@ -182,7 +182,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 3. ~~Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).~~ Built; needs Razorpay keys and webhook.
 4. ~~Customer cancel and reschedule with policy (5.2, 5.3).~~ Built.
 5. ~~Digital estimate approval (7.1).~~ Built.
-6. Ratings and reviews (9.1).
+6. ~~Ratings and reviews (9.1).~~ Built.
 7. Auto-confirmation and auto-assignment (4.2).
 8. Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).
 9. Real slot availability (3.2).

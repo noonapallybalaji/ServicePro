@@ -1960,6 +1960,65 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.ToTable("notification_templates", "comms");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.ServiceRequests.Domain.Review", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating");
+
+                    b.Property<Guid>("ServiceRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_request_id");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<Guid?>("TechnicianId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("technician_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_reviews");
+
+                    b.HasIndex("ServiceRequestId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_reviews_service_request_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_reviews_tenant_id");
+
+                    b.HasIndex("TechnicianId", "SubmittedAt")
+                        .HasDatabaseName("ix_reviews_technician_id_submitted_at");
+
+                    b.ToTable("reviews", "ops");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.ServiceRequests.Domain.ServiceRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2041,6 +2100,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)")
                         .HasColumnName("external_reference");
+
+                    b.Property<DateTimeOffset?>("FeedbackRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("feedback_requested_at");
 
                     b.Property<decimal?>("FinalAmount")
                         .HasPrecision(12, 2)

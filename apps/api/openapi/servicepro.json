@@ -3538,6 +3538,127 @@
         }
       }
     },
+    "/api/v1/public/track/{token}/review": {
+      "post": {
+        "tags": [
+          "Tracking"
+        ],
+        "operationId": "SubmitReview",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/reviews": {
+      "get": {
+        "tags": [
+          "Service requests"
+        ],
+        "operationId": "ListReviews",
+        "parameters": [
+          {
+            "name": "maxRating",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewListItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/bookings/{id}/cancel": {
       "post": {
         "tags": [
@@ -10388,6 +10509,72 @@
           }
         }
       },
+      "ReviewListItem": {
+        "required": [
+          "serviceRequestId",
+          "srNumber",
+          "technicianId",
+          "rating",
+          "comment",
+          "submittedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "serviceRequestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "srNumber": {
+            "type": "string"
+          },
+          "technicianId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReviewResponse": {
+        "required": [
+          "rating",
+          "comment",
+          "submittedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "The customer's rating of the job."
+      },
       "SaveAddressRequest": {
         "required": [
           "address",
@@ -10938,6 +11125,16 @@
                 "$ref": "#/components/schemas/InvoiceSummary"
               }
             ]
+          },
+          "review": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewResponse"
+              }
+            ]
           }
         }
       },
@@ -11122,6 +11319,25 @@
           "level": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "SubmitReviewRequest": {
+        "required": [
+          "rating",
+          "comment"
+        ],
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comment": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -11698,6 +11914,20 @@
                 "$ref": "#/components/schemas/InvoiceSummary"
               }
             ]
+          },
+          "review": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReviewResponse"
+              }
+            ]
+          },
+          "canReview": {
+            "type": "boolean",
+            "default": false
           }
         },
         "description": "What the customer sees at /t/{token} (UX-ARCHITECTURE.md §7): what's happening, who, what it costs,\r\nwhat's next. Deliberately minimal personal data: first name, locality, no full address."

@@ -18,6 +18,7 @@ public static class TemplateCodes
     public const string JobOffer = "JOB_OFFER";
     public const string PaymentLink = "PAYMENT_LINK";
     public const string BookingMoved = "BOOKING_MOVED";
+    public const string FeedbackRequest = "FEEDBACK_REQUEST";
     public const string TechJobCancelled = "TECH_JOB_CANCELLED";
     public const string TechJobMoved = "TECH_JOB_MOVED";
     public const string PaymentReceived = "PAYMENT_RECEIVED";
@@ -58,6 +59,8 @@ public static class DefaultTemplates
             "We missed you for {{sr}}. Reply here or call us to choose a new time: {{link}}"),
         new(TemplateCodes.SrCancelled, NotificationChannel.WhatsApp,
             "Your service request {{sr}} has been cancelled. If this is unexpected, please call us."),
+        new(TemplateCodes.FeedbackRequest, NotificationChannel.WhatsApp,
+            "How was your visit for {{sr}}? Rate it in one tap, it helps us keep our technicians at their best: {{link}}"),
         new(TemplateCodes.BookingMoved, NotificationChannel.WhatsApp,
             "We've noted the new time for {{sr}}: {{window}}. We'll confirm your visit shortly. Track it here: {{link}}"),
         new(TemplateCodes.TechJobCancelled, NotificationChannel.WhatsApp,

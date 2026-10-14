@@ -129,6 +129,7 @@ public sealed class GetServiceRequestDetail(
         var technician = request.CurrentTechnicianId is { } technicianId ? await technicians.GetAsync(technicianId, ct) : null;
         var invoice = await billing.GetInvoiceForServiceRequestAsync(request.Id, ct);
         var actorType = isTechnician ? ActorType.Technician : ActorType.User;
+        var review = await db.Set<Review>().AsNoTracking().FirstOrDefaultAsync(r => r.ServiceRequestId == request.Id, ct);
 
         return new ServiceRequestDetail(
             card,
@@ -162,7 +163,8 @@ public sealed class GetServiceRequestDetail(
             [.. request.Attachments.OrderBy(a => a.CreatedAt).Select(a => new AttachmentResponse(
                 a.Id, a.Kind, a.ContentType, a.SizeBytes, $"/api/v1/service-requests/{request.Id}/attachments/{a.Id}", a.CreatedAt))],
             [.. request.AvailableTransitions(actorType).Select(ServiceRequestViewBuilder.ToAvailable)],
-            invoice);
+            invoice,
+            review is null ? null : new ReviewResponse(review.Rating, review.Comment, review.SubmittedAt));
     }
 }
 

@@ -17,6 +17,7 @@ import type { TrackingTimelineEntry } from './trackingTimelineEntry';
 import type { TrackingResponseTechnician } from './trackingResponseTechnician';
 import type { TrackingPhoto } from './trackingPhoto';
 import type { TrackingResponseInvoice } from './trackingResponseInvoice';
+import type { TrackingResponseReview } from './trackingResponseReview';
 
 /**
  * What the customer sees at /t/{token} (UX-ARCHITECTURE.md §7): what's happening, who, what it costs,
@@ -44,4 +45,6 @@ export interface TrackingResponse {
   photos: TrackingPhoto[];
   messages: string[];
   invoice: TrackingResponseInvoice;
+  review?: TrackingResponseReview;
+  canReview?: boolean;
 }

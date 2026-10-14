@@ -36,6 +36,7 @@ import { Link, useParams, useSearchParams } from 'react-router';
 
 import { SITE, whatsappLink } from '../site';
 import { EstimateCard } from './tracking-estimate';
+import { ReviewCard } from './tracking-review';
 import { SiteLayout } from '../components/site-layout';
 import { usePageMeta } from '../seo/head';
 import { PAGES } from '../seo/pages';
@@ -227,6 +228,7 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
             </Text>
           </Card>
 
+          <ReviewCard token={token} technicianName={data.technician?.fullName} canReview={data.canReview ?? false} review={data.review} />
           {ESTIMATE_VISIBLE.has(data.status) ? <EstimateCard token={token} /> : null}
 
           <Card className="flex flex-col gap-3">

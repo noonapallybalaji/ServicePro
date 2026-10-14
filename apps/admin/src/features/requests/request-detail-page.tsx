@@ -280,6 +280,23 @@ function RequestDetail({ request }: { request: ServiceRequestDetail }) {
                 </Text>
               )}
             </Card>
+            {request.review ? (
+              <Card className="flex flex-col gap-1">
+                <Text variant="overline" tone="muted">
+                  Customer rating
+                </Text>
+                <Text weight="semibold" tone={request.review.rating <= 2 ? 'error' : undefined}>
+                  {'★'.repeat(request.review.rating)}
+                  {'☆'.repeat(5 - request.review.rating)} <span className="sr-only">{request.review.rating} out of 5</span>
+                </Text>
+                {request.review.comment ? <Text variant="sm">“{request.review.comment}”</Text> : null}
+                {request.review.rating <= 2 ? (
+                  <Text variant="caption" tone="muted">
+                    Low rating: call the customer to follow up.
+                  </Text>
+                ) : null}
+              </Card>
+            ) : null}
             <EstimatesPanel request={request} />
             <OnlinePaymentsPanel request={request} />
           </section>
