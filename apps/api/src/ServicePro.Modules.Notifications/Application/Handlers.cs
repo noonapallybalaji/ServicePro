@@ -165,6 +165,41 @@ public sealed class NotifyAboutCustomerChanges(CustomerMessageContext messages, 
     }
 }
 
+/// <summary>Estimates: the customer is asked to review; the technician hears the answer.</summary>
+public sealed class NotifyAboutEstimates(
+    CustomerMessageContext messages,
+    IServiceRequestWorkflow serviceRequests,
+    ITechnicianDirectory technicians,
+    NotificationDispatcher dispatcher) : IEventHandler<EstimateSent>, IEventHandler<EstimateAnswered>
+{
+    private static readonly CultureInfo India = CultureInfo.GetCultureInfo("en-IN");
+
+    public async Task HandleAsync(EstimateSent e, CancellationToken ct)
+    {
+        var job = await serviceRequests.GetBillingContextAsync(e.ServiceRequestId, ct);
+        if (job.IsSuccess)
+        {
+            await messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, job.Value.SrNumber, TemplateCodes.EstimateSent, e.TechnicianId,
+                new Dictionary<string, string> { ["amount"] = e.Total.ToString("C", India) }, ct);
+        }
+    }
+
+    public async Task HandleAsync(EstimateAnswered e, CancellationToken ct)
+    {
+        var job = await serviceRequests.GetBillingContextAsync(e.ServiceRequestId, ct);
+        if (job.IsFailure || job.Value.TechnicianId is not { } technicianId || await technicians.GetAsync(technicianId, ct) is not { } technician)
+        {
+            return;
+        }
+
+        await dispatcher.SendAsync(new NotificationRequest(
+            e.Approved ? TemplateCodes.TechEstimateApproved : TemplateCodes.TechEstimateDeclined,
+            NotificationChannel.WhatsApp, RecipientType.Technician, technician.Id, technician.Phone.Value, NotificationDispatcher.DefaultLanguage,
+            new Dictionary<string, string> { ["sr"] = job.Value.SrNumber, ["amount"] = e.Total.ToString("C", India) },
+            e.ServiceRequestId), ct);
+    }
+}
+
 /// <summary>Payment link, online payment receipt and refund: money messages to the customer.</summary>
 public sealed class NotifyCustomerAboutMoney(CustomerMessageContext messages, IServiceRequestWorkflow serviceRequests)
     : IEventHandler<PaymentLinkSent>, IEventHandler<PaymentRecorded>, IEventHandler<RefundProcessed>
@@ -274,6 +309,7 @@ public sealed class OtpSender(NotificationDispatcher dispatcher, IEnumerable<INo
         {
             OtpPurpose.Booking => (TemplateCodes.OtpBooking, RecipientType.Customer),
             OtpPurpose.CustomerLogin => (TemplateCodes.OtpCustomerLogin, RecipientType.Customer),
+            OtpPurpose.EstimateApproval => (TemplateCodes.OtpEstimate, RecipientType.Customer),
             _ => (TemplateCodes.OtpLogin, RecipientType.Technician),
         };
 

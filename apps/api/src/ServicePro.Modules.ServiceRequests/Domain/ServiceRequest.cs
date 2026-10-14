@@ -215,6 +215,11 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
             return Error.Conflict("sr.use_dispatch", "Use dispatch to assign, offer or unassign technicians.");
         }
 
+        if (rule is { EstimateOnly: true })
+        {
+            return Error.Conflict("sr.use_estimate", "Send an estimate for the customer to approve.");
+        }
+
         // A technician may only move jobs assigned to them. Dispatch-owned transitions
         // (accept/decline an offer) verify the technician themselves.
         if (actor.Type == ActorType.Technician && (CurrentTechnicianId is null || input.TechnicianId != CurrentTechnicianId))
@@ -268,6 +273,33 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
 
         return result;
     }
+
+    // ── Estimates (called through IServiceRequestWorkflow by Billing) ──
+
+    /// <summary>An estimate was sent: wait for the customer. Sending a revision while waiting changes nothing here.</summary>
+    public Result AwaitEstimateApproval(Actor actor, Guid? technicianId, DateTimeOffset now)
+    {
+        if (Status == ServiceRequestStatus.AwaitingEstimateApproval)
+        {
+            return Result.Success();
+        }
+
+        if (actor.Type == ActorType.Technician && technicianId != CurrentTechnicianId)
+        {
+            return Error.Forbidden("sr.not_assigned", "This job isn't assigned to you.");
+        }
+
+        return Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.AwaitingEstimateApproval), ServiceRequestStatus.AwaitingEstimateApproval,
+            actor, new TransitionInput(ReasonCode: "ESTIMATE_SENT", TechnicianId: technicianId), now);
+    }
+
+    /// <summary>Approved: the repair goes ahead. Declined: only the visiting charge applies.</summary>
+    public Result ResolveEstimate(bool approved, Actor actor, DateTimeOffset now) =>
+        approved
+            ? Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.InProgress), ServiceRequestStatus.InProgress, actor,
+                new TransitionInput(ReasonCode: "ESTIMATE_APPROVED"), now)
+            : Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.UnableToRepair), ServiceRequestStatus.UnableToRepair, actor,
+                new TransitionInput(ReasonCode: "ESTIMATE_DECLINED"), now);
 
     // ── Customer self-service ──
 
@@ -362,7 +394,7 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
     public IEnumerable<TransitionRule> AvailableTransitions(ActorType actorType)
     {
         var actor = ServiceRequestWorkflow.ToTransitionActor(actorType);
-        return ServiceRequestWorkflow.From(Status).Where(r => !r.DispatchOnly && r.Actors.HasFlag(actor));
+        return ServiceRequestWorkflow.From(Status).Where(r => !r.DispatchOnly && !r.EstimateOnly && r.Actors.HasFlag(actor));
     }
 
     private Result Apply(TransitionRule? rule, ServiceRequestStatus to, Actor actor, TransitionInput input, DateTimeOffset now, Guid? offeredTechnicianId = null)

@@ -76,3 +76,9 @@ public sealed record BookingTimeChanged(
     Guid? TechnicianId,
     DateTimeOffset PreferredSlotStart,
     DateTimeOffset PreferredSlotEnd) : IDomainEvent;
+
+/// <summary>A technician sent the customer a repair estimate to approve.</summary>
+public sealed record EstimateSent(Guid EstimateId, Guid ServiceRequestId, Guid CustomerId, Guid? TechnicianId, decimal Total) : IDomainEvent;
+
+/// <summary>The customer (or staff on their behalf) approved or declined an estimate.</summary>
+public sealed record EstimateAnswered(Guid EstimateId, Guid ServiceRequestId, bool Approved, decimal Total) : IDomainEvent;

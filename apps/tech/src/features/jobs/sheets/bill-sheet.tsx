@@ -1,4 +1,13 @@
-import { useGetPriceList, useSaveInvoice, type InvoiceLineInput, type InvoiceLineType, type ServiceRequestDetail } from '@servicepro/api-client';
+import {
+  getListEstimatesQueryKey,
+  useGetPriceList,
+  useSaveInvoice,
+  useSendEstimate,
+  type EstimateResponse,
+  type InvoiceLineInput,
+  type InvoiceLineType,
+  type ServiceRequestDetail,
+} from '@servicepro/api-client';
 import {
   Button,
   Dialog,
@@ -14,6 +23,7 @@ import {
   formatINR,
   toast,
 } from '@servicepro/ui';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -23,6 +33,10 @@ interface BillSheetProps {
   job: ServiceRequestDetail;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** "estimate": the same builder sends an estimate for the customer to approve. */
+  mode?: 'bill' | 'estimate';
+  /** Starting lines: the latest estimate (to revise it, or to bill what was approved). */
+  estimate?: EstimateResponse;
 }
 
 interface DraftLine {
@@ -42,11 +56,21 @@ const LINE_TYPES: { value: InvoiceLineType; label: string }[] = [
 
 let nextKey = 1;
 
-function initialLines(job: ServiceRequestDetail): DraftLine[] {
+function initialLines(job: ServiceRequestDetail, estimate: EstimateResponse | undefined): DraftLine[] {
   if (job.invoice && job.invoice.lines.length > 0) {
     return job.invoice.lines.map((line) => ({
       key: nextKey++,
       type: line.type as InvoiceLineType,
+      description: line.description,
+      quantity: String(line.quantity),
+      unitPrice: String(line.unitPrice),
+    }));
+  }
+
+  if (estimate && estimate.lines.length > 0) {
+    return estimate.lines.map((line) => ({
+      key: nextKey++,
+      type: line.type,
       description: line.description,
       quantity: String(line.quantity),
       unitPrice: String(line.unitPrice),
@@ -65,19 +89,27 @@ const toNumber = (value: string) => {
  * The bill builder (USER-FLOWS.md §2.2 step 8): price list first, free text second.
  * The form is a child of the dialog content, so it starts fresh from the job every time it opens.
  */
-export function BillSheet({ job, open, onOpenChange }: BillSheetProps) {
+export function BillSheet({ job, open, onOpenChange, mode = 'bill', estimate }: BillSheetProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent presentation="drawer">
-        <DialogHeader title="Bill" description={`${job.card.srNumber} · ${job.card.customerName}`} />
-        <BillForm job={job} onSaved={() => onOpenChange(false)} />
+        <DialogHeader
+          title={mode === 'estimate' ? 'Estimate for the customer' : 'Bill'}
+          description={
+            mode === 'estimate'
+              ? `${job.card.srNumber} · ${job.card.customerName} approves it on their phone before you start.`
+              : `${job.card.srNumber} · ${job.card.customerName}`
+          }
+        />
+        <BillForm job={job} mode={mode} estimate={estimate} onSaved={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function BillForm({ job, onSaved }: { job: ServiceRequestDetail; onSaved: () => void }) {
-  const [lines, setLines] = useState<DraftLine[]>(() => initialLines(job));
+function BillForm({ job, mode, estimate, onSaved }: { job: ServiceRequestDetail; mode: 'bill' | 'estimate'; estimate?: EstimateResponse; onSaved: () => void }) {
+  const [lines, setLines] = useState<DraftLine[]>(() => initialLines(job, estimate));
+  const queryClient = useQueryClient();
   const priceList = useGetPriceList({ categoryId: job.card.categoryId });
   const refresh = useRefreshJob(job.card.id);
   const save = useSaveInvoice({
@@ -85,6 +117,16 @@ function BillForm({ job, onSaved }: { job: ServiceRequestDetail; onSaved: () => 
       onSuccess: async () => {
         await refresh();
         toast.success('Bill saved');
+        onSaved();
+      },
+    },
+  });
+
+  const send = useSendEstimate({
+    mutation: {
+      onSuccess: async () => {
+        await Promise.all([refresh(), queryClient.invalidateQueries({ queryKey: getListEstimatesQueryKey(job.card.id) })]);
+        toast.success('Estimate sent', { description: "The customer approves it on WhatsApp. You'll be notified." });
         onSaved();
       },
     },
@@ -110,7 +152,8 @@ function BillForm({ job, onSaved }: { job: ServiceRequestDetail; onSaved: () => 
       quantity: toNumber(line.quantity),
       unitPrice: toNumber(line.unitPrice),
     }));
-    save.mutate({ serviceRequestId: job.card.id, data: { lines: data } });
+    if (mode === 'estimate') send.mutate({ serviceRequestId: job.card.id, data: { lines: data } });
+    else save.mutate({ serviceRequestId: job.card.id, data: { lines: data } });
   }
 
   return (
@@ -169,8 +212,8 @@ function BillForm({ job, onSaved }: { job: ServiceRequestDetail; onSaved: () => 
           <Text tone="secondary">Total</Text>
           <Text variant="stat-sm">{formatINR(Math.round(total * 100) / 100)}</Text>
         </div>
-        <Button size="lg" loading={save.isPending} disabled={!valid} onClick={submit}>
-          Save bill
+        <Button size="lg" loading={save.isPending || send.isPending} disabled={!valid} onClick={submit}>
+          {mode === 'estimate' ? 'Send to customer' : 'Save bill'}
         </Button>
       </DialogFooter>
     </>

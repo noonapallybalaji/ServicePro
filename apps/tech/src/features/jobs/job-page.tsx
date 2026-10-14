@@ -1,5 +1,5 @@
 import { AuthImage, DefaultSkeleton, QueryState } from '@servicepro/app-kit';
-import { useGetMyJob, type ServiceRequestDetail } from '@servicepro/api-client';
+import { useGetMyJob, useListEstimates, type ServiceRequestDetail } from '@servicepro/api-client';
 import {
   Alert,
   Button,
@@ -33,6 +33,8 @@ import { ProblemSheet } from './sheets/problem-sheet';
 import { useJobTransition } from './use-job-mutations';
 
 const BILLABLE = new Set(['DIAGNOSING', 'IN_PROGRESS', 'COMPLETED', 'UNABLE_TO_REPAIR']);
+/** Where the technician can send (or revise) an estimate. */
+const ESTIMATE_STAGES = new Set(['DIAGNOSING', 'IN_PROGRESS', 'AWAITING_ESTIMATE_APPROVAL']);
 
 /** The work surface (UX-ARCHITECTURE.md §3.2): everything for one job, one primary action. */
 export function JobPage() {
@@ -52,7 +54,10 @@ export function JobPage() {
 }
 
 function JobDetail({ job }: { job: ServiceRequestDetail }) {
-  const [sheet, setSheet] = useState<'problem' | 'complete' | 'bill' | 'payment' | null>(null);
+  const [sheet, setSheet] = useState<'problem' | 'complete' | 'bill' | 'estimate' | 'payment' | null>(null);
+  const estimates = useListEstimates(job.card.id, { query: { enabled: ESTIMATE_STAGES.has(job.card.status) || BILLABLE.has(job.card.status) } });
+  const latestEstimate = estimates.data?.find((e) => e.status !== 'SUPERSEDED');
+  const approvedEstimate = estimates.data?.find((e) => e.status === 'APPROVED');
   const transition = useJobTransition(job.card.id);
   const primary = primaryAction(job.availableTransitions);
   const problems = problemActions(job.availableTransitions);
@@ -101,6 +106,26 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
           {status === 'AWAITING_ESTIMATE_APPROVAL' ? (
             <Alert tone="info" title="Waiting for the customer" description="They're reviewing the estimate. You'll be notified when they respond." />
+          ) : null}
+          {ESTIMATE_STAGES.has(status) ? (
+            <Card className="flex flex-col gap-3">
+              <Text variant="overline" tone="muted">
+                Estimate
+              </Text>
+              {latestEstimate ? (
+                <Text variant="sm" tone={latestEstimate.status === 'APPROVED' ? 'success' : latestEstimate.status === 'REJECTED' ? 'error' : 'secondary'}>
+                  {formatINR(latestEstimate.total)} ·{' '}
+                  {latestEstimate.status === 'APPROVED' ? 'approved by the customer' : latestEstimate.status === 'REJECTED' ? 'declined' : 'waiting for approval'}
+                </Text>
+              ) : (
+                <Text variant="sm" tone="secondary">
+                  Found what's wrong? Send the customer the cost. The repair starts once they approve it.
+                </Text>
+              )}
+              <Button variant={latestEstimate ? 'outline' : 'primary'} onClick={() => setSheet('estimate')}>
+                <ReceiptText aria-hidden /> {latestEstimate ? 'Send a revised estimate' : 'Send estimate'}
+              </Button>
+            </Card>
           ) : null}
           {job.card.status === 'CLOSED' ? <Alert tone="success" title="Job closed" description="Payment received. Nice work." /> : null}
 
@@ -264,7 +289,8 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
 
       <ProblemSheet job={job} open={sheet === 'problem'} onOpenChange={(open) => setSheet(open ? 'problem' : null)} />
       <CompletionSheet job={job} open={sheet === 'complete'} onOpenChange={(open) => setSheet(open ? 'complete' : null)} onCompleted={() => setSheet(job.invoice ? 'payment' : 'bill')} />
-      <BillSheet job={job} open={sheet === 'bill'} onOpenChange={(open) => setSheet(open ? 'bill' : null)} />
+      <BillSheet job={job} open={sheet === 'bill'} onOpenChange={(open) => setSheet(open ? 'bill' : null)} estimate={approvedEstimate} />
+      <BillSheet job={job} mode="estimate" open={sheet === 'estimate'} onOpenChange={(open) => setSheet(open ? 'estimate' : null)} estimate={latestEstimate} />
       <PaymentSheet job={job} open={sheet === 'payment'} onOpenChange={(open) => setSheet(open ? 'payment' : null)} />
     </>
   );

@@ -35,12 +35,16 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 import { SITE, whatsappLink } from '../site';
+import { EstimateCard } from './tracking-estimate';
 import { SiteLayout } from '../components/site-layout';
 import { usePageMeta } from '../seo/head';
 import { PAGES } from '../seo/pages';
 
 /** Statuses where something interrupted the normal flow. */
 const ATTENTION: ReadonlySet<ServiceRequestStatus> = new Set(['WAITING_FOR_PARTS', 'RESCHEDULED', 'CUSTOMER_UNAVAILABLE', 'UNABLE_TO_REPAIR', 'CANCELLED']);
+
+/** Statuses where the customer may have an estimate to review or look back at. */
+const ESTIMATE_VISIBLE: ReadonlySet<ServiceRequestStatus> = new Set(['AWAITING_ESTIMATE_APPROVAL', 'IN_PROGRESS', 'UNABLE_TO_REPAIR', 'COMPLETED']);
 
 /** Before the technician sets out, customers can change or cancel from "My bookings". */
 const CHANGEABLE: ReadonlySet<ServiceRequestStatus> = new Set(['NEW', 'READY_FOR_ASSIGNMENT', 'OFFERED', 'ACCEPTED', 'RESCHEDULED']);
@@ -222,6 +226,8 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
               {data.scheduledStart ? ` · ${formatWindow(data.scheduledStart, data.scheduledEnd)}` : ''}
             </Text>
           </Card>
+
+          {ESTIMATE_VISIBLE.has(data.status) ? <EstimateCard token={token} /> : null}
 
           <Card className="flex flex-col gap-3">
             <Text variant="overline" tone="muted">

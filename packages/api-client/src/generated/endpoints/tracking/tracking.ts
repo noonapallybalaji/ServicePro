@@ -25,6 +25,11 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AnswerEstimateRequest,
+  CustomerEstimateResponse,
+  EstimateCodeResponse,
+  EstimateResponse,
+  HttpValidationProblemDetails,
   PayOnlineResponse,
   PaymentCheckResponse,
   ProblemDetails,
@@ -438,6 +443,227 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getCheckOnlinePaymentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getGetCustomerEstimateUrl = (token: string,) => {
+
+
+  
+
+  return `/api/v1/public/track/${token}/estimate`
+}
+
+export const getCustomerEstimate = async (token: string, options?: RequestInit): Promise<CustomerEstimateResponse> => {
+  
+  return apiFetch<CustomerEstimateResponse>(getGetCustomerEstimateUrl(token),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getGetCustomerEstimateQueryKey = (token?: string,) => {
+    return [`/api/v1/public/track/${token}/estimate`] as const;
+    }
+
+    
+export const getGetCustomerEstimateQueryOptions = <TData = Awaited<ReturnType<typeof getCustomerEstimate>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomerEstimate>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCustomerEstimateQueryKey(token);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCustomerEstimate>>> = ({ signal }) => getCustomerEstimate(token, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCustomerEstimate>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCustomerEstimateQueryResult = NonNullable<Awaited<ReturnType<typeof getCustomerEstimate>>>
+export type GetCustomerEstimateQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useGetCustomerEstimate<TData = Awaited<ReturnType<typeof getCustomerEstimate>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ token: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomerEstimate>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomerEstimate>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomerEstimate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomerEstimate<TData = Awaited<ReturnType<typeof getCustomerEstimate>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomerEstimate>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCustomerEstimate>>,
+          TError,
+          Awaited<ReturnType<typeof getCustomerEstimate>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCustomerEstimate<TData = Awaited<ReturnType<typeof getCustomerEstimate>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomerEstimate>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetCustomerEstimate<TData = Awaited<ReturnType<typeof getCustomerEstimate>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ token: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCustomerEstimate>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCustomerEstimateQueryOptions(token,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getRequestEstimateCodeUrl = (token: string,) => {
+
+
+  
+
+  return `/api/v1/public/track/${token}/estimate/code`
+}
+
+export const requestEstimateCode = async (token: string, options?: RequestInit): Promise<EstimateCodeResponse> => {
+  
+  return apiFetch<EstimateCodeResponse>(getRequestEstimateCodeUrl(token),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getRequestEstimateCodeMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEstimateCode>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestEstimateCode>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['requestEstimateCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestEstimateCode>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  requestEstimateCode(token,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestEstimateCodeMutationResult = NonNullable<Awaited<ReturnType<typeof requestEstimateCode>>>
+    
+    export type RequestEstimateCodeMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useRequestEstimateCode = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestEstimateCode>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestEstimateCode>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRequestEstimateCodeMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getAnswerEstimateUrl = (token: string,
+    estimateId: string,) => {
+
+
+  
+
+  return `/api/v1/public/track/${token}/estimate/${estimateId}/answer`
+}
+
+export const answerEstimate = async (token: string,
+    estimateId: string,
+    answerEstimateRequest: AnswerEstimateRequest, options?: RequestInit): Promise<EstimateResponse> => {
+  
+  return apiFetch<EstimateResponse>(getAnswerEstimateUrl(token,estimateId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      answerEstimateRequest,)
+  }
+);}
+
+
+
+
+export const getAnswerEstimateMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof answerEstimate>>, TError,{token: string;estimateId: string;data: AnswerEstimateRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof answerEstimate>>, TError,{token: string;estimateId: string;data: AnswerEstimateRequest}, TContext> => {
+
+const mutationKey = ['answerEstimate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof answerEstimate>>, {token: string;estimateId: string;data: AnswerEstimateRequest}> = (props) => {
+          const {token,estimateId,data} = props ?? {};
+
+          return  answerEstimate(token,estimateId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AnswerEstimateMutationResult = NonNullable<Awaited<ReturnType<typeof answerEstimate>>>
+    export type AnswerEstimateMutationBody = AnswerEstimateRequest
+    export type AnswerEstimateMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useAnswerEstimate = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof answerEstimate>>, TError,{token: string;estimateId: string;data: AnswerEstimateRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof answerEstimate>>,
+        TError,
+        {token: string;estimateId: string;data: AnswerEstimateRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getAnswerEstimateMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

@@ -9,4 +9,9 @@ public static class OpsSettings
         "ops.stuck_after_minutes",
         180,
         "Flag a job as stuck when its status hasn't changed for this many minutes.");
+
+    public static readonly SettingDefinition<bool> EstimateRequiredBeforeRepair = new(
+        "estimates.required_before_repair",
+        false,
+        "Technicians must send an estimate, and the customer approve it, before starting a repair.");
 }

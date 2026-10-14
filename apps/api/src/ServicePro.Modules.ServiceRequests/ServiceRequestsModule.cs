@@ -28,6 +28,7 @@ public sealed class ServiceRequestsModule : IModule
         services.AddScoped<SrNumberGenerator>();
         services.Configure<PublicSiteOptions>(configuration.GetSection("Notifications"));
         services.AddSetting(OpsSettings.StuckAfterMinutes);
+        services.AddSetting(OpsSettings.EstimateRequiredBeforeRepair);
         services.AddSetting(CustomerChangeSettings.CanCancel);
         services.AddSetting(CustomerChangeSettings.CanReschedule);
         services.AddSetting(CustomerChangeSettings.MaxReschedules);

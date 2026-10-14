@@ -25,6 +25,10 @@ public static class TemplateCodes
     public const string OtpLogin = "OTP_LOGIN";
     public const string OtpBooking = "OTP_BOOKING";
     public const string OtpCustomerLogin = "OTP_CUSTOMER_LOGIN";
+    public const string OtpEstimate = "OTP_ESTIMATE";
+    public const string EstimateSent = "ESTIMATE_SENT";
+    public const string TechEstimateApproved = "TECH_ESTIMATE_APPROVED";
+    public const string TechEstimateDeclined = "TECH_ESTIMATE_DECLINED";
 }
 
 public sealed record TemplateSeed(string Code, NotificationChannel Channel, string Body);
@@ -74,12 +78,21 @@ public static class DefaultTemplates
             "{{code}} is your code to confirm your repair booking. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.OtpCustomerLogin, NotificationChannel.Sms,
             "{{code}} is your code to see your bookings. It expires in 5 minutes. Don't share it."),
+        new(TemplateCodes.OtpEstimate, NotificationChannel.Sms,
+            "{{code}} is your code to approve the repair estimate. It expires in 5 minutes. Only share it if you agree to the cost."),
+        new(TemplateCodes.EstimateSent, NotificationChannel.WhatsApp,
+            "{{technician}} has sent an estimate of {{amount}} for {{sr}}. Nothing extra is done until you approve it. Review it here: {{link}}"),
+        new(TemplateCodes.TechEstimateApproved, NotificationChannel.WhatsApp,
+            "The customer approved the estimate of {{amount}} for {{sr}}. You can start the repair."),
+        new(TemplateCodes.TechEstimateDeclined, NotificationChannel.WhatsApp,
+            "The customer declined the estimate for {{sr}}. Collect the visiting charge only."),
 
         // WhatsApp "authentication" templates (used when Notifications:OtpChannel = WhatsApp).
         // Meta fixes their wording; set each one's approved name under Settings > Messages.
         new(TemplateCodes.OtpLogin, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
         new(TemplateCodes.OtpBooking, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
         new(TemplateCodes.OtpCustomerLogin, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
+        new(TemplateCodes.OtpEstimate, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
     ];
 
     /// <summary>

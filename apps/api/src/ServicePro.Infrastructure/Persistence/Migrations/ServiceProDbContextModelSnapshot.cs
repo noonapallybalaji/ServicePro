@@ -203,6 +203,155 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.ToTable("settings", "platform");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Billing.Domain.Estimate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ApprovalMethod")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("approval_method");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("RecordedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recorded_by_user_id");
+
+                    b.Property<DateTimeOffset?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<string>("ResponseNote")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("response_note");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<Guid?>("SentByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sent_by_user_id");
+
+                    b.Property<Guid>("ServiceRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_request_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("status");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("subtotal");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("tax_amount");
+
+                    b.Property<decimal>("TaxRatePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("tax_rate_percent");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("total");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("pk_estimates");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_estimates_tenant_id");
+
+                    b.HasIndex("ServiceRequestId", "Version")
+                        .IsUnique()
+                        .HasDatabaseName("ix_estimates_service_request_id_version");
+
+                    b.ToTable("estimates", "billing");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Billing.Domain.EstimateLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("description");
+
+                    b.Property<Guid>("EstimateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("estimate_id");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer")
+                        .HasColumnName("position");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("quantity");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("type");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("unit_price");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_estimate_lines");
+
+                    b.HasIndex("EstimateId")
+                        .HasDatabaseName("ix_estimate_lines_estimate_id");
+
+                    b.ToTable("estimate_lines", "billing");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Billing.Domain.Invoice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2445,6 +2594,16 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.ToTable("technician_time_off", "workforce");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Billing.Domain.EstimateLine", b =>
+                {
+                    b.HasOne("ServicePro.Modules.Billing.Domain.Estimate", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("EstimateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_estimate_lines_estimates_estimate_id");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Billing.Domain.InvoiceLine", b =>
                 {
                     b.HasOne("ServicePro.Modules.Billing.Domain.Invoice", null)
@@ -2589,6 +2748,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_technician_time_off_technician_technician_id");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Billing.Domain.Estimate", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.Billing.Domain.Invoice", b =>

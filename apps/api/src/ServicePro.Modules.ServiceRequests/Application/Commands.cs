@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Application;
 using ServicePro.BuildingBlocks.Security;
+using ServicePro.BuildingBlocks.Settings;
 using ServicePro.BuildingBlocks.Storage;
 using ServicePro.Contracts;
 using ServicePro.Contracts.Ports;
@@ -213,6 +214,7 @@ internal sealed class TransitionRequestValidator : AbstractValidator<TransitionR
 public sealed class TransitionServiceRequest(
     DbContext db,
     ICatalogDirectory catalog,
+    ISettingsStore settings,
     ICurrentUser currentUser,
     IClock clock) : IUseCase
 {
@@ -223,6 +225,13 @@ public sealed class TransitionServiceRequest(
         if (serviceRequest is null)
         {
             return ServiceRequestErrors.NotFound;
+        }
+
+        // When the owner requires it, a technician can't skip from diagnosis to repair without an approved estimate.
+        if (serviceRequest.Status == ServiceRequestStatus.Diagnosing && request.To == ServiceRequestStatus.InProgress &&
+            currentUser.Role == UserRole.Technician && await settings.GetAsync(OpsSettings.EstimateRequiredBeforeRepair, ct))
+        {
+            return Error.Conflict("sr.estimate_required", "Send the estimate to the customer first. The repair starts once they approve it.");
         }
 
         GeoLocation? location = null;

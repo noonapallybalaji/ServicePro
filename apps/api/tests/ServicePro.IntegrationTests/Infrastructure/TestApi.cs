@@ -36,12 +36,26 @@ public sealed partial class TestApi(ApiFactory factory)
         return this;
     }
 
+    /// <summary>
+    /// Seeded technicians are shared by parallel tests, and a new code replaces the previous one,
+    /// so sign-ins take turns.
+    /// </summary>
+    private static readonly SemaphoreSlim TechnicianSignIn = new(1, 1);
+
     public async Task<TestApi> AsTechnicianAsync(string phone)
     {
-        var otp = await PostAsync<OtpRequestedResponse>("/api/v1/auth/otp/request", new OtpRequest(phone));
-        var response = await Client.PostAsJsonAsync("/api/v1/auth/otp/verify", new OtpVerifyRequest(phone, otp.DevelopmentCode!), Json);
-        await UseSessionAsync(response);
-        return this;
+        await TechnicianSignIn.WaitAsync();
+        try
+        {
+            var otp = await PostAsync<OtpRequestedResponse>("/api/v1/auth/otp/request", new OtpRequest(phone));
+            var response = await Client.PostAsJsonAsync("/api/v1/auth/otp/verify", new OtpVerifyRequest(phone, otp.DevelopmentCode!), Json);
+            await UseSessionAsync(response);
+            return this;
+        }
+        finally
+        {
+            TechnicianSignIn.Release();
+        }
     }
 
     public async Task UseSessionAsync(HttpResponseMessage response)

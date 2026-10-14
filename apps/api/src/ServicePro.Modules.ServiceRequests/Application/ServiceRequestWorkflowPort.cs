@@ -71,6 +71,12 @@ internal sealed class ServiceRequestWorkflowPort(DbContext db, ICustomerDirector
             .Select(s => s.TrackingToken)
             .FirstOrDefaultAsync(ct);
 
+    public Task<Result> AwaitEstimateApprovalAsync(Guid serviceRequestId, Actor actor, Guid? technicianId, CancellationToken ct) =>
+        MutateAsync(serviceRequestId, r => r.AwaitEstimateApproval(actor, technicianId, clock.UtcNow), ct);
+
+    public Task<Result> ResolveEstimateAsync(Guid serviceRequestId, bool approved, Actor actor, CancellationToken ct) =>
+        MutateAsync(serviceRequestId, r => r.ResolveEstimate(approved, actor, clock.UtcNow), ct);
+
     public Task<bool> HasOpenRequestsAsync(Guid customerId, CancellationToken ct)
     {
         var finished = ServiceRequestWorkflow.Terminal.ToArray();

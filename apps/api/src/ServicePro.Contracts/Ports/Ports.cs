@@ -250,6 +250,12 @@ public interface IServiceRequestWorkflow
     /// <summary>The token for the customer's tracking link, used in messages.</summary>
     Task<string?> GetTrackingTokenAsync(Guid serviceRequestId, CancellationToken ct);
 
+    /// <summary>An estimate was sent: the job waits for the customer's answer.</summary>
+    Task<Result> AwaitEstimateApprovalAsync(Guid serviceRequestId, Actor actor, Guid? technicianId, CancellationToken ct);
+
+    /// <summary>The customer's answer to an estimate: approved starts the repair, declined means visit charge only.</summary>
+    Task<Result> ResolveEstimateAsync(Guid serviceRequestId, bool approved, Actor actor, CancellationToken ct);
+
     /// <summary>Whether the customer has a job that isn't closed or cancelled yet (blocks account deletion).</summary>
     Task<bool> HasOpenRequestsAsync(Guid customerId, CancellationToken ct);
 }

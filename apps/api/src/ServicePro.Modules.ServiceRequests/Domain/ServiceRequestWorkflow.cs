@@ -35,7 +35,8 @@ public sealed record TransitionRule(
     ServiceRequestStatus To,
     TransitionActors Actors,
     TransitionRequirements Requirements = TransitionRequirements.None,
-    bool DispatchOnly = false);
+    bool DispatchOnly = false,
+    bool EstimateOnly = false);
 
 /// <summary>
 /// The service-request lifecycle as one table (ADR 0003, PLAN.md §8).
@@ -108,6 +109,14 @@ public static class ServiceRequestWorkflow
             new(ServiceRequestStatus.Arrived, ServiceRequestStatus.Diagnosing, Field),
             new(ServiceRequestStatus.Arrived, ServiceRequestStatus.CustomerUnavailable, Field, TransitionRequirements.Reason),
             new(ServiceRequestStatus.Diagnosing, ServiceRequestStatus.InProgress, Field),
+
+            // Billing module only: sending an estimate, and the customer's answer (PLAN.md §8).
+            new(ServiceRequestStatus.Diagnosing, ServiceRequestStatus.AwaitingEstimateApproval, Field, EstimateOnly: true),
+            new(ServiceRequestStatus.InProgress, ServiceRequestStatus.AwaitingEstimateApproval, Field, EstimateOnly: true),
+            new(ServiceRequestStatus.AwaitingEstimateApproval, ServiceRequestStatus.InProgress, Office | TransitionActors.Customer, EstimateOnly: true),
+            new(ServiceRequestStatus.AwaitingEstimateApproval, ServiceRequestStatus.UnableToRepair, Office | TransitionActors.Customer,
+                TransitionRequirements.Reason, EstimateOnly: true),
+
             new(ServiceRequestStatus.Diagnosing, ServiceRequestStatus.WaitingForParts, Field, TransitionRequirements.Reason),
             new(ServiceRequestStatus.Diagnosing, ServiceRequestStatus.UnableToRepair, Field, TransitionRequirements.Reason),
             new(ServiceRequestStatus.InProgress, ServiceRequestStatus.WaitingForParts, Field, TransitionRequirements.Reason),

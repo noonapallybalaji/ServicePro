@@ -68,4 +68,7 @@ public enum OtpPurpose
 
     /// <summary>A customer signing in to see their bookings.</summary>
     CustomerLogin,
+
+    /// <summary>A customer approving a repair estimate from their tracking link.</summary>
+    EstimateApproval,
 }

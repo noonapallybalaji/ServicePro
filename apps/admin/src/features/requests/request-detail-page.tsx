@@ -36,6 +36,7 @@ import { paths } from '../../app/paths';
 import { BackLink, humanize } from '../../components/common';
 import { StuckBadge } from '../../components/request-list';
 import { AssignmentPanel } from '../dispatch/assignment-panel';
+import { EstimatesPanel } from './estimates-panel';
 import { OnlinePaymentsPanel } from './online-payments';
 import { AddNoteForm, EditRequestDialog, ReviewBookingAlert, StaffPaymentDialog, StatusChangeDialog, UnassignDialog } from './request-dialogs';
 
@@ -279,6 +280,7 @@ function RequestDetail({ request }: { request: ServiceRequestDetail }) {
                 </Text>
               )}
             </Card>
+            <EstimatesPanel request={request} />
             <OnlinePaymentsPanel request={request} />
           </section>
 

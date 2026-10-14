@@ -36,7 +36,7 @@ public sealed class CustomerSessionIssuer(DbContext db, IOptions<AuthOptions> op
         active.ForEach(t => t.Revoke(now));
 
         var codes = await db.Set<OtpChallenge>()
-            .Where(c => c.Phone == phone && (c.Purpose == OtpPurpose.Booking || c.Purpose == OtpPurpose.CustomerLogin))
+            .Where(c => c.Phone == phone && (c.Purpose == OtpPurpose.Booking || c.Purpose == OtpPurpose.CustomerLogin || c.Purpose == OtpPurpose.EstimateApproval))
             .ToListAsync(ct);
         db.Set<OtpChallenge>().RemoveRange(codes);
     }

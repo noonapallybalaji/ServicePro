@@ -93,7 +93,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
-| 7.1 | **Digital estimate the customer approves before work** | 🟡 | Status `AWAITING_ESTIMATE_APPROVAL` exists; no estimate document, approval link or approval screen (PLAN Phase 3). Our website copy says the technician *explains* the cost; approval should be recorded. | **P0** | M |
+| 7.1 | **Digital estimate the customer approves before work** | ✅ | Technician app: "Send estimate" (bill builder, price list) while diagnosing or mid-repair; revisions supersede. Customer gets `ESTIMATE_SENT` and approves on the tracking page with a code to the booking phone (`estimates.code_required_above`, default 0 = always), or declines (job goes to UNABLE_TO_REPAIR, visit charge only). Staff can record a phone approval with a note (logged; technicians can't). The bill starts from the approved estimate. `estimates.required_before_repair` (default off) makes it mandatory. | **P0** | M |
 | 7.2 | Spare parts with prices from the price list, shown to the customer | 🟡 | Technician bill builder exists (staff side); customer sees lines only on the bill. | P1 | S |
 | 7.3 | Before and after photos | ✅ | Shown on tracking. | — | — |
 | 7.4 | Completion code shared with the technician | ✅ | | — | — |
@@ -181,7 +181,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 2. ~~Legal pages and consent (13.1, 2.3), and account deletion (2.4).~~ Built; pages need the business's legal details and a lawyer's review.
 3. ~~Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).~~ Built; needs Razorpay keys and webhook.
 4. ~~Customer cancel and reschedule with policy (5.2, 5.3).~~ Built.
-5. Digital estimate approval (7.1).
+5. ~~Digital estimate approval (7.1).~~ Built.
 6. Ratings and reviews (9.1).
 7. Auto-confirmation and auto-assignment (4.2).
 8. Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).

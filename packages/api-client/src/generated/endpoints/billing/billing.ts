@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  EstimateResponse,
   HttpValidationProblemDetails,
   InvoiceResponse,
   LedgerEntryRequest,
@@ -36,10 +37,12 @@ import type {
   PaymentResponse,
   ProblemDetails,
   ProcessRefundRequest,
+  RecordEstimateApprovalRequest,
   RecordPaymentRequest,
   RefundRequest,
   RefundResponse,
   SaveInvoiceRequest,
+  SendEstimateRequest,
   WaivePaymentRequest
 } from '../../model';
 
@@ -423,6 +426,229 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getWaivePaymentMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getListEstimatesUrl = (serviceRequestId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/estimates`
+}
+
+export const listEstimates = async (serviceRequestId: string, options?: RequestInit): Promise<EstimateResponse[]> => {
+  
+  return apiFetch<EstimateResponse[]>(getListEstimatesUrl(serviceRequestId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getListEstimatesQueryKey = (serviceRequestId?: string,) => {
+    return [`/api/v1/service-requests/${serviceRequestId}/estimates`] as const;
+    }
+
+    
+export const getListEstimatesQueryOptions = <TData = Awaited<ReturnType<typeof listEstimates>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEstimates>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListEstimatesQueryKey(serviceRequestId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEstimates>>> = ({ signal }) => listEstimates(serviceRequestId, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(serviceRequestId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEstimates>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListEstimatesQueryResult = NonNullable<Awaited<ReturnType<typeof listEstimates>>>
+export type ListEstimatesQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useListEstimates<TData = Awaited<ReturnType<typeof listEstimates>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEstimates>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEstimates>>,
+          TError,
+          Awaited<ReturnType<typeof listEstimates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListEstimates<TData = Awaited<ReturnType<typeof listEstimates>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEstimates>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listEstimates>>,
+          TError,
+          Awaited<ReturnType<typeof listEstimates>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListEstimates<TData = Awaited<ReturnType<typeof listEstimates>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEstimates>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListEstimates<TData = Awaited<ReturnType<typeof listEstimates>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ serviceRequestId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listEstimates>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListEstimatesQueryOptions(serviceRequestId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getSendEstimateUrl = (serviceRequestId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/estimates`
+}
+
+export const sendEstimate = async (serviceRequestId: string,
+    sendEstimateRequest: SendEstimateRequest, options?: RequestInit): Promise<EstimateResponse> => {
+  
+  return apiFetch<EstimateResponse>(getSendEstimateUrl(serviceRequestId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      sendEstimateRequest,)
+  }
+);}
+
+
+
+
+export const getSendEstimateMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendEstimate>>, TError,{serviceRequestId: string;data: SendEstimateRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendEstimate>>, TError,{serviceRequestId: string;data: SendEstimateRequest}, TContext> => {
+
+const mutationKey = ['sendEstimate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendEstimate>>, {serviceRequestId: string;data: SendEstimateRequest}> = (props) => {
+          const {serviceRequestId,data} = props ?? {};
+
+          return  sendEstimate(serviceRequestId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendEstimateMutationResult = NonNullable<Awaited<ReturnType<typeof sendEstimate>>>
+    export type SendEstimateMutationBody = SendEstimateRequest
+    export type SendEstimateMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useSendEstimate = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendEstimate>>, TError,{serviceRequestId: string;data: SendEstimateRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof sendEstimate>>,
+        TError,
+        {serviceRequestId: string;data: SendEstimateRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getSendEstimateMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getRecordEstimateApprovalUrl = (serviceRequestId: string,
+    estimateId: string,) => {
+
+
+  
+
+  return `/api/v1/service-requests/${serviceRequestId}/estimates/${estimateId}/record-approval`
+}
+
+export const recordEstimateApproval = async (serviceRequestId: string,
+    estimateId: string,
+    recordEstimateApprovalRequest: RecordEstimateApprovalRequest, options?: RequestInit): Promise<EstimateResponse> => {
+  
+  return apiFetch<EstimateResponse>(getRecordEstimateApprovalUrl(serviceRequestId,estimateId),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      recordEstimateApprovalRequest,)
+  }
+);}
+
+
+
+
+export const getRecordEstimateApprovalMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordEstimateApproval>>, TError,{serviceRequestId: string;estimateId: string;data: RecordEstimateApprovalRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordEstimateApproval>>, TError,{serviceRequestId: string;estimateId: string;data: RecordEstimateApprovalRequest}, TContext> => {
+
+const mutationKey = ['recordEstimateApproval'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordEstimateApproval>>, {serviceRequestId: string;estimateId: string;data: RecordEstimateApprovalRequest}> = (props) => {
+          const {serviceRequestId,estimateId,data} = props ?? {};
+
+          return  recordEstimateApproval(serviceRequestId,estimateId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordEstimateApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof recordEstimateApproval>>>
+    export type RecordEstimateApprovalMutationBody = RecordEstimateApprovalRequest
+    export type RecordEstimateApprovalMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useRecordEstimateApproval = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordEstimateApproval>>, TError,{serviceRequestId: string;estimateId: string;data: RecordEstimateApprovalRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordEstimateApproval>>,
+        TError,
+        {serviceRequestId: string;estimateId: string;data: RecordEstimateApprovalRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getRecordEstimateApprovalMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

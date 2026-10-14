@@ -32,6 +32,7 @@ public sealed class BillingModule : IModule
         services.AddHttpClient<IPaymentGateway, RazorpayGateway>(http => http.Timeout = TimeSpan.FromSeconds(20));
         services.AddScoped<PaymentLinks>();
         services.AddScoped<OnlinePaymentPosting>();
+        services.AddSetting(EstimateSettings.CodeRequiredAbove);
         services.AddSetting(BillingSettings.GstRatePercent);
         services.AddSetting(BillingSettings.BusinessName);
         services.AddSetting(BillingSettings.BusinessContact);
@@ -149,6 +150,47 @@ public sealed class BillingModule : IModule
             .AllowAnonymous()
             .ExcludeFromDescription();
 
+        // Estimates: technician sends, customer answers on the tracking link, staff can record a phone approval.
+        job.MapGet("/estimates", async (Guid serviceRequestId, ListEstimates useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
+            .Produces<IReadOnlyList<EstimateResponse>>()
+            .WithStandardErrors()
+            .WithName("ListEstimates");
+
+        job.MapPost("/estimates", async (Guid serviceRequestId, SendEstimateRequest request, SendEstimate useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, request, ct)).ToHttp())
+            .Validate<SendEstimateRequest>()
+            .Produces<EstimateResponse>()
+            .WithStandardErrors()
+            .WithName("SendEstimate");
+
+        job.MapPost("/estimates/{estimateId:guid}/record-approval", async (Guid serviceRequestId, Guid estimateId, RecordEstimateApprovalRequest request, RecordEstimateApproval useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(serviceRequestId, estimateId, request, ct)).ToHttp())
+            .RequireAuthorization(AuthPolicies.Staff)
+            .Validate<RecordEstimateApprovalRequest>()
+            .Produces<EstimateResponse>()
+            .WithStandardErrors()
+            .WithName("RecordEstimateApproval");
+
+        pay.MapGet("/estimate", async (string token, GetCustomerEstimate useCase, CancellationToken ct) => (await useCase.HandleAsync(token, ct)).ToHttp())
+            .Produces<CustomerEstimateResponse>()
+            .WithStandardErrors()
+            .WithName("GetCustomerEstimate");
+
+        pay.MapPost("/estimate/code", async (string token, RequestEstimateCode useCase, CancellationToken ct) => (await useCase.HandleAsync(token, ct)).ToHttp())
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Produces<EstimateCodeResponse>()
+            .WithStandardErrors()
+            .WithName("RequestEstimateCode");
+
+        pay.MapPost("/estimate/{estimateId:guid}/answer", async (string token, Guid estimateId, AnswerEstimateRequest request, AnswerEstimate useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(token, estimateId, request, ct)).ToHttp())
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Validate<AnswerEstimateRequest>()
+            .Produces<EstimateResponse>()
+            .WithStandardErrors()
+            .WithName("AnswerEstimate");
+
         // Staff and the assigned technician
         job.MapPost("/payment-link", async (Guid serviceRequestId, SendPaymentLink useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(serviceRequestId, ct)).ToHttp())
@@ -242,6 +284,36 @@ internal sealed class PaymentLinkConfiguration : IEntityTypeConfiguration<Paymen
         builder.Property(l => l.Amount).HasPrecision(12, 2);
         builder.HasIndex(l => l.ProviderLinkId).IsUnique();
         builder.HasIndex(l => l.ServiceRequestId);
+    }
+}
+
+internal sealed class EstimateConfiguration : IEntityTypeConfiguration<Estimate>
+{
+    public void Configure(EntityTypeBuilder<Estimate> builder)
+    {
+        builder.ToTable("estimates", "billing");
+        foreach (var money in new[] { nameof(Estimate.Subtotal), nameof(Estimate.TaxAmount), nameof(Estimate.Total) })
+        {
+            builder.Property(money).HasPrecision(12, 2);
+        }
+
+        builder.Property(e => e.TaxRatePercent).HasPrecision(5, 2);
+        builder.Property(e => e.ResponseNote).HasMaxLength(300);
+        builder.HasIndex(e => new { e.ServiceRequestId, e.Version }).IsUnique();
+        builder.HasMany(e => e.Lines).WithOne().HasForeignKey(l => l.EstimateId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(e => e.Lines).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+internal sealed class EstimateLineConfiguration : IEntityTypeConfiguration<EstimateLine>
+{
+    public void Configure(EntityTypeBuilder<EstimateLine> builder)
+    {
+        builder.ToTable("estimate_lines", "billing");
+        builder.Property(l => l.Description).HasMaxLength(200);
+        builder.Property(l => l.Quantity).HasPrecision(10, 2);
+        builder.Property(l => l.UnitPrice).HasPrecision(12, 2);
+        builder.Property(l => l.Amount).HasPrecision(12, 2);
     }
 }
 
