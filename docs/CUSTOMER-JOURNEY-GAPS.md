@@ -126,12 +126,12 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 10.1 | Call and WhatsApp buttons | ✅ | Static links to the business number. | — | — |
-| 10.2 | **In-app chat with support** (per booking, with history) | ❌ | No conversations model, chat UI or staff inbox. | **P0** | L |
+| 10.2 | **In-app chat with support** (per booking, with history) | ✅ | My bookings > Help: open a request (about a booking or not), topic chips, threaded conversation that refreshes every 10 s, "My problem is solved". "Get help" on each booking card and a link on the tracking page. Replies also arrive on WhatsApp (`SUPPORT_REPLY`). Polling, not websockets. | **P0** | L |
 | 10.3 | Chat with the technician (masked) | ❌ | See 5.6. | P1 | M |
-| 10.4 | WhatsApp AI assistant (n8n) | 🟡 | Booking API ready and tested; workflow setup and escalation pending (docs/DEPLOY-CLOUDFLARE-N8N.md). | P1 | S |
+| 10.4 | WhatsApp AI assistant (n8n) | 🟡 | Booking API and hand-over API (`POST /api/v1/integrations/support-tickets`, idempotent) ready and tested; the n8n workflow itself still needs setting up (docs/DEPLOY-CLOUDFLARE-N8N.md §6). | P1 | S |
 | 10.5 | Help centre: issue categories ("payment", "late technician", "damage") with self-help | ❌ | Only a general FAQ page. | P1 | M |
-| 10.6 | Tickets with status, SLA and escalation; staff support console | ❌ | Admin has no support queue. | **P0** | L |
-| 10.7 | Damage or safety incident reporting | ❌ | Important for in-home services (and insurance). | P1 | S |
+| 10.6 | Tickets with status, SLA and escalation; staff support console | ✅ | Admin > Support: queue (waiting for us / customer / solved, "mine"), damage reports flagged high priority, "reply overdue" against `support.first_response_minutes` (120; damage: half), replies, internal notes, assign, solve/reopen; live refresh. No automatic escalation to the owner yet. | **P0** | L |
+| 10.7 | Damage or safety incident reporting | 🟡 | "Damage or a safety concern" topic in Help: high priority, half the reply time, "call us now if anyone is in danger". No photo upload or insurance workflow yet. | P1 | S |
 
 ## 11. Notifications
 
@@ -170,7 +170,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 14.2 | Database backups and restore drill | ❌ | | **P0** | S |
 | 14.3 | Monitoring and alerts (uptime, errors, failed messages) | 🟡 | Health endpoints and Serilog exist; no alerting. | P1 | S |
 | 14.4 | Analytics funnel (visit → book → completed → paid → reviewed) | ❌ | Needed to measure conversion; respect consent. | P1 | S |
-| 14.5 | Customer support console for staff | ❌ | See 10.6. | **P0** | L |
+| 14.5 | Customer support console for staff | ✅ | See 10.6. | **P0** | L |
 
 ---
 
@@ -184,7 +184,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 5. ~~Digital estimate approval (7.1).~~ Built.
 6. ~~Ratings and reviews (9.1).~~ Built.
 7. ~~Auto-confirmation and auto-assignment (4.2).~~ Built, off until the owner turns it on.
-8. Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).
+8. ~~Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).~~ Built.
 9. Real slot availability (3.2).
 10. Production hosting and backups (14.1, 14.2).
 

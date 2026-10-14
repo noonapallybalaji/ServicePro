@@ -16,19 +16,7 @@ import {
   StatusDot,
   Text,
 } from '@servicepro/ui';
-import {
-  Gauge,
-  LayoutList,
-  LogOut,
-  MoreHorizontal,
-  ReceiptIndianRupee,
-  Search,
-  Send,
-  Settings,
-  UserRound,
-  Users,
-  Wrench,
-} from 'lucide-react';
+import { Gauge, LayoutList, LifeBuoy, LogOut, MoreHorizontal, ReceiptIndianRupee, Search, Send, Settings, UserRound, Users, Wrench } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 
@@ -46,6 +34,7 @@ const OPERATE: NavEntry[] = [
   { to: paths.dashboard, label: 'Dashboard', icon: <Gauge aria-hidden />, end: true },
   { to: paths.requests, label: 'Service requests', icon: <LayoutList aria-hidden /> },
   { to: paths.dispatch, label: 'Dispatch', icon: <Send aria-hidden /> },
+  { to: paths.support(), label: 'Support', icon: <LifeBuoy aria-hidden /> },
 ];
 
 const MANAGE: NavEntry[] = [

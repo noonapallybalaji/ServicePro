@@ -27,6 +27,9 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
             modelBuilder.HasSequence("sr_number_seq", "ops")
                 .StartsAt(10001L);
 
+            modelBuilder.HasSequence("ticket_number_seq", "support")
+                .StartsAt(10001L);
+
             modelBuilder.Entity("ServicePro.BuildingBlocks.Messaging.OutboxConsumer", b =>
                 {
                     b.Property<Guid>("MessageId")
@@ -2415,6 +2418,178 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.ToTable("service_status_history", "ops");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Support.Domain.SupportTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_to_user_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("category");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("channel");
+
+                    b.Property<string>("ContactName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("contact_name");
+
+                    b.Property<string>("ContactPhone")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("contact_phone");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("customer_id");
+
+                    b.Property<string>("ExternalReference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("external_reference");
+
+                    b.Property<DateTimeOffset?>("FirstResponseAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_response_at");
+
+                    b.Property<DateTimeOffset>("FirstResponseDueAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_response_due_at");
+
+                    b.Property<bool>("HighPriority")
+                        .HasColumnType("boolean")
+                        .HasColumnName("high_priority");
+
+                    b.Property<DateTimeOffset>("LastActivityAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_activity_at");
+
+                    b.Property<string>("Number")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("number");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ServiceRequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("service_request_id");
+
+                    b.Property<string>("SrNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("sr_number");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tickets");
+
+                    b.HasIndex("CustomerId")
+                        .HasDatabaseName("ix_tickets_customer_id");
+
+                    b.HasIndex("ServiceRequestId")
+                        .HasDatabaseName("ix_tickets_service_request_id");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_tickets_tenant_id");
+
+                    b.HasIndex("Status", "FirstResponseDueAt")
+                        .HasDatabaseName("ix_tickets_status_first_response_due_at");
+
+                    b.HasIndex("TenantId", "ExternalReference")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tickets_tenant_id_external_reference")
+                        .HasFilter("external_reference IS NOT NULL");
+
+                    b.HasIndex("TenantId", "Number")
+                        .IsUnique()
+                        .HasDatabaseName("ix_tickets_tenant_id_number");
+
+                    b.ToTable("tickets", "support");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Support.Domain.TicketMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Author")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("author");
+
+                    b.Property<Guid?>("AuthorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_user_id");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("body");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<bool>("IsInternal")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_internal");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ticket_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ticket_messages");
+
+                    b.HasIndex("TicketId", "SentAt")
+                        .HasDatabaseName("ix_ticket_messages_ticket_id_sent_at");
+
+                    b.ToTable("ticket_messages", "support");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.Technician", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2773,6 +2948,16 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_service_status_history_service_requests_service_request_id");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Support.Domain.TicketMessage", b =>
+                {
+                    b.HasOne("ServicePro.Modules.Support.Domain.SupportTicket", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ticket_messages_tickets_ticket_id");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.TechnicianServiceArea", b =>
                 {
                     b.HasOne("ServicePro.Modules.Technicians.Domain.Technician", null)
@@ -2839,6 +3024,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.Navigation("History");
 
                     b.Navigation("Notes");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Support.Domain.SupportTicket", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.Technician", b =>

@@ -50,8 +50,9 @@ import { Link, useSearchParams } from 'react-router';
 
 import { forgetSavedAddress } from '../booking/draft';
 import { BookingChanges } from './booking-changes';
+import { HelpTab } from './help-tab';
 
-const TABS = ['bookings', 'profile'] as const;
+const TABS = ['bookings', 'profile', 'help'] as const;
 type Tab = (typeof TABS)[number];
 
 /** Signed in: greeting, then Bookings and Profile tabs (?tab= keeps the choice in the URL). */
@@ -65,7 +66,7 @@ export function AccountView({ fullName }: { fullName: string }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <Heading level={1}>Hi, {firstName}</Heading>
-          <Text tone="secondary">Your bookings, profile and saved addresses.</Text>
+          <Text tone="secondary">Your bookings, profile, saved addresses and help.</Text>
         </div>
         <Button asChild variant="accent">
           <Link to="/book">
@@ -82,12 +83,18 @@ export function AccountView({ fullName }: { fullName: string }) {
           <TabsTrigger value="profile" className="min-w-24">
             Profile
           </TabsTrigger>
+          <TabsTrigger value="help" className="min-w-24">
+            Help
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="bookings" className="pt-2">
           <BookingsTab />
         </TabsContent>
         <TabsContent value="profile" className="pt-2">
           <ProfileTab />
+        </TabsContent>
+        <TabsContent value="help" className="pt-2">
+          <HelpTab />
         </TabsContent>
       </Tabs>
     </div>

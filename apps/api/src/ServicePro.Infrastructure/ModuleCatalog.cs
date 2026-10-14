@@ -7,6 +7,7 @@ using ServicePro.Modules.Dispatch;
 using ServicePro.Modules.Identity;
 using ServicePro.Modules.Notifications;
 using ServicePro.Modules.ServiceRequests;
+using ServicePro.Modules.Support;
 using ServicePro.Modules.Technicians;
 
 namespace ServicePro.Infrastructure;
@@ -24,6 +25,7 @@ public static class ModuleCatalog
         new DispatchModule(),
         new NotificationsModule(),
         new BillingModule(),
+        new SupportModule(),
     ];
 
     /// <summary>Assemblies whose EF configurations make up the model.</summary>

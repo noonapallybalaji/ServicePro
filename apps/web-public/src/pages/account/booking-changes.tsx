@@ -1,8 +1,9 @@
 import { getListMyBookingsQueryKey, isApiError, useCancelMyBooking, useRescheduleMyBooking, type MyBookingResponse } from '@servicepro/api-client';
 import { Alert, Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Field, Textarea } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, X } from 'lucide-react';
+import { CalendarClock, LifeBuoy, X } from 'lucide-react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import { EMPTY_DRAFT, type Draft } from '../booking/draft';
 import { slotWindow } from '../booking/slots';
@@ -14,7 +15,6 @@ import { TimeStep } from '../booking/time-step';
  */
 export function BookingChanges({ booking }: { booking: MyBookingResponse }) {
   const [open, setOpen] = useState<'cancel' | 'reschedule' | null>(null);
-  if (!booking.canCancel && !booking.canReschedule) return null;
 
   return (
     <div className="flex flex-wrap gap-2 border-t border-border px-4 py-3">
@@ -28,6 +28,11 @@ export function BookingChanges({ booking }: { booking: MyBookingResponse }) {
           <X aria-hidden /> Cancel booking
         </Button>
       ) : null}
+      <Button asChild size="sm" variant="ghost">
+        <Link to={`/account?tab=help&booking=${booking.id}`}>
+          <LifeBuoy aria-hidden /> Get help
+        </Link>
+      </Button>
       {open === 'reschedule' ? <RescheduleDialog booking={booking} onClose={() => setOpen(null)} /> : null}
       {open === 'cancel' ? <CancelDialog booking={booking} onClose={() => setOpen(null)} /> : null}
     </div>

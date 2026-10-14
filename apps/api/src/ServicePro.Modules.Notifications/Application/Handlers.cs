@@ -165,6 +165,33 @@ public sealed class NotifyAboutCustomerChanges(CustomerMessageContext messages, 
     }
 }
 
+/// <summary>Staff replied to a support request: the customer hears it on WhatsApp (with the text, so WhatsApp-only contacts can read it).</summary>
+public sealed class NotifySupportReply(ICustomerDirectory customers, NotificationDispatcher dispatcher, IOptions<NotificationOptions> options)
+    : IEventHandler<SupportReplySent>
+{
+    public async Task HandleAsync(SupportReplySent e, CancellationToken ct)
+    {
+        var customer = e.CustomerId is { } id ? await customers.GetAsync(id, ct) : null;
+        var to = customer?.Phone.Value ?? e.ContactPhone;
+        if (to is null)
+        {
+            return;
+        }
+
+        var message = e.Message.Length > 500 ? e.Message[..500] + "…" : e.Message;
+        await dispatcher.SendAsync(new NotificationRequest(
+            customer is null ? TemplateCodes.SupportReplyWhatsApp : TemplateCodes.SupportReply,
+            NotificationChannel.WhatsApp, RecipientType.Customer, customer?.Id, to, customer?.PreferredLanguage ?? NotificationDispatcher.DefaultLanguage,
+            new Dictionary<string, string>
+            {
+                ["ticket"] = e.Number,
+                ["message"] = message,
+                ["link"] = $"{options.Value.PublicSiteUrl.TrimEnd('/')}/account?tab=help",
+            },
+            null), ct);
+    }
+}
+
 /// <summary>Asks the customer to rate the visit (sent once, a while after the job closes).</summary>
 public sealed class AskForFeedback(CustomerMessageContext messages) : IEventHandler<FeedbackRequested>
 {

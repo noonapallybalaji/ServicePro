@@ -48,6 +48,7 @@ export const router = createBrowserRouter([
       { path: 'customers', lazy: page(() => import('../features/customers/customers-page'), (m) => m.CustomersPage) },
       { path: 'customers/new', lazy: page(() => import('../features/customers/new-customer-page'), (m) => m.NewCustomerPage) },
       { path: 'customers/:customerId', lazy: page(() => import('../features/customers/customer-detail-page'), (m) => m.CustomerDetailPage) },
+      { path: 'support', lazy: page(() => import('../features/support/support-page'), (m) => m.SupportPage) },
       { path: 'billing', lazy: page(() => import('../features/billing/billing-page'), (m) => m.BillingPage) },
       { path: 'settings', lazy: page(() => import('../features/settings/settings-page'), (m) => m.SettingsPage) },
       { path: '*', element: <RouteError /> },

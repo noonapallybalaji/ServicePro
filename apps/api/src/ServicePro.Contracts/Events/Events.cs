@@ -88,3 +88,9 @@ public sealed record ReviewSubmitted(Guid ReviewId, Guid ServiceRequestId, strin
 
 /// <summary>Time to ask the customer how the visit went.</summary>
 public sealed record FeedbackRequested(Guid ServiceRequestId, string SrNumber, Guid CustomerId, Guid? TechnicianId) : IDomainEvent;
+
+/// <summary>A customer (or the WhatsApp assistant on their behalf) asked for help.</summary>
+public sealed record SupportTicketOpened(Guid TicketId, string Number, bool HighPriority) : IDomainEvent;
+
+/// <summary>Staff replied to a customer's support ticket.</summary>
+public sealed record SupportReplySent(Guid TicketId, string Number, Guid? CustomerId, string? ContactPhone, string Message) : IDomainEvent;

@@ -67,3 +67,10 @@ public sealed class PushPayment(IHubContext<OpsHub> ops, ITenantContext tenant) 
         ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId))
             .SendAsync(RealtimeMessages.ServiceRequestChanged, new { e.ServiceRequestId }, ct);
 }
+
+/// <summary>New support request: the office queue refreshes (damage and safety reports are flagged).</summary>
+public sealed class PushSupportTicketOpened(IHubContext<OpsHub> ops, ITenantContext tenant) : IEventHandler<SupportTicketOpened>
+{
+    public Task HandleAsync(SupportTicketOpened e, CancellationToken ct) =>
+        ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId)).SendAsync(RealtimeMessages.SupportChanged, new { e.TicketId, e.Number, e.HighPriority }, ct);
+}

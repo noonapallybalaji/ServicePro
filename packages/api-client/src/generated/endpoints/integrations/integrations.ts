@@ -16,6 +16,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AssistantTicketRequest,
+  AssistantTicketResponse,
   HttpValidationProblemDetails,
   IntegrationBookingRequest,
   IntegrationBookingResponse,
@@ -91,6 +93,71 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getBookViaIntegrationMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getOpenTicketFromAssistantUrl = () => {
+
+
+  
+
+  return `/api/v1/integrations/support-tickets`
+}
+
+export const openTicketFromAssistant = async (assistantTicketRequest: AssistantTicketRequest, options?: RequestInit): Promise<AssistantTicketResponse> => {
+  
+  return apiFetch<AssistantTicketResponse>(getOpenTicketFromAssistantUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      assistantTicketRequest,)
+  }
+);}
+
+
+
+
+export const getOpenTicketFromAssistantMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof openTicketFromAssistant>>, TError,{data: AssistantTicketRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof openTicketFromAssistant>>, TError,{data: AssistantTicketRequest}, TContext> => {
+
+const mutationKey = ['openTicketFromAssistant'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof openTicketFromAssistant>>, {data: AssistantTicketRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  openTicketFromAssistant(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type OpenTicketFromAssistantMutationResult = NonNullable<Awaited<ReturnType<typeof openTicketFromAssistant>>>
+    export type OpenTicketFromAssistantMutationBody = AssistantTicketRequest
+    export type OpenTicketFromAssistantMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useOpenTicketFromAssistant = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof openTicketFromAssistant>>, TError,{data: AssistantTicketRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof openTicketFromAssistant>>,
+        TError,
+        {data: AssistantTicketRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getOpenTicketFromAssistantMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

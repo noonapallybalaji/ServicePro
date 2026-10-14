@@ -181,10 +181,22 @@ For each tool, set **Options → Timeout** = `15000` ms. Turn **Options → Resp
   - If your n8n version doesn't evaluate `$fromAI` inside `JSON.stringify`, switch to *Using Fields Below* and send `address` as a JSON string field.
 
 **escalate_to_human**
-- I couldn't inspect how this is implemented, because the workflow isn't in the repo.
-- Point it at a real destination you control, for example a *WhatsApp → Send Message* to the office number, or an email or Slack node, using credentials you add yourself.
-- Send only: customer first name, phone, appliance, a one-line problem summary, pincode, and the reason for escalation. No full addresses, codes or conversation dumps.
-- To avoid repeat alerts, have the agent escalate at most once per conversation. Simplest: include the WhatsApp `messages[0].id` in the alert, and skip it if *Log Processed Message* already recorded an escalation for that id.
+- Make it an *HTTP Request Tool* that creates a support ticket in the admin console (Support page), so the office sees it in the queue with a reply-time target:
+  - Method `POST`, URL `{{ $('ServicePro Settings').item.json.apiBaseUrl }}/api/v1/integrations/support-tickets`
+  - Header `X-ServicePro-Integration-Key` with the same n8n credential as *create_booking*.
+  - JSON body:
+  ```
+  {{ JSON.stringify({
+    idempotencyKey: $('WhatsApp Trigger').item.json.messages[0].id,
+    phone: $('WhatsApp Trigger').item.json.messages[0].from,
+    name: $fromAI('name', 'customer first name if they gave it, else empty', 'string'),
+    category: $fromAI('category', 'one of BOOKING, PAYMENT, LATE_TECHNICIAN, REPAIR_QUALITY, DAMAGE_OR_SAFETY, OTHER', 'string'),
+    summary: $fromAI('summary', 'two or three sentences: what the customer needs and why you are handing over. No OTPs, payment details or full addresses.', 'string')
+  }) }}
+  ```
+  - Reply to the customer with the `message` the API returns (it contains the ticket number). `duplicate: true` means this conversation was already handed over: don't escalate again.
+- Staff replies from the console reach the customer on WhatsApp (template `SUPPORT_REPLY_WHATSAPP`, which needs an approved name in Settings > Messages).
+- If the customer has booked before, the ticket is linked to their account; otherwise it keeps only the phone number and the name they gave.
 
 ### 6.4 Rules for the agent's system prompt
 

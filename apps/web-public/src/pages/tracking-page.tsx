@@ -164,6 +164,12 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
           <Text variant="body-lg" tone="secondary">
             {detail}
           </Text>
+          <Text variant="sm" tone="secondary">
+            Questions about this visit?{' '}
+            <Link className="link" to="/account?tab=help">
+              Ask us in My bookings
+            </Link>
+          </Text>
           {CHANGEABLE.has(data.status) ? (
             <Text variant="sm" tone="secondary">
               Need a different time, or want to cancel?{' '}

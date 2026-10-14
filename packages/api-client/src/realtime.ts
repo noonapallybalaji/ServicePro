@@ -11,7 +11,7 @@ import { session } from './session';
  */
 export type RealtimeHub = '/hubs/ops' | '/hubs/tech';
 
-export type RealtimeMessage = 'serviceRequestChanged' | 'technicianChanged' | 'jobChanged' | 'offerReceived' | 'offerResolved';
+export type RealtimeMessage = 'serviceRequestChanged' | 'technicianChanged' | 'jobChanged' | 'offerReceived' | 'offerResolved' | 'supportChanged';
 
 export type ConnectionHealth = 'connecting' | 'live' | 'reconnecting' | 'offline';
 

@@ -21,6 +21,7 @@ public static class RealtimeMessages
     public const string JobChanged = "jobChanged";
     public const string OfferReceived = "offerReceived";
     public const string OfferResolved = "offerResolved";
+    public const string SupportChanged = "supportChanged";
 }
 
 /// <summary>Live board for the owner/dispatcher (PLAN.md §5.2).</summary>

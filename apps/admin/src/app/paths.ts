@@ -12,6 +12,7 @@ export const paths = {
   newCustomer: '/customers/new',
   customer: (id: string) => `/customers/${id}`,
   billing: '/billing',
+  support: (ticketId?: string) => (ticketId ? `/support?ticket=${ticketId}` : '/support'),
   settings: '/settings',
   designSystem: '/design-system',
 } as const;

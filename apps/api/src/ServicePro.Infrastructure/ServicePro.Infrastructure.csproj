@@ -20,5 +20,6 @@
     <ProjectReference Include="..\ServicePro.Modules.Dispatch\ServicePro.Modules.Dispatch.csproj" />
     <ProjectReference Include="..\ServicePro.Modules.Notifications\ServicePro.Modules.Notifications.csproj" />
     <ProjectReference Include="..\ServicePro.Modules.Billing\ServicePro.Modules.Billing.csproj" />
+    <ProjectReference Include="..\ServicePro.Modules.Support\ServicePro.Modules.Support.csproj" />
   </ItemGroup>
 </Project>

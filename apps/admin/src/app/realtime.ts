@@ -15,4 +15,5 @@ const SERVICE_REQUEST_VIEWS = [
 export const LIVE_INVALIDATION: Partial<Record<RealtimeMessage, readonly string[]>> = {
   serviceRequestChanged: SERVICE_REQUEST_VIEWS,
   technicianChanged: ['/api/v1/admin/technicians', '/api/v1/admin/service-requests'],
+  supportChanged: ['/api/v1/admin/support'],
 };
