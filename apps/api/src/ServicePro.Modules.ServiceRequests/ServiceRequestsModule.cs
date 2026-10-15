@@ -36,6 +36,12 @@ public sealed class ServiceRequestsModule : IModule
         services.AddSetting(CustomerChangeSettings.MaxReschedules);
         services.AddSetting(CustomerChangeSettings.CutoffMinutes);
         services.AddScoped<CustomerChangePolicy>();
+        services.AddScoped<SlotAvailability>();
+        services.AddSetting(AvailabilitySettings.Windows);
+        services.AddSetting(AvailabilitySettings.DaysAhead);
+        services.AddSetting(AvailabilitySettings.LeadTimeMinutes);
+        services.AddSetting(AvailabilitySettings.JobsPerTechnicianPerWindow);
+        services.AddSetting(AvailabilitySettings.CapacityCheck);
         services.AddSetting(FeedbackSettings.RequestsEnabled);
         services.AddSetting(FeedbackSettings.RequestDelayMinutes);
         services.AddSingleton<FeedbackRequestWorker>();
@@ -240,6 +246,23 @@ public sealed class ServiceRequestsModule : IModule
             .RequireAuthorization(AuthPolicies.Staff)
             .Produces<IReadOnlyList<ReviewListItem>>()
             .WithName("ListReviews");
+
+        endpoints.MapGet("/api/v1/public/availability", async (Guid categoryId, string pincode, GetAvailability useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(categoryId, pincode, ct)).ToHttp())
+            .WithTags("Online booking")
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .Produces<AvailabilityResponse>()
+            .WithStandardErrors()
+            .WithName("GetAvailability");
+
+        endpoints.MapGet("/api/v1/account/bookings/{id:guid}/availability", async (Guid id, GetMyBookingAvailability useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(id, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces<AvailabilityResponse>()
+            .WithStandardErrors()
+            .WithName("GetMyBookingAvailability");
 
         endpoints.MapPost("/api/v1/account/bookings/{id:guid}/cancel", async (Guid id, CancelBookingRequest request, CancelMyBooking useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, request, ct)).ToHttp())

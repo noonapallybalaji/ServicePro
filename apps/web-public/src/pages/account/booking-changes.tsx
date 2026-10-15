@@ -1,4 +1,11 @@
-import { getListMyBookingsQueryKey, isApiError, useCancelMyBooking, useRescheduleMyBooking, type MyBookingResponse } from '@servicepro/api-client';
+import {
+  getListMyBookingsQueryKey,
+  isApiError,
+  useCancelMyBooking,
+  useGetMyBookingAvailability,
+  useRescheduleMyBooking,
+  type MyBookingResponse,
+} from '@servicepro/api-client';
 import { Alert, Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Field, Textarea } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { CalendarClock, LifeBuoy, X } from 'lucide-react';
@@ -6,7 +13,6 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 
 import { EMPTY_DRAFT, type Draft } from '../booking/draft';
-import { slotWindow } from '../booking/slots';
 import { TimeStep } from '../booking/time-step';
 
 /**
@@ -46,6 +52,7 @@ function useRefreshBookings() {
 
 function RescheduleDialog({ booking, onClose }: { booking: MyBookingResponse; onClose: () => void }) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const availability = useGetMyBookingAvailability(booking.id);
   const refresh = useRefreshBookings();
   const reschedule = useRescheduleMyBooking({
     mutation: {
@@ -58,9 +65,8 @@ function RescheduleDialog({ booking, onClose }: { booking: MyBookingResponse; on
   });
 
   function submit() {
-    if (!draft.date || !draft.slot) return;
-    const window = slotWindow(draft.date, draft.slot);
-    reschedule.mutate({ id: booking.id, data: { preferredSlotStart: window.start, preferredSlotEnd: window.end } });
+    if (!draft.slotStart) return;
+    reschedule.mutate({ id: booking.id, data: { preferredSlotStart: draft.slotStart, preferredSlotEnd: draft.slotEnd } });
   }
 
   return (
@@ -76,6 +82,9 @@ function RescheduleDialog({ booking, onClose }: { booking: MyBookingResponse; on
             draft={draft}
             update={(patch) => setDraft((d) => ({ ...d, ...patch }))}
             onNext={submit}
+            availability={availability.data}
+            loading={availability.isPending}
+            failed={availability.isError}
             actions={(ready) => (
               <DialogFooter className="px-0">
                 <Button type="button" variant="ghost" onClick={onClose}>

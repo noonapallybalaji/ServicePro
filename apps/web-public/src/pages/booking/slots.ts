@@ -1,46 +1,37 @@
+import type { AvailabilityDay, AvailabilitySlot } from '@servicepro/api-client';
+
 /*
- * Visit windows the customer can pick. Times are the business's local time (India, UTC+05:30),
- * whatever time zone the visitor's device is set to.
+ * Visit windows come from the server (GET /public/availability): it knows the technicians'
+ * shifts and how busy each window is. This file only formats them, always in the business's
+ * local time (India), whatever time zone the visitor's device is set to.
  */
 
 const BUSINESS_TZ = 'Asia/Kolkata';
-const BUSINESS_OFFSET = '+05:30';
-/** Bookings need this much notice before a window starts. */
-const LEAD_TIME_MS = 2 * 60 * 60 * 1000;
-export const BOOKABLE_DAYS = 7;
 
-export const SLOTS = [
-  { id: 'morning', label: 'Morning', range: '9 am – 12 pm', start: '09:00', end: '12:00' },
-  { id: 'afternoon', label: 'Afternoon', range: '12 – 3 pm', start: '12:00', end: '15:00' },
-  { id: 'evening', label: 'Evening', range: '3 – 6 pm', start: '15:00', end: '18:00' },
-] as const;
+const parts = new Intl.DateTimeFormat('en-IN', { timeZone: BUSINESS_TZ, weekday: 'short', day: 'numeric', month: 'short' });
+const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: BUSINESS_TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+const time = new Intl.DateTimeFormat('en-IN', { timeZone: BUSINESS_TZ, hour: 'numeric', minute: '2-digit', hour12: true });
 
-export type SlotId = (typeof SLOTS)[number]['id'];
-
-export interface BookableDay {
-  /** YYYY-MM-DD in business time. */
-  date: string;
+export interface DayLabel {
   weekday: string;
   dayOfMonth: string;
   month: string;
 }
 
-const ymd = new Intl.DateTimeFormat('en-CA', { timeZone: BUSINESS_TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
-const parts = new Intl.DateTimeFormat('en-IN', { timeZone: BUSINESS_TZ, weekday: 'short', day: 'numeric', month: 'short' });
-
-export function bookableDays(now: Date): BookableDay[] {
-  return Array.from({ length: BOOKABLE_DAYS }, (_, offset) => {
-    const day = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
-    const p = Object.fromEntries(parts.formatToParts(day).map((part) => [part.type, part.value]));
-    return { date: ymd.format(day), weekday: offset === 0 ? 'Today' : offset === 1 ? 'Tomorrow' : (p.weekday ?? ''), dayOfMonth: p.day ?? '', month: p.month ?? '' };
-  });
+/** "Today" / "Tomorrow" / "Fri", plus day and month, for a YYYY-MM-DD business date. */
+export function dayLabel(date: string, now: Date): DayLabel {
+  const noon = new Date(`${date}T12:00:00+05:30`);
+  const p = Object.fromEntries(parts.formatToParts(noon).map((part) => [part.type, part.value]));
+  const today = ymd.format(now);
+  const tomorrow = ymd.format(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  return { weekday: date === today ? 'Today' : date === tomorrow ? 'Tomorrow' : (p.weekday ?? ''), dayOfMonth: p.day ?? '', month: p.month ?? '' };
 }
 
-export function slotWindow(date: string, slotId: SlotId): { start: string; end: string } {
-  const slot = SLOTS.find((s) => s.id === slotId) ?? SLOTS[0];
-  return { start: `${date}T${slot.start}:00${BUSINESS_OFFSET}`, end: `${date}T${slot.end}:00${BUSINESS_OFFSET}` };
+/** "9:00 am – 12:00 pm". */
+export function slotRange(slot: Pick<AvailabilitySlot, 'start' | 'end'>): string {
+  return `${time.format(new Date(slot.start))} – ${time.format(new Date(slot.end))}`;
 }
 
-export function isSlotAvailable(date: string, slotId: SlotId, now: Date): boolean {
-  return new Date(slotWindow(date, slotId).start).getTime() - now.getTime() >= LEAD_TIME_MS;
+export function dayHasRoom(day: AvailabilityDay): boolean {
+  return day.slots.some((s) => s.available);
 }

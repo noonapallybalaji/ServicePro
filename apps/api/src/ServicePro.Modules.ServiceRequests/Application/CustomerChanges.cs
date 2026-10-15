@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Application;
 using ServicePro.BuildingBlocks.Settings;
+using ServicePro.Contracts.Ports;
 using ServicePro.Modules.ServiceRequests.Domain;
 using ServicePro.SharedKernel.Abstractions;
 using ServicePro.SharedKernel.Results;
@@ -137,7 +138,13 @@ public sealed class CancelMyBooking(DbContext db, ICurrentUser currentUser, Cust
 
 public sealed record RescheduleBookingRequest(DateTimeOffset PreferredSlotStart, DateTimeOffset PreferredSlotEnd);
 
-public sealed class RescheduleMyBooking(DbContext db, ICurrentUser currentUser, CustomerChangePolicy policy, IClock clock) : IUseCase
+public sealed class RescheduleMyBooking(
+    DbContext db,
+    ICurrentUser currentUser,
+    CustomerChangePolicy policy,
+    SlotAvailability availability,
+    ICustomerDirectory customers,
+    IClock clock) : IUseCase
 {
     public async Task<Result> HandleAsync(Guid id, RescheduleBookingRequest request, CancellationToken ct)
     {
@@ -155,6 +162,13 @@ public sealed class RescheduleMyBooking(DbContext db, ICurrentUser currentUser, 
         if (BookingRules.ValidateSlot(clock, request.PreferredSlotStart, request.PreferredSlotEnd) is { } invalid)
         {
             return invalid;
+        }
+
+        var address = await customers.GetAddressAsync(booking.Value.AddressId, ct);
+        if (await availability.CheckAsync(booking.Value.CategoryId, address?.Pincode ?? string.Empty,
+                request.PreferredSlotStart, request.PreferredSlotEnd, booking.Value.Id, ct) is { } full)
+        {
+            return full;
         }
 
         var moved = booking.Value.RescheduleByCustomer(request.PreferredSlotStart, request.PreferredSlotEnd, await policy.MaxReschedulesAsync(ct), clock.UtcNow);

@@ -55,6 +55,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await _database.StartAsync();
         _ = Services; // build the host: migrates and seeds
+
+        // Most tests book at arbitrary times; AvailabilityTests switch capacity checks on.
+        await using var scope = Services.CreateAsyncScope();
+        var settings = scope.ServiceProvider.GetRequiredService<ServicePro.BuildingBlocks.Settings.ISettingsStore>();
+        await settings.SetAsync("booking.capacity_check", System.Text.Json.JsonSerializer.SerializeToElement(false), CancellationToken.None);
+        await scope.ServiceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.DbContext>().SaveChangesAsync();
     }
 
     public new async ValueTask DisposeAsync()

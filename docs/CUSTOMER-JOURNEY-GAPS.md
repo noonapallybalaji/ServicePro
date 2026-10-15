@@ -47,7 +47,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 3.1 | 5-step booking: appliance, problem, address, time, details | ✅ | With pincode check, saved address, optional device pin, signed-in fast path. | — | — |
-| 3.2 | **Real slot availability** (only show times we can serve) | ❌ | Customers pick any morning/afternoon/evening in 7 days. No capacity, technician calendars or slot holds, so we can promise slots we can't meet. | **P0** | L |
+| 3.2 | **Real slot availability** (only show times we can serve) | ✅ | `GET /public/availability`: windows (`booking.windows`, 7 days, 2 h notice) open only when technicians with the skill, covering the pincode, on shift and not on leave have room (`booking.jobs_per_technician_per_window`, 2). Website, WhatsApp bookings and customer reschedules re-check at submit (`booking.slot_full`). No hold while the customer fills the form. Staff bookings can still overbook. `booking.capacity_check` off = old behaviour. | **P0** | L |
 | 3.3 | Instant or urgent booking ("as soon as possible") | ❌ | Priority exists for staff (HIGH/EMERGENCY) but the customer can't request it; no surge or urgent fee. | P1 | M |
 | 3.4 | Photos or video of the problem at booking | 🟡 | Attachments exist for staff and technicians (`PHOTO_ISSUE` kind) but the booking form has no upload. | P1 | S |
 | 3.5 | Appliance details: brand, model, age, under warranty? | 🟡 | The customer appliance model exists (staff side). The booking doesn't ask, so technicians arrive without parts info. | P1 | S |
@@ -185,7 +185,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 6. ~~Ratings and reviews (9.1).~~ Built.
 7. ~~Auto-confirmation and auto-assignment (4.2).~~ Built, off until the owner turns it on.
 8. ~~Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).~~ Built.
-9. Real slot availability (3.2).
+9. ~~Real slot availability (3.2).~~ Built.
 10. Production hosting and backups (14.1, 14.2).
 
 **Phase B: feels like an on-demand app (P1)**

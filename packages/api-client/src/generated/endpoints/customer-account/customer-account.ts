@@ -27,6 +27,7 @@ import type {
 import type {
   AccountResponse,
   AddAccountAddressRequest,
+  AvailabilityResponse,
   CancelBookingRequest,
   HttpValidationProblemDetails,
   MyBookingResponse,
@@ -404,6 +405,95 @@ export function useListMyBookings<TData = Awaited<ReturnType<typeof listMyBookin
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListMyBookingsQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getGetMyBookingAvailabilityUrl = (id: string,) => {
+
+
+  
+
+  return `/api/v1/account/bookings/${id}/availability`
+}
+
+export const getMyBookingAvailability = async (id: string, options?: RequestInit): Promise<AvailabilityResponse> => {
+  
+  return apiFetch<AvailabilityResponse>(getGetMyBookingAvailabilityUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getGetMyBookingAvailabilityQueryKey = (id?: string,) => {
+    return [`/api/v1/account/bookings/${id}/availability`] as const;
+    }
+
+    
+export const getGetMyBookingAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBookingAvailabilityQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBookingAvailability>>> = ({ signal }) => getMyBookingAvailability(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyBookingAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBookingAvailability>>>
+export type GetMyBookingAvailabilityQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyBookingAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof getMyBookingAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyBookingAvailability>>,
+          TError,
+          Awaited<ReturnType<typeof getMyBookingAvailability>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyBookingAvailabilityQueryOptions(id,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

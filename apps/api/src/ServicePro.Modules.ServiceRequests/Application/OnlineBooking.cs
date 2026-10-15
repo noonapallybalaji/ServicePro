@@ -123,6 +123,7 @@ public sealed class BookServiceOnline(
     ICurrentUser currentUser,
     ICatalogDirectory catalog,
     ISettingsStore settings,
+    SlotAvailability availability,
     IClock clock) : IUseCase
 {
     public async Task<Result<OnlineBookingOutcome>> HandleAsync(OnlineBookingRequest request, CancellationToken ct)
@@ -138,6 +139,11 @@ public sealed class BookServiceOnline(
         if (details.IsFailure)
         {
             return details.Error!;
+        }
+
+        if (await availability.CheckAsync(request.CategoryId, request.Address.Pincode, request.PreferredSlotStart, request.PreferredSlotEnd, null, ct) is { } slotError)
+        {
+            return slotError;
         }
 
         // A customer already signed in with this number has proven it; anyone else verifies now.

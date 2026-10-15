@@ -2,6 +2,7 @@ import {
   isApiError,
   useBookServiceOnline,
   useGetActiveCatalog,
+  useGetAvailability,
   useRequestBookingCode,
   type CategoryResponse,
   useSession,
@@ -39,7 +40,7 @@ import { PolicyNotice } from '../../components/policy-notice';
 import { customerFrom, signInWith } from '../../customer-session';
 import { AddressStep } from './address-step';
 import { EMPTY_DRAFT, addressOneLine, saveAddress, type Draft } from './draft';
-import { SLOTS, bookableDays, slotWindow } from './slots';
+import { dayLabel, slotRange } from './slots';
 import { TimeStep } from './time-step';
 
 const STEPS = [
@@ -68,6 +69,11 @@ export function BookingPage() {
   const categoryId = draft.categoryId || preset?.id || '';
   const category = categories.find((c) => c.id === categoryId);
   const currentStep = draft.categoryId || !preset ? step : Math.max(step, 1);
+  // Windows with room for this appliance at this address (refreshed while the customer decides).
+  const availability = useGetAvailability(
+    { categoryId, pincode: draft.pincode },
+    { query: { enabled: Boolean(categoryId && /^[1-9][0-9]{5}$/.test(draft.pincode)), refetchInterval: 60_000 } },
+  );
 
   const update = (patch: Partial<Draft>) => setDraft((d) => ({ ...d, ...patch }));
   const go = (to: number) => {
@@ -116,7 +122,15 @@ export function BookingPage() {
                 ) : currentStep === 2 ? (
                   <AddressStep draft={draft} update={update} onNext={() => go(3)} actions={continueButton} />
                 ) : currentStep === 3 ? (
-                  <TimeStep draft={draft} update={update} onNext={() => go(4)} actions={continueButton} />
+                  <TimeStep
+                    draft={draft}
+                    update={update}
+                    onNext={() => go(4)}
+                    actions={continueButton}
+                    availability={availability.data}
+                    loading={availability.isPending}
+                    failed={availability.isError}
+                  />
                 ) : category ? (
                   <DetailsStep draft={draft} update={update} category={category} onBooked={setBooked} />
                 ) : null}
@@ -243,8 +257,8 @@ function DetailsStep({
 
   function confirm(event: FormEvent) {
     event.preventDefault();
-    if (!draft.slot) return;
-    const visit = slotWindow(draft.date, draft.slot);
+    if (!draft.slotStart) return;
+    const visit = { start: draft.slotStart, end: draft.slotEnd };
     book.mutate(
       {
         data: {
@@ -397,8 +411,8 @@ const continueButton = (ready: boolean) => (
 
 function Summary({ draft, category }: { draft: Draft; category: CategoryResponse | undefined }) {
   const issue = category?.issueTypes.find((i) => i.id === draft.issueTypeId)?.name;
-  const day = draft.date ? bookableDays(new Date()).find((d) => d.date === draft.date) : undefined;
-  const slot = SLOTS.find((s) => s.id === draft.slot);
+  const day = draft.date && draft.slotStart ? dayLabel(draft.date, new Date()) : undefined;
+  const slot = draft.slotStart ? { range: slotRange({ start: draft.slotStart, end: draft.slotEnd }) } : undefined;
 
   return (
     <Card className="flex flex-col gap-4">

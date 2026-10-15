@@ -91,6 +91,7 @@ public sealed class BookViaIntegration(
     ICatalogDirectory catalog,
     IOptions<PublicSiteOptions> site,
     ISettingsStore settings,
+    SlotAvailability availability,
     IClock clock) : IUseCase
 {
     private const RequestChannel Channel = RequestChannel.WhatsApp;
@@ -119,6 +120,11 @@ public sealed class BookViaIntegration(
         if (details.IsFailure)
         {
             return details.Error!;
+        }
+
+        if (await availability.CheckAsync(request.CategoryId, request.Address.Pincode, request.PreferredSlotStart, request.PreferredSlotEnd, null, ct) is { } slotError)
+        {
+            return slotError;
         }
 
         var address = request.Address;

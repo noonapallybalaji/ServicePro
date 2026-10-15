@@ -1,4 +1,3 @@
-import type { SlotId } from './slots';
 
 export const ADDRESS_LABELS = ['Home', 'Work', 'Other'] as const;
 export type AddressLabel = (typeof ADDRESS_LABELS)[number];
@@ -29,7 +28,10 @@ export interface Draft extends BookingAddress {
   issueTypeId: string;
   description: string;
   date: string;
-  slot: SlotId | '';
+  /** Window id from the server, and its exact start and end (ISO). */
+  slot: string;
+  slotStart: string;
+  slotEnd: string;
   fullName: string;
   phone: string;
   /** Remember this address on this device for the next booking. */
@@ -50,6 +52,8 @@ export const EMPTY_DRAFT: Draft = {
   pin: null,
   date: '',
   slot: '',
+  slotStart: '',
+  slotEnd: '',
   fullName: '',
   phone: '',
   rememberAddress: true,
