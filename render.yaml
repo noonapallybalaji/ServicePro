@@ -71,7 +71,7 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://servicepro-api.onrender.com/api/*
+        destination: https://servicepro-api-x3te.onrender.com/api/*
       - type: rewrite
         source: /book
         destination: /app.html
@@ -95,10 +95,10 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://servicepro-api.onrender.com/api/*
+        destination: https://servicepro-api-x3te.onrender.com/api/*
       - type: rewrite
         source: /hubs/*
-        destination: https://servicepro-api.onrender.com/hubs/*
+        destination: https://servicepro-api-x3te.onrender.com/hubs/*
       - type: rewrite
         source: /*
         destination: /index.html
@@ -116,10 +116,10 @@ services:
     routes:
       - type: rewrite
         source: /api/*
-        destination: https://servicepro-api.onrender.com/api/*
+        destination: https://servicepro-api-x3te.onrender.com/api/*
       - type: rewrite
         source: /hubs/*
-        destination: https://servicepro-api.onrender.com/hubs/*
+        destination: https://servicepro-api-x3te.onrender.com/hubs/*
       - type: rewrite
         source: /*
         destination: /index.html
