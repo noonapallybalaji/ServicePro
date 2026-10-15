@@ -670,6 +670,40 @@
         }
       }
     },
+    "/api/v1/catalog/public-prices": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "GetPublicPrices",
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PublicPriceResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/catalog/brands": {
       "get": {
         "tags": [
@@ -11842,6 +11876,36 @@
             ]
           }
         }
+      },
+      "PublicPriceResponse": {
+        "required": [
+          "issueTypeId",
+          "itemName",
+          "priceMin",
+          "priceMax"
+        ],
+        "type": "object",
+        "properties": {
+          "issueTypeId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "itemName": {
+            "type": "string"
+          },
+          "priceMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "priceMax": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "description": "A typical price a customer may see: what it is, and the range we usually charge."
       },
       "RecipientType": {
         "enum": [

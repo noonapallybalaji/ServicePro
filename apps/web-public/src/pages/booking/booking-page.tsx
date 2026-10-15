@@ -3,6 +3,7 @@ import {
   useBookServiceOnline,
   useGetActiveCatalog,
   useGetAvailability,
+  useGetPublicPrices,
   useRequestBookingCode,
   type CategoryResponse,
   useSession,
@@ -43,6 +44,7 @@ import { EMPTY_DRAFT, addressOneLine, saveAddress, type Draft } from './draft';
 import { dayLabel, slotRange } from './slots';
 import { TimeStep } from './time-step';
 import { ApplianceDetails, ProblemPhotos, SomeoneElse, bookingExtras, uploadPhotos } from './extras';
+import { priceRange } from '../../components/typical-prices';
 
 const STEPS = [
   { id: 'appliance', label: 'Appliance', title: 'What needs repairing?' },
@@ -189,6 +191,8 @@ interface StepProps {
 
 function ProblemStep({ category, draft, update, onNext }: StepProps & { category: CategoryResponse }) {
   const issues = category.issueTypes.filter((i) => i.isActive);
+  // Typical prices for the chosen problem (empty unless the business shows prices).
+  const prices = (useGetPublicPrices({ categoryId: category.id }).data ?? []).filter((p) => p.issueTypeId === draft.issueTypeId);
   const ready = draft.description.trim().length >= 3 || draft.issueTypeId !== '';
 
   function submit(event: FormEvent) {
@@ -211,6 +215,22 @@ function ProblemStep({ category, draft, update, onNext }: StepProps & { category
             ))}
           </RadioGroup>
         </fieldset>
+      ) : null}
+      {prices.length > 0 ? (
+        <div className="flex flex-col gap-1 rounded-card bg-surface-sunken p-4">
+          <Text variant="sm" weight="semibold">
+            Usually costs
+          </Text>
+          {prices.map((p) => (
+            <Text key={p.itemName} variant="sm" tone="secondary" className="flex justify-between gap-3">
+              <span>{p.itemName}</span>
+              <span className="tabular-nums">{priceRange(p.priceMin, p.priceMax)}</span>
+            </Text>
+          ))}
+          <Text variant="caption" tone="muted">
+            On top of the visiting charge. The technician confirms the price before starting.
+          </Text>
+        </div>
       ) : null}
       <Field label="Tell us more" optional={draft.issueTypeId !== ''} hint="What you've noticed: sounds, error codes, when it started.">
         <Textarea rows={4} value={draft.description} onChange={(e) => update({ description: e.target.value })} maxLength={1000} />

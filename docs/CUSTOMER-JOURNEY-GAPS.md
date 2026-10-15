@@ -22,7 +22,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 1.1 | Landing page, service pages, FAQ, SEO | ✅ | Pre-rendered, sitemap, structured data | — | — |
-| 1.2 | Clear price per problem before booking | 🟡 | Only the visiting charge is public. The price list exists, but it's **staff-only** (`/catalog/price-list` needs sign-in). Customers can't see "Gas refill from ₹1,500". | P1 | S |
+| 1.2 | Clear price per problem before booking | 🔌 | "Typical prices" on each service page and "Usually costs" on the booking problem step, from the active price-list items (Admin > catalog). Off until the owner turns on `catalog.show_prices_to_customers`, so no price is published unchecked. Also fixed: creating a price item ignored "active". | P1 | S |
 | 1.3 | Customer reviews and ratings shown on pages | ❌ | No review collection exists yet (see 9.1), so there's nothing to show. | P1 | S (after 9.1) |
 | 1.4 | Search ("fridge not cooling") | ❌ | Only browsing by appliance. | P2 | S |
 | 1.5 | Offers, coupons, first-booking discount | ❌ | No coupon model, pricing rules or redemption. | P2 | M |

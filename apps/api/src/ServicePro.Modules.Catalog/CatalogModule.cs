@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using ServicePro.BuildingBlocks;
 using ServicePro.BuildingBlocks.Modules;
 using ServicePro.BuildingBlocks.Security;
 using ServicePro.BuildingBlocks.Web;
@@ -16,8 +17,11 @@ public sealed class CatalogModule : IModule
 {
     public string Name => "Catalog";
 
-    public void Register(IServiceCollection services, IConfiguration configuration) =>
+    public void Register(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddScoped<ICatalogDirectory, CatalogDirectory>();
+        services.AddSetting(PublicPriceSettings.ShowToCustomers);
+    }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
@@ -42,6 +46,14 @@ public sealed class CatalogModule : IModule
             .RequireAuthorization()
             .Produces<IReadOnlyList<PriceListItemResponse>>()
             .WithName("GetPriceList");
+
+        // Public: typical prices, only when the owner has chosen to show them.
+        catalog.MapGet("/public-prices", async (Guid categoryId, GetPublicPrices useCase, CancellationToken ct) =>
+                Results.Ok(await useCase.HandleAsync(categoryId, ct)))
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .Produces<IReadOnlyList<PublicPriceResponse>>()
+            .WithName("GetPublicPrices");
 
         // Public: brand names are offered as suggestions on the booking form.
         catalog.MapGet("/brands", async (ListBrands useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(ct)))

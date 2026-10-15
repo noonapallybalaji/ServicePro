@@ -276,6 +276,12 @@ public sealed class SavePriceListItem(DbContext db) : IUseCase
         else
         {
             item = new PriceListItem(request.CategoryId, request.IssueTypeId, request.ItemName, request.PriceMin, request.PriceMax);
+            if (!request.IsActive)
+            {
+                // Created as a draft (unticked "active"): not offered or shown yet.
+                item.Update(request.IssueTypeId, request.ItemName, request.PriceMin, request.PriceMax, isActive: false);
+            }
+
             db.Set<PriceListItem>().Add(item);
         }
 

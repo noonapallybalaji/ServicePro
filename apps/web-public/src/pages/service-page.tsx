@@ -8,6 +8,7 @@ import { GENERAL_FAQS, inSentence, serviceBySlug, serviceHeading, servicePath, t
 import { usePageMeta } from '../seo/head';
 import { SERVICE_PAGES, type PageMeta } from '../seo/pages';
 import { SITE } from '../site';
+import { TypicalPrices } from '../components/typical-prices';
 
 /** One page per appliance: what we fix, how it works, FAQs, related services. */
 export function ServicePage({ slug }: { slug: string }) {
@@ -62,6 +63,8 @@ function ServiceContentPage({ service, meta }: { service: ServiceContent; meta: 
           ))}
         </ul>
       </PageSection>
+
+      <TypicalPrices code={service.code} appliance={service.appliance} />
 
       <PageSection id="how" title={`How our ${service.appliance} repair service works`}>
         <StepList />
