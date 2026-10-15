@@ -1,4 +1,5 @@
 import {
+  apiUrl,
   getGetMyTicketQueryKey,
   getListMyTicketsQueryKey,
   isApiError,
@@ -7,14 +8,15 @@ import {
   useListMyTickets,
   useOpenMyTicket,
   useResolveMyTicket,
+  session,
   useWriteToMyTicket,
   type TicketCategory,
   type TicketStatus,
 } from '@servicepro/api-client';
 import { Alert, Badge, Button, Card, EmptyState, Field, Select, Skeleton, SpotArt, Text, Textarea, cn, formatDateTime } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, CheckCircle2, LifeBuoy, MessageSquarePlus, Send } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
+import { ArrowLeft, CheckCircle2, ImagePlus, LifeBuoy, MessageSquarePlus, Send } from 'lucide-react';
+import { useId, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router';
 
 import { SITE, whatsappLink } from '../../site';
@@ -43,12 +45,13 @@ export function HelpTab() {
   const [params, setParams] = useSearchParams();
   const number = params.get('ticket');
   const booking = params.get('booking');
-  const [composing, setComposing] = useState(Boolean(booking));
+  const topic = CATEGORIES.find((c) => c.value === params.get('topic'))?.value;
+  const [composing, setComposing] = useState(Boolean(booking || topic));
 
   const go = (next: Record<string, string>) => setParams({ tab: 'help', ...next }, { replace: true });
 
   if (number) return <Thread number={number} onBack={() => go({})} />;
-  if (composing) return <NewRequest bookingId={booking ?? ''} onCancel={() => (setComposing(false), go({}))} onOpened={(n) => (setComposing(false), go({ ticket: n }))} />;
+  if (composing) return <NewRequest bookingId={booking ?? ''} initialCategory={topic} onCancel={() => (setComposing(false), go({}))} onOpened={(n) => (setComposing(false), go({ ticket: n }))} />;
   return <Requests onNew={() => setComposing(true)} onOpen={(n) => go({ ticket: n })} />;
 }
 
@@ -103,11 +106,21 @@ function Requests({ onNew, onOpen }: { onNew: () => void; onOpen: (number: strin
   );
 }
 
-function NewRequest({ bookingId, onCancel, onOpened }: { bookingId: string; onCancel: () => void; onOpened: (number: string) => void }) {
+function NewRequest({
+  bookingId,
+  initialCategory,
+  onCancel,
+  onOpened,
+}: {
+  bookingId: string;
+  initialCategory?: TicketCategory;
+  onCancel: () => void;
+  onOpened: (number: string) => void;
+}) {
   const bookings = useListMyBookings();
   const queryClient = useQueryClient();
   const [serviceRequestId, setServiceRequestId] = useState(bookingId);
-  const [category, setCategory] = useState<TicketCategory | ''>('');
+  const [category, setCategory] = useState<TicketCategory | ''>(initialCategory ?? '');
   const [message, setMessage] = useState('');
   const open = useOpenMyTicket({
     mutation: {
@@ -253,6 +266,7 @@ function Thread({ number, onBack }: { number: string; onBack: () => void }) {
           <Textarea value={reply} maxLength={2000} rows={3} onChange={(event) => setReply(event.target.value)} />
         </Field>
         {isApiError(write.error) ? <Alert role="alert" tone="error" title={write.error.message} /> : null}
+        <TicketPhotos number={number} count={t.photoCount ?? 0} onAdded={refresh} />
         <div className="flex flex-wrap gap-2">
           <Button type="submit" loading={write.isPending} disabled={reply.trim().length === 0}>
             <Send aria-hidden /> Send
@@ -271,6 +285,56 @@ function Thread({ number, onBack }: { number: string; onBack: () => void }) {
           ) : null}
         </div>
       </form>
+    </div>
+  );
+}
+
+/** Photos for the request: damage, an error code, the bill. Staff see them; they aren't shown back here. */
+function TicketPhotos({ number, count, onAdded }: { number: string; count: number; onAdded: () => Promise<unknown> }) {
+  const inputId = useId();
+  const [state, setState] = useState<'idle' | 'uploading' | 'failed'>('idle');
+
+  async function upload(files: FileList | null) {
+    const photos = Array.from(files ?? []);
+    if (photos.length === 0) return;
+    setState('uploading');
+    let failed = 0;
+    for (const photo of photos) {
+      const form = new FormData();
+      form.append('file', photo);
+      try {
+        const response = await fetch(apiUrl(`/api/v1/account/support/${encodeURIComponent(number)}/photos`), {
+          method: 'POST',
+          body: form,
+          headers: { Authorization: `Bearer ${session.getAccessToken() ?? ''}` },
+          credentials: 'same-origin',
+        });
+        if (!response.ok) failed++;
+      } catch {
+        failed++;
+      }
+    }
+
+    await onAdded();
+    setState(failed > 0 ? 'failed' : 'idle');
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <label htmlFor={inputId} className="link inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
+        <ImagePlus aria-hidden className="size-4" /> {state === 'uploading' ? 'Uploading…' : 'Add photos'}
+        <input id={inputId} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" onChange={(e) => void upload(e.target.files)} />
+      </label>
+      {count > 0 ? (
+        <Text variant="caption" tone="muted">
+          {count} photo{count > 1 ? 's' : ''} sent to our team
+        </Text>
+      ) : null}
+      {state === 'failed' ? (
+        <Text variant="caption" tone="error">
+          Some photos didn't upload (photos only, up to 6, under 10 MB).
+        </Text>
+      ) : null}
     </div>
   );
 }

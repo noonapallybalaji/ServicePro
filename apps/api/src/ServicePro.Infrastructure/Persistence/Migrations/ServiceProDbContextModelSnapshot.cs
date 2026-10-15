@@ -2617,6 +2617,53 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.ToTable("ticket_messages", "support");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Support.Domain.TicketPhoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("AddedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("added_at");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint")
+                        .HasColumnName("size_bytes");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("storage_key");
+
+                    b.Property<Guid>("TicketId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ticket_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ticket_photos");
+
+                    b.HasIndex("TicketId")
+                        .HasDatabaseName("ix_ticket_photos_ticket_id");
+
+                    b.ToTable("ticket_photos", "support");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.Technician", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2985,6 +3032,16 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_ticket_messages_tickets_ticket_id");
                 });
 
+            modelBuilder.Entity("ServicePro.Modules.Support.Domain.TicketPhoto", b =>
+                {
+                    b.HasOne("ServicePro.Modules.Support.Domain.SupportTicket", null)
+                        .WithMany("Photos")
+                        .HasForeignKey("TicketId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_ticket_photos_tickets_ticket_id");
+                });
+
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.TechnicianServiceArea", b =>
                 {
                     b.HasOne("ServicePro.Modules.Technicians.Domain.Technician", null)
@@ -3056,6 +3113,8 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ServicePro.Modules.Support.Domain.SupportTicket", b =>
                 {
                     b.Navigation("Messages");
+
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.Technician", b =>

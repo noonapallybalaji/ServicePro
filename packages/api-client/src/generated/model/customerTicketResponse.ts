@@ -20,4 +20,5 @@ export interface CustomerTicketResponse {
   srNumber: CustomerTicketResponseSrNumber;
   messages: CustomerMessageResponse[];
   createdAt: string;
+  photoCount?: number;
 }

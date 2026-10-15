@@ -70,7 +70,8 @@ public sealed record CustomerTicketResponse(
     Guid? ServiceRequestId,
     string? SrNumber,
     IReadOnlyList<CustomerMessageResponse> Messages,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    int PhotoCount = 0);
 
 internal static class CustomerViews
 {
@@ -95,7 +96,8 @@ internal static class CustomerViews
             m.Author switch { MessageAuthor.Customer => "You", MessageAuthor.Assistant => "WhatsApp assistant", _ => "Support team" },
             m.Body,
             m.SentAt))],
-        t.CreatedAt);
+        t.CreatedAt,
+        t.Photos.Count);
 }
 
 public sealed record OpenTicketRequest(Guid? ServiceRequestId, TicketCategory Category, string Message);
@@ -159,7 +161,7 @@ public sealed class ListMyTickets(DbContext db, ICurrentUser currentUser) : IUse
             return SupportErrors.NotSignedIn;
         }
 
-        var tickets = await db.Set<SupportTicket>().AsNoTracking().Include(t => t.Messages)
+        var tickets = await db.Set<SupportTicket>().AsNoTracking().Include(t => t.Messages).Include(t => t.Photos)
             .Where(t => t.CustomerId == customerId)
             .OrderByDescending(t => t.LastActivityAt)
             .Take(50)
@@ -178,7 +180,7 @@ internal static class MyTickets
             return SupportErrors.NotSignedIn;
         }
 
-        var query = db.Set<SupportTicket>().Include(t => t.Messages).Where(t => t.Number == number && t.CustomerId == customerId);
+        var query = db.Set<SupportTicket>().Include(t => t.Messages).Include(t => t.Photos).Where(t => t.Number == number && t.CustomerId == customerId);
         var ticket = await (track ? query : query.AsNoTracking()).FirstOrDefaultAsync(ct);
         return ticket is null ? SupportErrors.NotFound : ticket;
     }
@@ -278,7 +280,8 @@ public sealed record StaffTicketResponse(
     string? SrNumber,
     Guid? AssignedToUserId,
     IReadOnlyList<StaffMessageResponse> Messages,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    IReadOnlyList<TicketPhotoResponse>? Photos = null);
 
 internal sealed class StaffViews(ICustomerDirectory customers, IClock clock)
 {
@@ -307,7 +310,8 @@ internal sealed class StaffViews(ICustomerDirectory customers, IClock clock)
             t.SrNumber,
             t.AssignedToUserId,
             [.. t.Messages.OrderBy(m => m.SentAt).Select(m => new StaffMessageResponse(m.Author, m.IsInternal, m.Body, m.SentAt))],
-            t.CreatedAt);
+            t.CreatedAt,
+            [.. t.Photos.OrderBy(p => p.AddedAt).Select(p => new TicketPhotoResponse(p.Id, p.ContentType, p.SizeBytes, p.AddedAt, $"/api/v1/admin/support/{t.Id}/photos/{p.Id}"))]);
     }
 }
 
@@ -316,7 +320,7 @@ public sealed class ListTickets(DbContext db, ICustomerDirectory customers, ICur
 {
     public async Task<IReadOnlyList<StaffTicketListItem>> HandleAsync(TicketStatus? status, bool mine, Guid? serviceRequestId, CancellationToken ct)
     {
-        var query = db.Set<SupportTicket>().AsNoTracking().Include(t => t.Messages).AsQueryable();
+        var query = db.Set<SupportTicket>().AsNoTracking().Include(t => t.Messages).Include(t => t.Photos).AsQueryable();
         if (status is { } s)
         {
             query = query.Where(t => t.Status == s);
@@ -346,7 +350,7 @@ public sealed class GetTicket(DbContext db, ICustomerDirectory customers, IClock
 {
     public async Task<Result<StaffTicketResponse>> HandleAsync(Guid id, CancellationToken ct)
     {
-        var ticket = await db.Set<SupportTicket>().AsNoTracking().Include(t => t.Messages).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var ticket = await db.Set<SupportTicket>().AsNoTracking().Include(t => t.Messages).Include(t => t.Photos).FirstOrDefaultAsync(t => t.Id == id, ct);
         return ticket is null ? SupportErrors.NotFound : await new StaffViews(customers, clock).DetailAsync(ticket, ct);
     }
 }
@@ -364,7 +368,7 @@ public sealed class ReplyToTicket(DbContext db, ICustomerDirectory customers, IC
 {
     public async Task<Result<StaffTicketResponse>> HandleAsync(Guid id, StaffReplyRequest request, CancellationToken ct)
     {
-        var ticket = await db.Set<SupportTicket>().Include(t => t.Messages).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var ticket = await db.Set<SupportTicket>().Include(t => t.Messages).Include(t => t.Photos).FirstOrDefaultAsync(t => t.Id == id, ct);
         if (ticket is null)
         {
             return SupportErrors.NotFound;
@@ -387,7 +391,7 @@ public sealed class UpdateTicket(DbContext db, ICustomerDirectory customers, ICu
 {
     public async Task<Result<StaffTicketResponse>> HandleAsync(Guid id, UpdateTicketRequest request, CancellationToken ct)
     {
-        var ticket = await db.Set<SupportTicket>().Include(t => t.Messages).FirstOrDefaultAsync(t => t.Id == id, ct);
+        var ticket = await db.Set<SupportTicket>().Include(t => t.Messages).Include(t => t.Photos).FirstOrDefaultAsync(t => t.Id == id, ct);
         if (ticket is null)
         {
             return SupportErrors.NotFound;

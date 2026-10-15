@@ -15,6 +15,7 @@ import type { StaffTicketResponseServiceRequestId } from './staffTicketResponseS
 import type { StaffTicketResponseSrNumber } from './staffTicketResponseSrNumber';
 import type { StaffTicketResponseAssignedToUserId } from './staffTicketResponseAssignedToUserId';
 import type { StaffMessageResponse } from './staffMessageResponse';
+import type { StaffTicketResponsePhotos } from './staffTicketResponsePhotos';
 
 export interface StaffTicketResponse {
   id: string;
@@ -34,4 +35,5 @@ export interface StaffTicketResponse {
   assignedToUserId: StaffTicketResponseAssignedToUserId;
   messages: StaffMessageResponse[];
   createdAt: string;
+  photos?: StaffTicketResponsePhotos;
 }

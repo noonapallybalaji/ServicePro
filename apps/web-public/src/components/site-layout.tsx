@@ -161,7 +161,7 @@ function SiteFooter() {
             Company
           </h2>
           <ul className="mt-3 flex flex-col">
-            {[{ to: '/book', label: 'Book a repair' }, { to: '/account', label: 'My bookings' }, ...MAIN_NAV].map((item) => (
+            {[{ to: '/book', label: 'Book a repair' }, { to: '/account', label: 'My bookings' }, { to: '/help', label: 'Help centre' }, ...MAIN_NAV].map((item) => (
               <li key={item.to}>
                 <Link to={item.to} className={footerLink}>
                   {item.label}

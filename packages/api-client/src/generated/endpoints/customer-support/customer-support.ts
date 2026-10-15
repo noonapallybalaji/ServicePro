@@ -25,6 +25,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddTicketPhotoBody,
   CustomerTicketResponse,
   HttpValidationProblemDetails,
   OpenTicketRequest,
@@ -346,6 +347,74 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getWriteToMyTicketMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getAddTicketPhotoUrl = (number: string,) => {
+
+
+  
+
+  return `/api/v1/account/support/${number}/photos`
+}
+
+export const addTicketPhoto = async (number: string,
+    addTicketPhotoBody: AddTicketPhotoBody, options?: RequestInit): Promise<number> => {
+    const formData = new FormData();
+formData.append(`file`, addTicketPhotoBody.file)
+
+  return apiFetch<number>(getAddTicketPhotoUrl(number),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
+  }
+);}
+
+
+
+
+export const getAddTicketPhotoMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addTicketPhoto>>, TError,{number: string;data: AddTicketPhotoBody}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addTicketPhoto>>, TError,{number: string;data: AddTicketPhotoBody}, TContext> => {
+
+const mutationKey = ['addTicketPhoto'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addTicketPhoto>>, {number: string;data: AddTicketPhotoBody}> = (props) => {
+          const {number,data} = props ?? {};
+
+          return  addTicketPhoto(number,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddTicketPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof addTicketPhoto>>>
+    export type AddTicketPhotoMutationBody = AddTicketPhotoBody
+    export type AddTicketPhotoMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useAddTicketPhoto = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addTicketPhoto>>, TError,{number: string;data: AddTicketPhotoBody}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addTicketPhoto>>,
+        TError,
+        {number: string;data: AddTicketPhotoBody},
+        TContext
+      > => {
+
+      const mutationOptions = getAddTicketPhotoMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

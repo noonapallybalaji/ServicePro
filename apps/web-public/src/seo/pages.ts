@@ -92,6 +92,15 @@ export const PAGES = {
     sitemap: { changefreq: 'monthly', priority: 0.6 },
   }),
 
+  help: withBreadcrumbs({
+    path: '/help',
+    title: brand('Help Centre'),
+    description: `Help with ${SITE.name} bookings: changing the time, estimates, payments and bills, warranty, your account, and reporting damage.`,
+    indexable: true,
+    crumbs: [HOME, { name: 'Help centre', path: '/help' }],
+    sitemap: { changefreq: 'monthly', priority: 0.5 },
+  }),
+
   // Policies: indexable only once the business has filled in the legal details (see site.ts).
   terms: withBreadcrumbs({
     path: '/terms',
@@ -131,7 +140,7 @@ export const SERVICE_PAGES: ReadonlyMap<string, PageMeta> = new Map(SERVICES.map
 
 /** Every indexable page, in sitemap order. */
 export function indexablePages(): PageMeta[] {
-  return [PAGES.home, PAGES.services, ...SERVICES.map(servicePage), PAGES.about, PAGES.contact, PAGES.faq, ...LEGAL_PAGES].filter((page) => page.indexable);
+  return [PAGES.home, PAGES.services, ...SERVICES.map(servicePage), PAGES.about, PAGES.contact, PAGES.faq, PAGES.help, ...LEGAL_PAGES].filter((page) => page.indexable);
 }
 
 /** Policy pages are always pre-rendered, even while they are drafts (and noindex). */

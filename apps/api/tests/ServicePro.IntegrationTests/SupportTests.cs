@@ -115,6 +115,35 @@ public sealed class SupportTests(ApiFactory factory)
         (await owner.GetAsync<StaffTicketResponse>($"/api/v1/admin/support/{item.Id}")).Messages.ShouldAllBe(m => !m.Body.Contains("4512"));
     }
 
+    [Fact]
+    public async Task A_damage_report_carries_photos_that_only_staff_can_open()
+    {
+        var (owner, customer, jobId) = await CustomerChangesTests.JobWithSignedInCustomerAsync(factory, accepted: false);
+        var (_, stranger, _) = await CustomerChangesTests.JobWithSignedInCustomerAsync(factory, accepted: false);
+        var opened = await customer.PostAsync<CustomerTicketResponse>("/api/v1/account/support",
+            new OpenTicketRequest(jobId, TicketCategory.DamageOrSafety, "The wall was scratched."));
+
+        (await customer.Client.PostAsync($"/api/v1/account/support/{opened.Number}/photos", Photo())).StatusCode.ShouldBe(HttpStatusCode.OK);
+        (await stranger.Client.PostAsync($"/api/v1/account/support/{opened.Number}/photos", Photo())).StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await customer.GetAsync<CustomerTicketResponse>($"/api/v1/account/support/{opened.Number}")).PhotoCount.ShouldBe(1);
+
+        var item = (await owner.GetAsync<List<StaffTicketListItem>>($"/api/v1/admin/support?serviceRequestId={jobId}")).Single();
+        var photo = (await owner.GetAsync<StaffTicketResponse>($"/api/v1/admin/support/{item.Id}")).Photos!.ShouldHaveSingleItem();
+        var file = await owner.Client.GetAsync(photo.Url);
+        file.StatusCode.ShouldBe(HttpStatusCode.OK);
+        file.Content.Headers.ContentType!.MediaType.ShouldBe("image/png");
+        (await customer.Client.GetAsync(photo.Url)).StatusCode.ShouldBeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden);
+    }
+
+    private static MultipartFormDataContent Photo()
+    {
+        var form = new MultipartFormDataContent();
+        var image = new ByteArrayContent(Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="));
+        image.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        form.Add(image, "file", "damage.png");
+        return form;
+    }
+
     private async Task<AssistantTicketResponse> SendAsync(AssistantTicketRequest body)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/integrations/support-tickets") { Content = JsonContent.Create(body, options: TestApi.Json) };

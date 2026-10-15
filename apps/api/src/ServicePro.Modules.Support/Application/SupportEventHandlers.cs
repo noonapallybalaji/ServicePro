@@ -10,7 +10,7 @@ public sealed class RedactErasedCustomerTickets(DbContext db) : IEventHandler<Cu
 {
     public async Task HandleAsync(CustomerErased e, CancellationToken ct)
     {
-        var tickets = await db.Set<SupportTicket>().Include(t => t.Messages).Where(t => t.CustomerId == e.CustomerId).ToListAsync(ct);
+        var tickets = await db.Set<SupportTicket>().Include(t => t.Messages).Include(t => t.Photos).Where(t => t.CustomerId == e.CustomerId).ToListAsync(ct);
         tickets.ForEach(t => t.Redact());
         await db.SaveChangesAsync(ct);
     }

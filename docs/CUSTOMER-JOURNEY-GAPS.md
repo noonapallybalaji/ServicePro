@@ -129,9 +129,9 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 10.2 | **In-app chat with support** (per booking, with history) | ✅ | My bookings > Help: open a request (about a booking or not), topic chips, threaded conversation that refreshes every 10 s, "My problem is solved". "Get help" on each booking card and a link on the tracking page. Replies also arrive on WhatsApp (`SUPPORT_REPLY`). Polling, not websockets. | **P0** | L |
 | 10.3 | Chat with the technician (masked) | ❌ | See 5.6. | P1 | M |
 | 10.4 | WhatsApp AI assistant (n8n) | 🟡 | Booking API and hand-over API (`POST /api/v1/integrations/support-tickets`, idempotent) ready and tested; the n8n workflow itself still needs setting up (docs/DEPLOY-CLOUDFLARE-N8N.md §6). | P1 | S |
-| 10.5 | Help centre: issue categories ("payment", "late technician", "damage") with self-help | ❌ | Only a general FAQ page. | P1 | M |
+| 10.5 | Help centre: issue categories ("payment", "late technician", "damage") with self-help | ✅ | `/help`: six topics (booking and times, the visit, payments and bills, warranty, account and privacy, damage and safety) with answers that describe how the service actually works, each ending in "Still need help?" → a help request with that topic chosen. | P1 | M |
 | 10.6 | Tickets with status, SLA and escalation; staff support console | ✅ | Admin > Support: queue (waiting for us / customer / solved, "mine"), damage reports flagged high priority, "reply overdue" against `support.first_response_minutes` (120; damage: half), replies, internal notes, assign, solve/reopen; live refresh. No automatic escalation to the owner yet. | **P0** | L |
-| 10.7 | Damage or safety incident reporting | 🟡 | "Damage or a safety concern" topic in Help: high priority, half the reply time, "call us now if anyone is in danger". No photo upload or insurance workflow yet. | P1 | S |
+| 10.7 | Damage or safety incident reporting | ✅ | "Damage or a safety concern" help requests are high priority with half the reply time; customers attach up to 6 photos to any request, which only staff can open (Support console). No insurance workflow. | P1 | S |
 
 ## 11. Notifications
 

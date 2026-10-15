@@ -45,6 +45,9 @@ public sealed class SupportTicket : TenantOwnedAggregateRoot, ServicePro.Buildin
     public const int MaxMessageLength = 2000;
 
     private readonly List<TicketMessage> _messages = [];
+    private readonly List<TicketPhoto> _photos = [];
+
+    public const int MaxPhotos = 6;
 
     private SupportTicket()
     {
@@ -86,6 +89,28 @@ public sealed class SupportTicket : TenantOwnedAggregateRoot, ServicePro.Buildin
     public string? ExternalReference { get; private set; }
 
     public IReadOnlyCollection<TicketMessage> Messages => _messages;
+
+    /// <summary>Photos the customer added (damage, error codes, the bill...). Staff see them; nobody else.</summary>
+    public IReadOnlyCollection<TicketPhoto> Photos => _photos;
+
+    public Result<TicketPhoto> AddPhoto(string storageKey, string contentType, long sizeBytes, DateTimeOffset now)
+    {
+        if (_photos.Count >= MaxPhotos)
+        {
+            return Error.Conflict("support.photo_limit", $"You can add up to {MaxPhotos} photos to a request.");
+        }
+
+        var photo = new TicketPhoto(Id, storageKey, contentType, sizeBytes, now);
+        _photos.Add(photo);
+        LastActivityAt = now;
+        if (Status == TicketStatus.Resolved)
+        {
+            Status = TicketStatus.Open;
+            ResolvedAt = null;
+        }
+
+        return photo;
+    }
 
     public static Result<SupportTicket> Open(
         string number,
@@ -175,6 +200,7 @@ public sealed class SupportTicket : TenantOwnedAggregateRoot, ServicePro.Buildin
     {
         ContactPhone = null;
         ContactName = null;
+        _photos.Clear();
         foreach (var message in _messages)
         {
             message.Redact();
@@ -244,4 +270,30 @@ public sealed class TicketMessage : Entity
     public DateTimeOffset SentAt { get; private set; }
 
     internal void Redact() => Body = "[removed at the customer's request]";
+}
+
+public sealed class TicketPhoto : Entity
+{
+    private TicketPhoto()
+    {
+    }
+
+    internal TicketPhoto(Guid ticketId, string storageKey, string contentType, long sizeBytes, DateTimeOffset at)
+    {
+        TicketId = ticketId;
+        StorageKey = storageKey;
+        ContentType = contentType;
+        SizeBytes = sizeBytes;
+        AddedAt = at;
+    }
+
+    public Guid TicketId { get; private set; }
+
+    public string StorageKey { get; private set; } = string.Empty;
+
+    public string ContentType { get; private set; } = string.Empty;
+
+    public long SizeBytes { get; private set; }
+
+    public DateTimeOffset AddedAt { get; private set; }
 }

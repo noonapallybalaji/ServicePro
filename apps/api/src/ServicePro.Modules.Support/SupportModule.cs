@@ -57,6 +57,17 @@ public sealed class SupportModule : IModule
             .WithStandardErrors()
             .WithName("WriteToMyTicket");
 
+        mine.MapPost("/{number}/photos", async (string number, IFormFile file, AddTicketPhoto useCase, CancellationToken ct) =>
+            {
+                await using var stream = file.OpenReadStream();
+                return (await useCase.HandleAsync(number, stream, file.ContentType, file.Length, ct)).ToHttp();
+            })
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .DisableAntiforgery()
+            .Produces<int>()
+            .WithStandardErrors()
+            .WithName("AddTicketPhoto");
+
         mine.MapPost("/{number}/resolve", async (string number, ResolveMyTicket useCase, CancellationToken ct) => (await useCase.HandleAsync(number, ct)).ToHttp())
             .Produces<CustomerTicketResponse>()
             .WithStandardErrors()
@@ -87,6 +98,14 @@ public sealed class SupportModule : IModule
             .Produces<StaffTicketResponse>()
             .WithStandardErrors()
             .WithName("GetTicket");
+
+        staff.MapGet("/{id:guid}/photos/{photoId:guid}", async (Guid id, Guid photoId, OpenTicketPhoto useCase, CancellationToken ct) =>
+            {
+                var result = await useCase.HandleAsync(id, photoId, ct);
+                return result.IsSuccess ? Results.Stream(result.Value.Content, result.Value.ContentType) : result.Error!.ToProblem();
+            })
+            .WithStandardErrors()
+            .WithName("OpenTicketPhoto");
 
         staff.MapPost("/{id:guid}/messages", async (Guid id, StaffReplyRequest request, ReplyToTicket useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, request, ct)).ToHttp())
@@ -136,6 +155,19 @@ internal sealed class SupportTicketConfiguration : IEntityTypeConfiguration<Supp
         builder.HasIndex(t => t.ServiceRequestId);
         builder.HasMany(t => t.Messages).WithOne().HasForeignKey(m => m.TicketId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(t => t.Messages).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.HasMany(t => t.Photos).WithOne().HasForeignKey(p => p.TicketId).OnDelete(DeleteBehavior.Cascade);
+        builder.Navigation(t => t.Photos).UsePropertyAccessMode(PropertyAccessMode.Field);
+    }
+}
+
+internal sealed class TicketPhotoConfiguration : IEntityTypeConfiguration<TicketPhoto>
+{
+    public void Configure(EntityTypeBuilder<TicketPhoto> builder)
+    {
+        builder.ToTable("ticket_photos", SupportSchema.Name);
+        builder.Property(p => p.StorageKey).HasMaxLength(300);
+        builder.Property(p => p.ContentType).HasMaxLength(60);
+        builder.HasIndex(p => p.TicketId);
     }
 }
 

@@ -1,3 +1,4 @@
+import { AuthImage, openProtectedFile } from '@servicepro/app-kit';
 import {
   getGetTicketQueryKey,
   getListTicketsQueryKey,
@@ -182,6 +183,28 @@ function TicketDetail({ id }: { id: string }) {
       </div>
 
       {t.overdue ? <Alert tone="warning" title={`Reply was due ${formatDateTime(t.firstResponseDueAt)}`} /> : null}
+
+      {t.photos && t.photos.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <Text variant="overline" tone="muted">
+            Photos from the customer
+          </Text>
+          <ul className="flex flex-wrap gap-2">
+            {t.photos.map((photo, index) => (
+              <li key={photo.id}>
+                <button
+                  type="button"
+                  onClick={() => void openProtectedFile(photo.url)}
+                  className="pressable block overflow-hidden rounded-control border border-border"
+                  aria-label={`Open customer upload ${index + 1}`}
+                >
+                  <AuthImage src={photo.url} alt="" className="size-24 object-cover" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <ol className="flex flex-col gap-3" aria-label="Messages">
         {t.messages.map((m, i) => (
