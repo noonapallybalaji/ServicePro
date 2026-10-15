@@ -7,6 +7,7 @@
  */
 import type { MyBookingResponse } from './myBookingResponse';
 import type { MyBookingDetailResponseTracking } from './myBookingDetailResponseTracking';
+import type { MyBookingDetailResponseWarranty } from './myBookingDetailResponseWarranty';
 
 /**
  * One booking inside "My bookings": the same live view as the tracking page, plus what the
@@ -16,4 +17,5 @@ export interface MyBookingDetailResponse {
   booking: MyBookingResponse;
   trackingToken: string;
   tracking: MyBookingDetailResponseTracking;
+  warranty?: MyBookingDetailResponseWarranty;
 }

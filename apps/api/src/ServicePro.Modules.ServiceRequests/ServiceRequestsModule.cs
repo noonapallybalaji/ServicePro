@@ -37,6 +37,9 @@ public sealed class ServiceRequestsModule : IModule
         services.AddSetting(CustomerChangeSettings.CutoffMinutes);
         services.AddScoped<CustomerChangePolicy>();
         services.AddScoped<SlotAvailability>();
+        services.AddScoped<WarrantyCards>();
+        services.AddSetting(WarrantySettings.Days);
+        services.AddSetting(WarrantySettings.Terms);
         services.AddSetting(AvailabilitySettings.Windows);
         services.AddSetting(AvailabilitySettings.DaysAhead);
         services.AddSetting(AvailabilitySettings.LeadTimeMinutes);
@@ -276,6 +279,15 @@ public sealed class ServiceRequestsModule : IModule
             .Produces<int>()
             .WithStandardErrors()
             .WithName("AddMyBookingPhoto");
+
+        endpoints.MapPost("/api/v1/account/bookings/{id:guid}/revisit", async (Guid id, RevisitRequest request, RequestWarrantyRevisit useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(id, request, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Validate<RevisitRequest>()
+            .Produces<RevisitResponse>()
+            .WithStandardErrors()
+            .WithName("RequestWarrantyRevisit");
 
         endpoints.MapGet("/api/v1/account/bookings/{id:guid}/availability", async (Guid id, GetMyBookingAvailability useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, ct)).ToHttp())

@@ -36,6 +36,8 @@ import type {
   MyInvoiceResponse,
   ProblemDetails,
   RescheduleBookingRequest,
+  RevisitRequest,
+  RevisitResponse,
   UpdateAccountRequest
 } from '../../model';
 
@@ -702,6 +704,72 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getAddMyBookingPhotoMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getRequestWarrantyRevisitUrl = (id: string,) => {
+
+
+  
+
+  return `/api/v1/account/bookings/${id}/revisit`
+}
+
+export const requestWarrantyRevisit = async (id: string,
+    revisitRequest: RevisitRequest, options?: RequestInit): Promise<RevisitResponse> => {
+  
+  return apiFetch<RevisitResponse>(getRequestWarrantyRevisitUrl(id),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      revisitRequest,)
+  }
+);}
+
+
+
+
+export const getRequestWarrantyRevisitMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestWarrantyRevisit>>, TError,{id: string;data: RevisitRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestWarrantyRevisit>>, TError,{id: string;data: RevisitRequest}, TContext> => {
+
+const mutationKey = ['requestWarrantyRevisit'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestWarrantyRevisit>>, {id: string;data: RevisitRequest}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  requestWarrantyRevisit(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestWarrantyRevisitMutationResult = NonNullable<Awaited<ReturnType<typeof requestWarrantyRevisit>>>
+    export type RequestWarrantyRevisitMutationBody = RevisitRequest
+    export type RequestWarrantyRevisitMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useRequestWarrantyRevisit = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestWarrantyRevisit>>, TError,{id: string;data: RevisitRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestWarrantyRevisit>>,
+        TError,
+        {id: string;data: RevisitRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getRequestWarrantyRevisitMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

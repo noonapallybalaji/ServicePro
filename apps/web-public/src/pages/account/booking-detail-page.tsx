@@ -11,6 +11,7 @@ import { PAGES } from '../../seo/pages';
 import { uploadPhotos } from '../booking/extras';
 import { Tracking } from '../tracking-page';
 import { BookingChanges } from './booking-changes';
+import { WarrantyCard } from './warranty-card';
 
 /** One booking inside "My bookings": the live tracking view, plus change, cancel and help. */
 export function BookingDetailPage() {
@@ -60,7 +61,7 @@ function Detail() {
   }
 
   if (!booking.data) return <Alert tone="error" title="We couldn't find this booking in your account" />;
-  const { booking: summary, tracking, trackingToken } = booking.data;
+  const { booking: summary, tracking, trackingToken, warranty } = booking.data;
 
   return (
     <Stack gap={4}>
@@ -68,6 +69,7 @@ function Detail() {
         <BookingChanges booking={summary} />
         {FINISHED.has(summary.status) ? null : <AddPhotos bookingId={summary.id} />}
       </div>
+      {warranty ? <WarrantyCard bookingId={summary.id} warranty={warranty} /> : null}
       {tracking ? (
         <Tracking data={tracking} token={trackingToken} inAccount />
       ) : (

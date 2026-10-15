@@ -115,8 +115,8 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 9.1 | **Rate and review the technician and service** | ✅ | 1–5 stars and a comment on the tracking page once the job is finished (once per job). `FEEDBACK_REQUEST` on WhatsApp after the job closes (`feedback.request_delay_minutes`, default 120; `feedback.requests_enabled`). Ratings update the technician's average (shown to customers, used by dispatch). Staff see the rating on the job page; `GET /admin/reviews?maxRating=2` lists poor ones for follow-up. Not yet shown on public pages (1.3). | **P0** | S |
-| 9.2 | Complaint or "problem came back" request (re-visit under warranty) | 🟡 | Warranty visits exist for staff (`IsWarrantyVisit`, parent job); customer can't raise one. | P1 | M |
-| 9.3 | Warranty card per repair (period, what's covered) | ❌ | No warranty terms stored per job. | P1 | S |
+| 9.2 | Complaint or "problem came back" request (re-visit under warranty) | 🔌 | "Problem came back?" on the booking page while under warranty: a free (waived) warranty visit linked to the original job, at an available time, staff-confirmed; one open re-visit per job. Badges in admin and the technician app. Needs `warranty.days` > 0. | P1 | M |
+| 9.3 | Warranty card per repair (period, what's covered) | 🔌 | End date fixed when a repaired job closes (`warranty.days`, default 0 = no warranty shown or promised); what's covered from `warranty.terms`. Shown on the account booking page. | P1 | S |
 | 9.4 | Invoices list in the account | ✅ | Profile > My bills: every bill with paid status and a PDF download (own bills only). | P1 | S |
 | 9.5 | Service reminders and annual maintenance contracts (AMC) | ❌ | PLAN Phase 3 mentions AC pre-summer reminders. | P2 | L |
 | 9.6 | Referral programme | ❌ | Deliberately not shown until rules exist (reward, eligibility, fraud limits). | P2 | M |

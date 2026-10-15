@@ -4043,6 +4043,87 @@
         }
       }
     },
+    "/api/v1/account/bookings/{id}/revisit": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "RequestWarrantyRevisit",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevisitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisitResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/bookings/{id}/availability": {
       "get": {
         "tags": [
@@ -10910,6 +10991,16 @@
                 "$ref": "#/components/schemas/TrackingResponse"
               }
             ]
+          },
+          "warranty": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/WarrantyCardResponse"
+              }
+            ]
           }
         },
         "description": "One booking inside \"My bookings\": the same live view as the tracking page, plus what the\r\ncustomer can do with it. Tracking is null once the job's tracking link has expired."
@@ -12177,6 +12268,47 @@
           }
         },
         "description": "The customer's rating of the job."
+      },
+      "RevisitRequest": {
+        "required": [
+          "description",
+          "preferredSlotStart",
+          "preferredSlotEnd"
+        ],
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "preferredSlotStart": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "preferredSlotEnd": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RevisitResponse": {
+        "required": [
+          "serviceRequestId",
+          "srNumber",
+          "trackingPath"
+        ],
+        "type": "object",
+        "properties": {
+          "serviceRequestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "srNumber": {
+            "type": "string"
+          },
+          "trackingPath": {
+            "type": "string"
+          }
+        }
       },
       "SaveAddressRequest": {
         "required": [
@@ -14330,6 +14462,38 @@
             "type": "string"
           }
         }
+      },
+      "WarrantyCardResponse": {
+        "required": [
+          "until",
+          "terms",
+          "active",
+          "canRequestRevisit",
+          "openRevisitSrNumber"
+        ],
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "terms": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "canRequestRevisit": {
+            "type": "boolean"
+          },
+          "openRevisitSrNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        },
+        "description": "The warranty card the customer sees for one job."
       }
     },
     "securitySchemes": {

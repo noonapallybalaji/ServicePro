@@ -78,6 +78,11 @@ function RequestDetail({ request }: { request: ServiceRequestDetail }) {
             {card.isStuck ? <StuckBadge /> : null}
             {card.priority === 'HIGH' || card.priority === 'EMERGENCY' ? <Badge tone="error">{humanize(card.priority)}</Badge> : null}
             {request.isWarrantyVisit ? <Badge tone="info">Warranty visit</Badge> : null}
+            {request.parentServiceRequestId ? (
+              <Link className="link text-sm" to={paths.request(request.parentServiceRequestId)}>
+                Original job
+              </Link>
+            ) : null}
           </div>
         }
         title={`${card.srNumber} · ${card.categoryName}`}

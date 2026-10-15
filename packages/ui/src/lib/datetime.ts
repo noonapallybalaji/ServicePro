@@ -8,6 +8,7 @@ export const BUSINESS_TIME_ZONE = 'Asia/Kolkata';
 
 const timeFormat = new Intl.DateTimeFormat(LOCALE, { hour: 'numeric', minute: '2-digit', timeZone: BUSINESS_TIME_ZONE });
 const dayFormat = new Intl.DateTimeFormat(LOCALE, { weekday: 'short', day: 'numeric', month: 'short', timeZone: BUSINESS_TIME_ZONE });
+const dateFormat = new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short', year: 'numeric', timeZone: BUSINESS_TIME_ZONE });
 const dateTimeFormat = new Intl.DateTimeFormat(LOCALE, {
   day: 'numeric',
   month: 'short',
@@ -35,6 +36,12 @@ export function formatTime(value: DateInput): string {
 export function formatDay(value: DateInput): string {
   const date = toDate(value);
   return date ? dayFormat.format(date) : '';
+}
+
+/** "15 Jan 2027": dates far enough away that the year matters (warranty, expiry). */
+export function formatDate(value: DateInput): string {
+  const date = toDate(value);
+  return date ? dateFormat.format(date) : '';
 }
 
 /** "5 Oct, 10:30 am" */

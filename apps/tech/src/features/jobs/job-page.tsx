@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   CardTitle,
+  Badge,
   CategoryTile,
   Heading,
   SERVICE_REQUEST_STATUS,
@@ -89,6 +90,11 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
               {job.card.srNumber}
             </Text>
             <StatusBadge status={status} audience="technician" size="sm" />
+            {job.isWarrantyVisit ? (
+              <Badge tone="info" size="sm">
+                Warranty re-visit: no charge
+              </Badge>
+            ) : null}
           </div>
           <Heading level={1} size="h2">
             {job.card.categoryName}

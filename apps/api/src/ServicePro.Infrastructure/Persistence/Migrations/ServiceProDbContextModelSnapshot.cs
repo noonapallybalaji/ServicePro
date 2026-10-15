@@ -2228,6 +2228,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(16)")
                         .HasColumnName("visit_contact_phone");
 
+                    b.Property<DateTimeOffset?>("WarrantyUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("warranty_until");
+
                     b.HasKey("Id")
                         .HasName("pk_service_requests");
 

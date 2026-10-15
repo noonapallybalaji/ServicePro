@@ -126,6 +126,9 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
     /// <summary>The customer's answer to "is it under the maker's warranty?" (null: didn't say).</summary>
     public bool? ApplianceUnderWarranty { get; private set; }
 
+    /// <summary>End of the service warranty, fixed when a repaired job closes (null: no warranty).</summary>
+    public DateTimeOffset? WarrantyUntil { get; private set; }
+
     /// <summary>When we asked the customer to rate the visit (once per job).</summary>
     public DateTimeOffset? FeedbackRequestedAt { get; private set; }
 
@@ -322,6 +325,8 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
         VisitContactPhone = VisitContactName is null ? null : contactPhone;
         ApplianceUnderWarranty = underWarranty;
     }
+
+    public void GrantWarranty(DateTimeOffset until) => WarrantyUntil ??= until;
 
     public void RequestFeedback(DateTimeOffset now)
     {
