@@ -125,6 +125,23 @@ public sealed class BillingModule : IModule
             .WithStandardErrors()
             .WithName("GetTrackingInvoicePdf");
 
+        // The signed-in customer's bills (customer site: My bookings > Profile).
+        var myBills = endpoints.MapGroup("/api/v1/account/invoices").WithTags("Customer account").RequireAuthorization(AuthPolicies.Customer);
+
+        myBills.MapGet("/", async (ListMyInvoices useCase, CancellationToken ct) => (await useCase.HandleAsync(ct)).ToHttp())
+            .Produces<IReadOnlyList<MyInvoiceResponse>>()
+            .WithStandardErrors()
+            .WithName("ListMyInvoices");
+
+        myBills.MapGet("/{invoiceId:guid}/pdf", async (Guid invoiceId, DownloadMyInvoice useCase, CancellationToken ct) =>
+            {
+                var result = await useCase.HandleAsync(invoiceId, ct);
+                return result.IsSuccess ? Results.File(result.Value.Pdf, "application/pdf", result.Value.FileName) : result.Error!.ToProblem();
+            })
+            .Produces(StatusCodes.Status200OK, contentType: "application/pdf")
+            .WithStandardErrors()
+            .WithName("DownloadMyInvoice");
+
         // Online payment (customer, by tracking link)
         var pay = endpoints.MapGroup("/api/v1/public/track/{token}").WithTags("Tracking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Public);
 

@@ -91,3 +91,32 @@ public sealed class ListMyBookings(
         }).ToList();
     }
 }
+
+/// <summary>
+/// One booking inside "My bookings": the same live view as the tracking page, plus what the
+/// customer can do with it. Tracking is null once the job's tracking link has expired.
+/// </summary>
+public sealed record MyBookingDetailResponse(MyBookingResponse Booking, string TrackingToken, TrackingResponse? Tracking);
+
+public sealed class GetMyBooking(DbContext db, ICurrentUser currentUser, ListMyBookings bookings, GetTracking tracking) : IUseCase
+{
+    public async Task<Result<MyBookingDetailResponse>> HandleAsync(Guid id, CancellationToken ct)
+    {
+        var booking = await MyBookingLookup.FindAsync(db, currentUser, id, ct);
+        if (booking.IsFailure)
+        {
+            return booking.Error!;
+        }
+
+        var all = await bookings.HandleAsync(ct);
+        var summary = all.IsSuccess ? all.Value.FirstOrDefault(b => b.Id == id) : null;
+        if (summary is null)
+        {
+            return MyBookingLookup.NotFound;
+        }
+
+        var token = booking.Value.TrackingToken;
+        var view = await tracking.HandleAsync(token, ct);
+        return new MyBookingDetailResponse(summary, token, view.IsSuccess ? view.Value : null);
+    }
+}

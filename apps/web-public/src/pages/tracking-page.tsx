@@ -47,6 +47,9 @@ const ATTENTION: ReadonlySet<ServiceRequestStatus> = new Set(['WAITING_FOR_PARTS
 /** Statuses where the customer may have an estimate to review or look back at. */
 const ESTIMATE_VISIBLE: ReadonlySet<ServiceRequestStatus> = new Set(['AWAITING_ESTIMATE_APPROVAL', 'IN_PROGRESS', 'UNABLE_TO_REPAIR', 'COMPLETED']);
 
+/** Links on the dark hero band: the hero's own text colour, underlined (the default link colour is too dark here). */
+const HERO_LINK = 'font-semibold text-inherit underline underline-offset-2 hover:no-underline';
+
 /** Before the technician sets out, customers can change or cancel from "My bookings". */
 const CHANGEABLE: ReadonlySet<ServiceRequestStatus> = new Set(['NEW', 'READY_FOR_ASSIGNMENT', 'OFFERED', 'ACCEPTED', 'RESCHEDULED']);
 
@@ -147,7 +150,8 @@ export function TrackingPage() {
   );
 }
 
-function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
+/** inAccount: shown inside My bookings, where change, cancel and help are already buttons above. */
+export function Tracking({ data, token, inAccount = false }: { data: TrackingResponse; token: string; inAccount?: boolean }) {
   const { title, detail } = headline(data);
   const attention = ATTENTION.has(data.status);
   const beforePhotos = data.photos.filter((p) => p.kind === 'PHOTO_BEFORE');
@@ -164,20 +168,24 @@ function Tracking({ data, token }: { data: TrackingResponse; token: string }) {
           <Text variant="body-lg" tone="secondary">
             {detail}
           </Text>
-          <Text variant="sm" tone="secondary">
-            Questions about this visit?{' '}
-            <Link className="link" to="/account?tab=help">
-              Ask us in My bookings
-            </Link>
-          </Text>
-          {CHANGEABLE.has(data.status) ? (
-            <Text variant="sm" tone="secondary">
-              Need a different time, or want to cancel?{' '}
-              <Link className="link" to="/account">
-                Manage it in My bookings
-              </Link>
-            </Text>
-          ) : null}
+          {inAccount ? null : (
+            <>
+              <Text variant="sm" tone="secondary">
+                Questions about this visit?{' '}
+                <Link className={HERO_LINK} to="/account?tab=help">
+                  Ask us in My bookings
+                </Link>
+              </Text>
+              {CHANGEABLE.has(data.status) ? (
+                <Text variant="sm" tone="secondary">
+                  Need a different time, or want to cancel?{' '}
+                  <Link className={HERO_LINK} to="/account">
+                    Manage it in My bookings
+                  </Link>
+                </Text>
+              ) : null}
+            </>
+          )}
         </div>
       </HeroBand>
 

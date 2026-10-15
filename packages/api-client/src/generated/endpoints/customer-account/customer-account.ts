@@ -30,7 +30,9 @@ import type {
   AvailabilityResponse,
   CancelBookingRequest,
   HttpValidationProblemDetails,
+  MyBookingDetailResponse,
   MyBookingResponse,
+  MyInvoiceResponse,
   ProblemDetails,
   RescheduleBookingRequest,
   UpdateAccountRequest
@@ -326,6 +328,136 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
+    export const getUpdateMyAddressUrl = (addressId: string,) => {
+
+
+  
+
+  return `/api/v1/account/addresses/${addressId}`
+}
+
+export const updateMyAddress = async (addressId: string,
+    addAccountAddressRequest: AddAccountAddressRequest, options?: RequestInit): Promise<AccountResponse> => {
+  
+  return apiFetch<AccountResponse>(getUpdateMyAddressUrl(addressId),
+  {      
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      addAccountAddressRequest,)
+  }
+);}
+
+
+
+
+export const getUpdateMyAddressMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyAddress>>, TError,{addressId: string;data: AddAccountAddressRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateMyAddress>>, TError,{addressId: string;data: AddAccountAddressRequest}, TContext> => {
+
+const mutationKey = ['updateMyAddress'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateMyAddress>>, {addressId: string;data: AddAccountAddressRequest}> = (props) => {
+          const {addressId,data} = props ?? {};
+
+          return  updateMyAddress(addressId,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateMyAddressMutationResult = NonNullable<Awaited<ReturnType<typeof updateMyAddress>>>
+    export type UpdateMyAddressMutationBody = AddAccountAddressRequest
+    export type UpdateMyAddressMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useUpdateMyAddress = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateMyAddress>>, TError,{addressId: string;data: AddAccountAddressRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateMyAddress>>,
+        TError,
+        {addressId: string;data: AddAccountAddressRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateMyAddressMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getRemoveMyAddressUrl = (addressId: string,) => {
+
+
+  
+
+  return `/api/v1/account/addresses/${addressId}`
+}
+
+export const removeMyAddress = async (addressId: string, options?: RequestInit): Promise<AccountResponse> => {
+  
+  return apiFetch<AccountResponse>(getRemoveMyAddressUrl(addressId),
+  {      
+    ...options,
+    method: 'DELETE'
+    
+    
+  }
+);}
+
+
+
+
+export const getRemoveMyAddressMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMyAddress>>, TError,{addressId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeMyAddress>>, TError,{addressId: string}, TContext> => {
+
+const mutationKey = ['removeMyAddress'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeMyAddress>>, {addressId: string}> = (props) => {
+          const {addressId} = props ?? {};
+
+          return  removeMyAddress(addressId,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveMyAddressMutationResult = NonNullable<Awaited<ReturnType<typeof removeMyAddress>>>
+    
+    export type RemoveMyAddressMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useRemoveMyAddress = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeMyAddress>>, TError,{addressId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof removeMyAddress>>,
+        TError,
+        {addressId: string},
+        TContext
+      > => {
+
+      const mutationOptions = getRemoveMyAddressMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
     export const getListMyBookingsUrl = () => {
 
 
@@ -405,6 +537,95 @@ export function useListMyBookings<TData = Awaited<ReturnType<typeof listMyBookin
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListMyBookingsQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getGetMyBookingUrl = (id: string,) => {
+
+
+  
+
+  return `/api/v1/account/bookings/${id}`
+}
+
+export const getMyBooking = async (id: string, options?: RequestInit): Promise<MyBookingDetailResponse> => {
+  
+  return apiFetch<MyBookingDetailResponse>(getGetMyBookingUrl(id),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getGetMyBookingQueryKey = (id?: string,) => {
+    return [`/api/v1/account/bookings/${id}`] as const;
+    }
+
+    
+export const getGetMyBookingQueryOptions = <TData = Awaited<ReturnType<typeof getMyBooking>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBooking>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMyBookingQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBooking>>> = ({ signal }) => getMyBooking(id, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBooking>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMyBookingQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBooking>>>
+export type GetMyBookingQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useGetMyBooking<TData = Awaited<ReturnType<typeof getMyBooking>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBooking>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyBooking>>,
+          TError,
+          Awaited<ReturnType<typeof getMyBooking>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyBooking<TData = Awaited<ReturnType<typeof getMyBooking>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBooking>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMyBooking>>,
+          TError,
+          Awaited<ReturnType<typeof getMyBooking>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMyBooking<TData = Awaited<ReturnType<typeof getMyBooking>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBooking>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetMyBooking<TData = Awaited<ReturnType<typeof getMyBooking>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBooking>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMyBookingQueryOptions(id,options)
 
   const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -636,4 +857,181 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
+    export const getListMyInvoicesUrl = () => {
+
+
+  
+
+  return `/api/v1/account/invoices`
+}
+
+export const listMyInvoices = async ( options?: RequestInit): Promise<MyInvoiceResponse[]> => {
+  
+  return apiFetch<MyInvoiceResponse[]>(getListMyInvoicesUrl(),
+  {      
+    ...options,
+    method: 'GET'
     
+    
+  }
+);}
+
+
+
+export const getListMyInvoicesQueryKey = () => {
+    return [`/api/v1/account/invoices`] as const;
+    }
+
+    
+export const getListMyInvoicesQueryOptions = <TData = Awaited<ReturnType<typeof listMyInvoices>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyInvoices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyInvoicesQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyInvoices>>> = ({ signal }) => listMyInvoices({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyInvoices>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyInvoicesQueryResult = NonNullable<Awaited<ReturnType<typeof listMyInvoices>>>
+export type ListMyInvoicesQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useListMyInvoices<TData = Awaited<ReturnType<typeof listMyInvoices>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyInvoices>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyInvoices>>,
+          TError,
+          Awaited<ReturnType<typeof listMyInvoices>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyInvoices<TData = Awaited<ReturnType<typeof listMyInvoices>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyInvoices>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyInvoices>>,
+          TError,
+          Awaited<ReturnType<typeof listMyInvoices>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyInvoices<TData = Awaited<ReturnType<typeof listMyInvoices>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyInvoices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMyInvoices<TData = Awaited<ReturnType<typeof listMyInvoices>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyInvoices>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyInvoicesQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getDownloadMyInvoiceUrl = (invoiceId: string,) => {
+
+
+  
+
+  return `/api/v1/account/invoices/${invoiceId}/pdf`
+}
+
+export const downloadMyInvoice = async (invoiceId: string, options?: RequestInit): Promise<void> => {
+  
+  return apiFetch<void>(getDownloadMyInvoiceUrl(invoiceId),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getDownloadMyInvoiceQueryKey = (invoiceId?: string,) => {
+    return [`/api/v1/account/invoices/${invoiceId}/pdf`] as const;
+    }
+
+    
+export const getDownloadMyInvoiceQueryOptions = <TData = Awaited<ReturnType<typeof downloadMyInvoice>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(invoiceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyInvoice>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadMyInvoiceQueryKey(invoiceId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadMyInvoice>>> = ({ signal }) => downloadMyInvoice(invoiceId, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(invoiceId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadMyInvoice>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadMyInvoiceQueryResult = NonNullable<Awaited<ReturnType<typeof downloadMyInvoice>>>
+export type DownloadMyInvoiceQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useDownloadMyInvoice<TData = Awaited<ReturnType<typeof downloadMyInvoice>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ invoiceId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyInvoice>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadMyInvoice>>,
+          TError,
+          Awaited<ReturnType<typeof downloadMyInvoice>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadMyInvoice<TData = Awaited<ReturnType<typeof downloadMyInvoice>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ invoiceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyInvoice>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadMyInvoice>>,
+          TError,
+          Awaited<ReturnType<typeof downloadMyInvoice>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadMyInvoice<TData = Awaited<ReturnType<typeof downloadMyInvoice>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ invoiceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyInvoice>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useDownloadMyInvoice<TData = Awaited<ReturnType<typeof downloadMyInvoice>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ invoiceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadMyInvoice>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadMyInvoiceQueryOptions(invoiceId,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+

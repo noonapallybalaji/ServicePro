@@ -104,6 +104,7 @@ public sealed class Customer : TenantOwnedAggregateRoot, IAudited
         }
 
         address.Update(details);
+        address.Restore();
         if (makeDefault)
         {
             SetDefaultAddress(addressId);
@@ -111,6 +112,34 @@ public sealed class Customer : TenantOwnedAggregateRoot, IAudited
 
         return Result.Success();
     }
+
+    /// <summary>
+    /// Removes an address from the customer's list. It stays on record (past and current jobs
+    /// point at it) but is no longer offered. If it was the default, the newest remaining one is.
+    /// </summary>
+    public Result RemoveAddress(Guid addressId)
+    {
+        var address = _addresses.FirstOrDefault(a => a.Id == addressId && !a.IsArchived);
+        if (address is null)
+        {
+            return Error.NotFound("address.not_found", "That address doesn't belong to this customer.");
+        }
+
+        address.Archive();
+        if (address.IsDefault)
+        {
+            address.SetDefault(false);
+            if (_addresses.Where(a => !a.IsArchived).OrderByDescending(a => a.CreatedAt).FirstOrDefault() is { } next)
+            {
+                SetDefaultAddress(next.Id);
+            }
+        }
+
+        return Result.Success();
+    }
+
+    /// <summary>Addresses the customer still uses (removed ones are kept for past jobs only).</summary>
+    public IEnumerable<CustomerAddress> ActiveAddresses => _addresses.Where(a => !a.IsArchived);
 
     public CustomerAppliance AddAppliance(ApplianceDetails details)
     {
@@ -182,7 +211,7 @@ public sealed class Customer : TenantOwnedAggregateRoot, IAudited
     {
         foreach (var address in _addresses)
         {
-            address.SetDefault(address.Id == addressId);
+            address.SetDefault(address.Id == addressId && !address.IsArchived);
         }
     }
 }
@@ -235,7 +264,14 @@ public sealed class CustomerAddress : TenantOwnedEntity
 
     public bool IsDefault { get; private set; }
 
+    /// <summary>Removed by the customer: kept because jobs point at it, never offered again.</summary>
+    public bool IsArchived { get; private set; }
+
     public GeoLocation? Location => GeoColumns.ToLocation(Latitude, Longitude);
+
+    internal void Archive() => IsArchived = true;
+
+    internal void Restore() => IsArchived = false;
 
     internal void Update(AddressDetails details)
     {

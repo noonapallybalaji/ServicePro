@@ -39,6 +39,7 @@ internal sealed class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Navigation(c => c.Appliances).UsePropertyAccessMode(PropertyAccessMode.Field);
         builder.HasMany(c => c.Consents).WithOne().HasForeignKey(c => c.CustomerId).OnDelete(DeleteBehavior.Cascade);
         builder.Navigation(c => c.Consents).UsePropertyAccessMode(PropertyAccessMode.Field);
+        builder.Ignore(c => c.ActiveAddresses);
     }
 }
 
@@ -186,11 +187,12 @@ internal sealed class CustomerRegistry(DbContext db, IOptions<LegalOptions> lega
             return new CustomerAddressRef(Info(customer), added.Id);
         }
 
-        if (existing.Location is null && address.Location is not null)
+        if ((existing.Location is null && address.Location is not null) || existing.IsArchived)
         {
             customer.UpdateAddress(
                 existing.Id,
-                new AddressDetails(existing.Label, existing.Line1, existing.Line2, existing.Landmark, existing.Locality, existing.City, existing.State, existing.Pincode, address.Location),
+                new AddressDetails(existing.Label, existing.Line1, existing.Line2, existing.Landmark, existing.Locality, existing.City, existing.State, existing.Pincode,
+                    existing.Location ?? address.Location),
                 makeDefault: false);
         }
 

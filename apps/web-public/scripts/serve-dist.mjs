@@ -59,7 +59,7 @@ http
       return;
     }
 
-    if (pathname === '/book' || pathname === '/account' || pathname.startsWith('/t/')) {
+    if (pathname === '/book' || pathname === '/account' || pathname.startsWith('/account/') || pathname.startsWith('/t/')) {
       return send(res, path.join(dist, 'app.html'), 200, { 'x-robots-tag': pathname === '/book' ? 'noindex' : 'noindex, nofollow' });
     }
 

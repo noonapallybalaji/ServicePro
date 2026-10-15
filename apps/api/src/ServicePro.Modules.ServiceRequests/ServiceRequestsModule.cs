@@ -256,6 +256,14 @@ public sealed class ServiceRequestsModule : IModule
             .WithStandardErrors()
             .WithName("GetAvailability");
 
+        endpoints.MapGet("/api/v1/account/bookings/{id:guid}", async (Guid id, GetMyBooking useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(id, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces<MyBookingDetailResponse>()
+            .WithStandardErrors()
+            .WithName("GetMyBooking");
+
         endpoints.MapGet("/api/v1/account/bookings/{id:guid}/availability", async (Guid id, GetMyBookingAvailability useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, ct)).ToHttp())
             .WithTags("Customer account")

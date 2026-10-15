@@ -79,7 +79,7 @@ internal static class CustomerMapping
     public static CustomerResponse ToResponse(this Customer c) => new(
         c.Id, c.FullName, c.PrimaryPhone.Value, c.AlternatePhone?.Value, c.Email, c.PreferredLanguage, c.FirstSource,
         c.IsBlocked, c.Notes, c.CreatedAt,
-        [.. c.Addresses.OrderByDescending(a => a.IsDefault).ThenBy(a => a.CreatedAt).Select(ToResponse)],
+        [.. c.ActiveAddresses.OrderByDescending(a => a.IsDefault).ThenBy(a => a.CreatedAt).Select(ToResponse)],
         [.. c.Appliances.OrderBy(a => a.CreatedAt).Select(ToResponse)]);
 
     public static AddressResponse ToResponse(this CustomerAddress a) => new(

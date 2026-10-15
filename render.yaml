@@ -83,6 +83,9 @@ services:
         source: /account
         destination: /app.html
       - type: rewrite
+        source: /account/*
+        destination: /app.html
+      - type: rewrite
         source: /t/*
         destination: /app.html
 

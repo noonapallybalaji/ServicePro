@@ -61,7 +61,7 @@ public sealed class GetMyAccount(DbContext db, ICurrentUser currentUser) : IUseC
         customer.FullName,
         customer.PrimaryPhone.Value,
         customer.Email,
-        [.. customer.Addresses
+        [.. customer.ActiveAddresses
             .OrderByDescending(a => a.IsDefault)
             .ThenByDescending(a => a.CreatedAt)
             .Select(a => new AccountAddressResponse(a.Id, a.Label, a.Line1, a.Line2, a.Landmark, a.Locality, a.City, a.Pincode, a.Location is not null, a.IsDefault))],
@@ -143,7 +143,7 @@ public sealed class AddMyAddress(DbContext db, ICurrentUser currentUser) : IUseC
             return AccountErrors.NotSignedIn;
         }
 
-        if (customer.Addresses.Count >= MaxAddresses)
+        if (customer.ActiveAddresses.Count() >= MaxAddresses)
         {
             return Error.Conflict("account.too_many_addresses", "You can save up to 10 addresses. Call us to remove old ones.");
         }
@@ -151,6 +151,65 @@ public sealed class AddMyAddress(DbContext db, ICurrentUser currentUser) : IUseC
         customer.AddAddress(
             new AddressDetails(request.Label, request.Line1, request.Line2, request.Landmark, request.Locality, request.City, string.Empty, request.Pincode, null),
             request.MakeDefault);
+        await db.SaveChangesAsync(ct);
+        return GetMyAccount.ToResponse(customer);
+    }
+}
+
+/// <summary>Edit one of the signed-in customer's saved addresses (or make it the default).</summary>
+public sealed class UpdateMyAddress(DbContext db, ICurrentUser currentUser) : IUseCase
+{
+    public async Task<Result<AccountResponse>> HandleAsync(Guid addressId, AddAccountAddressRequest request, CancellationToken ct)
+    {
+        if (currentUser.CustomerId is not { } customerId)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        var customer = await db.Set<Customer>().Include(c => c.Addresses).Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId && c.ErasedAt == null, ct);
+        var existing = customer?.ActiveAddresses.FirstOrDefault(a => a.Id == addressId);
+        if (customer is null || existing is null)
+        {
+            return Error.NotFound("address.not_found", "We couldn't find this address in your account.");
+        }
+
+        // The pin stays if the street address is unchanged; a new street address drops it.
+        var samePlace = string.Equals(existing.Line1, request.Line1.Trim(), StringComparison.OrdinalIgnoreCase) && existing.Pincode == request.Pincode.Trim();
+        var updated = customer.UpdateAddress(addressId, new AddressDetails(
+            request.Label, request.Line1, request.Line2, request.Landmark, request.Locality, request.City, existing.State, request.Pincode,
+            samePlace ? existing.Location : null), request.MakeDefault);
+        if (updated.IsFailure)
+        {
+            return updated.Error!;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return GetMyAccount.ToResponse(customer);
+    }
+}
+
+/// <summary>Remove a saved address. Bookings that used it keep it; it just isn't offered any more.</summary>
+public sealed class RemoveMyAddress(DbContext db, ICurrentUser currentUser) : IUseCase
+{
+    public async Task<Result<AccountResponse>> HandleAsync(Guid addressId, CancellationToken ct)
+    {
+        if (currentUser.CustomerId is not { } customerId)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        var customer = await db.Set<Customer>().Include(c => c.Addresses).Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId && c.ErasedAt == null, ct);
+        if (customer is null)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        var removed = customer.RemoveAddress(addressId);
+        if (removed.IsFailure)
+        {
+            return removed.Error!;
+        }
+
         await db.SaveChangesAsync(ct);
         return GetMyAccount.ToResponse(customer);
     }

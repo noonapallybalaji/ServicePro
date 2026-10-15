@@ -49,6 +49,19 @@ public sealed class CustomersModule : IModule
             .WithStandardErrors()
             .WithName("AddMyAddress");
 
+        account.MapPut("/addresses/{addressId:guid}", async (Guid addressId, AddAccountAddressRequest request, UpdateMyAddress useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(addressId, request, ct)).ToHttp())
+            .Validate<AddAccountAddressRequest>()
+            .Produces<AccountResponse>()
+            .WithStandardErrors()
+            .WithName("UpdateMyAddress");
+
+        account.MapDelete("/addresses/{addressId:guid}", async (Guid addressId, RemoveMyAddress useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(addressId, ct)).ToHttp())
+            .Produces<AccountResponse>()
+            .WithStandardErrors()
+            .WithName("RemoveMyAddress");
+
         account.MapDelete("/", async (DeleteMyAccount useCase, CancellationToken ct) => (await useCase.HandleAsync(ct)).ToHttp())
             .Produces(StatusCodes.Status204NoContent)
             .WithStandardErrors()

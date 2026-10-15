@@ -74,7 +74,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 5.1 | List of my bookings with status | ✅ | With filters. | — | — |
 | 5.2 | **Cancel a booking** (with a clear cancellation policy and fee rules) | ✅ | "Cancel booking" in My bookings until the technician sets out (signed in; a forwarded tracking link can't cancel). Offer/assignment released, technician told (`TECH_JOB_CANCELLED`). Settings: `booking.customer_can_cancel`, `booking.customer_change_cutoff_minutes`. No cancellation fee: nothing is paid upfront to charge it against (would need 8.5). | **P0** | M |
 | 5.3 | **Reschedule** | ✅ | "Change time" in My bookings (same day/time picker as booking). Before a technician accepts, only the time changes; after, the job goes to RESCHEDULED for the office to reconfirm, and the technician is told (`TECH_JOB_MOVED`). Customer gets `BOOKING_MOVED`. Limit `booking.customer_max_reschedules` (default 2). | **P0** | M |
-| 5.4 | Booking detail page inside the account (not just the public tracking link) | 🟡 | Cards link to `/t/{token}`; no account-scoped detail page, notes or history. | P1 | S |
+| 5.4 | Booking detail page inside the account (not just the public tracking link) | ✅ | `/account/bookings/{id}`: the live tracking view (timeline, technician, estimate, bill, photos) plus change time, cancel and get help; only the customer's own bookings. | P1 | S |
 | 5.5 | Edit problem details, add notes or photos after booking | ❌ | | P1 | S |
 | 5.6 | Call or message the technician with **masked numbers** | 🟡 | Tracking exposes the technician's real phone (`TrackingTechnician.Phone`). Needs call masking (Exotel/Knowlarity) or in-app chat. | P1 | M |
 | 5.7 | Book again or repeat with one tap | ❌ | | P2 | S |
@@ -117,7 +117,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 9.1 | **Rate and review the technician and service** | ✅ | 1–5 stars and a comment on the tracking page once the job is finished (once per job). `FEEDBACK_REQUEST` on WhatsApp after the job closes (`feedback.request_delay_minutes`, default 120; `feedback.requests_enabled`). Ratings update the technician's average (shown to customers, used by dispatch). Staff see the rating on the job page; `GET /admin/reviews?maxRating=2` lists poor ones for follow-up. Not yet shown on public pages (1.3). | **P0** | S |
 | 9.2 | Complaint or "problem came back" request (re-visit under warranty) | 🟡 | Warranty visits exist for staff (`IsWarrantyVisit`, parent job); customer can't raise one. | P1 | M |
 | 9.3 | Warranty card per repair (period, what's covered) | ❌ | No warranty terms stored per job. | P1 | S |
-| 9.4 | Invoices list in the account | ❌ | Only per booking via tracking. | P1 | S |
+| 9.4 | Invoices list in the account | ✅ | Profile > My bills: every bill with paid status and a PDF download (own bills only). | P1 | S |
 | 9.5 | Service reminders and annual maintenance contracts (AMC) | ❌ | PLAN Phase 3 mentions AC pre-summer reminders. | P2 | L |
 | 9.6 | Referral programme | ❌ | Deliberately not shown until rules exist (reward, eligibility, fraud limits). | P2 | M |
 
@@ -148,7 +148,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 12.1 | Profile (name, email), saved addresses, add address | ✅ | | — | — |
-| 12.2 | Edit, delete, set default address | ❌ | Add only; backend has update (staff) but no customer endpoint for edit/delete. | P1 | S |
+| 12.2 | Edit, delete, set default address | ✅ | Edit (a new street address clears the saved pin), remove (kept on record for jobs that used it; the default moves to the next address), make default. Re-entering a removed address at booking brings it back. | P1 | S |
 | 12.3 | My appliances (brand, model, purchase date, warranty) | 🟡 | Model exists (staff side). | P2 | S |
 | 12.4 | Language preference | 🟡 | `PreferredLanguage` stored; no UI or translations. | P1 | S (after 1.7) |
 | 12.5 | Saved payment methods | ❌ | After 8.2. | P2 | M |

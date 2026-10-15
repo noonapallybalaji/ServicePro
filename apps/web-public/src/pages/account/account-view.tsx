@@ -5,6 +5,9 @@ import {
   session,
   useAddMyAddress,
   useDeleteMyAccount,
+  useListMyInvoices,
+  useRemoveMyAddress,
+  useUpdateMyAddress,
   useGetMyAccount,
   useListMyBookings,
   useUpdateMyAccount,
@@ -49,6 +52,7 @@ import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
 import { forgetSavedAddress } from '../booking/draft';
+import { downloadProtected } from './download';
 import { BookingChanges } from './booking-changes';
 import { HelpTab } from './help-tab';
 
@@ -225,7 +229,7 @@ function BookingCard({ booking }: { booking: MyBookingResponse }) {
 
   return (
     <div className="transition-interactive overflow-hidden rounded-card border border-border bg-surface hover:border-border-strong hover:shadow-md">
-      <Link to={booking.trackingPath} className="pressable flex items-center gap-4 p-4">
+      <Link to={`/account/bookings/${booking.id}`} className="pressable flex items-center gap-4 p-4">
         <CategoryTile code={booking.categoryCode} />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="flex flex-wrap items-center gap-2">
@@ -264,6 +268,7 @@ function ProfileTab() {
     <div className="flex flex-col gap-10">
       <ProfileCard account={account.data} />
       <SavedAddresses account={account.data} />
+      <MyBills />
       <YourData account={account.data} />
       <div className="border-t border-border pt-6">
         <Button variant="outline" onClick={() => void session.signOut()}>
@@ -459,6 +464,7 @@ const LABEL_ICON: Record<string, ReactNode> = {
 
 function SavedAddresses({ account }: { account: AccountResponse }) {
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState<AccountAddressResponse | null>(null);
 
   return (
     <section aria-labelledby="saved-addresses" className="flex flex-col gap-4">
@@ -481,21 +487,28 @@ function SavedAddresses({ account }: { account: AccountResponse }) {
         <ul className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {account.addresses.map((address) => (
             <li key={address.id}>
-              <AddressCard address={address} />
+              <AddressCard address={address} onEdit={() => setEditing(address)} />
             </li>
           ))}
         </ul>
       )}
 
-      <AddAddressDialog open={adding} onOpenChange={setAdding} />
+      <AddressDialog open={adding} onOpenChange={setAdding} />
+      {editing ? <AddressDialog key={editing.id} open editing={editing} onOpenChange={(open) => (open ? undefined : setEditing(null))} /> : null}
     </section>
   );
 }
 
-function AddressCard({ address }: { address: AccountAddressResponse }) {
+function AddressCard({ address, onEdit }: { address: AccountAddressResponse; onEdit: () => void }) {
   const label = address.label ?? 'Address';
+  const queryClient = useQueryClient();
+  const [confirming, setConfirming] = useState(false);
+  const remove = useRemoveMyAddress({
+    mutation: { meta: { silent: true }, onSuccess: (updated) => queryClient.setQueryData(getGetMyAccountQueryKey(), updated) },
+  });
   return (
-    <Card className={cn('flex h-full items-start gap-4', address.isDefault && 'border-primary-border')}>
+    <Card className={cn('flex h-full flex-col gap-3', address.isDefault && 'border-primary-border')}>
+      <div className="flex items-start gap-4">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-control bg-primary-subtle text-primary [&_svg]:size-5">
         {LABEL_ICON[label] ?? <MapPinned aria-hidden />}
       </span>
@@ -517,33 +530,69 @@ function AddressCard({ address }: { address: AccountAddressResponse }) {
           </Text>
         ) : null}
       </div>
+      </div>
+      {isApiError(remove.error) ? <Alert tone="error" title={remove.error.message} /> : null}
+      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+        {confirming ? (
+          <>
+            <Text variant="sm">Remove this address?</Text>
+            <Button size="sm" variant="destructive" loading={remove.isPending} onClick={() => remove.mutate({ addressId: address.id })}>
+              Remove
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+              Keep
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button size="sm" variant="ghost" onClick={onEdit}>
+              <Pencil aria-hidden /> Edit
+            </Button>
+            <Button size="sm" variant="ghost" className="text-error" onClick={() => setConfirming(true)}>
+              <Trash2 aria-hidden /> Remove
+            </Button>
+          </>
+        )}
+      </div>
     </Card>
   );
 }
 
 const EMPTY_ADDRESS = { label: 'Home', line1: '', line2: '', landmark: '', locality: '', city: '', pincode: '', makeDefault: false };
 
-function AddAddressDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+function AddressDialog({ open, onOpenChange, editing }: { open: boolean; onOpenChange: (open: boolean) => void; editing?: AccountAddressResponse }) {
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(EMPTY_ADDRESS);
-  const add = useAddMyAddress({
-    mutation: {
-      meta: { silent: true },
-      onSuccess: (updated) => {
-        queryClient.setQueryData(getGetMyAccountQueryKey(), updated);
-        setForm(EMPTY_ADDRESS);
-        onOpenChange(false);
-      },
+  const initial = editing
+    ? {
+        label: editing.label ?? 'Home',
+        line1: editing.line1,
+        line2: editing.line2 ?? '',
+        landmark: editing.landmark ?? '',
+        locality: editing.locality,
+        city: editing.city,
+        pincode: editing.pincode,
+        makeDefault: editing.isDefault,
+      }
+    : EMPTY_ADDRESS;
+  const [form, setForm] = useState(initial);
+  const onSaved = {
+    meta: { silent: true },
+    onSuccess: (updated: AccountResponse) => {
+      queryClient.setQueryData(getGetMyAccountQueryKey(), updated);
+      setForm(EMPTY_ADDRESS);
+      onOpenChange(false);
     },
-  });
+  };
+  const addAddress = useAddMyAddress({ mutation: onSaved });
+  const updateAddress = useUpdateMyAddress({ mutation: onSaved });
+  const add = editing ? updateAddress : addAddress;
   const update = (patch: Partial<typeof EMPTY_ADDRESS>) => setForm((f) => ({ ...f, ...patch }));
   const error = (field: string) => (isApiError(add.error) ? add.error.fieldError(field) : undefined);
   const ready = form.line1.trim() && form.locality.trim() && form.city.trim() && /^[1-9][0-9]{5}$/.test(form.pincode);
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    add.mutate({
-      data: {
+    const data = {
         label: form.label,
         line1: form.line1,
         line2: form.line2 || null,
@@ -552,14 +601,18 @@ function AddAddressDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
         city: form.city,
         pincode: form.pincode,
         makeDefault: form.makeDefault,
-      },
-    });
+    };
+    if (editing) updateAddress.mutate({ addressId: editing.id, data });
+    else addAddress.mutate({ data });
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent presentation="sheet">
-        <DialogHeader title="Add new address" description="Saved addresses are offered when you book." />
+        <DialogHeader
+          title={editing ? 'Edit address' : 'Add new address'}
+          description={editing ? 'A new street address clears the saved map location.' : 'Saved addresses are offered when you book.'}
+        />
         <form onSubmit={submit} noValidate>
           <DialogBody className="flex flex-col gap-4">
             {isApiError(add.error) && !add.error.fieldErrors ? <Alert tone="error" title={add.error.message} /> : null}
@@ -613,5 +666,46 @@ function AddAddressDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ── Bills ──────────────────────────────────────────────────────────────── */
+
+function MyBills() {
+  const bills = useListMyInvoices();
+  const [failed, setFailed] = useState(false);
+  if (!bills.data || bills.data.length === 0) return null;
+
+  return (
+    <section aria-labelledby="my-bills" className="flex flex-col gap-4">
+      <Heading level={2} id="my-bills">
+        My bills
+      </Heading>
+      {failed ? <Alert tone="error" title="Couldn't download the bill" description="Check your connection and try again." /> : null}
+      <ul className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface">
+        {bills.data.map((bill) => (
+          <li key={bill.id} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+            <span className="flex flex-col">
+              <Text weight="semibold" className="tabular-nums">
+                {bill.invoiceNumber} · {formatINR(bill.total)}
+              </Text>
+              <Text variant="caption" tone="muted" className="tabular-nums">
+                {bill.srNumber} · {formatDateTime(bill.issuedAt)} · {bill.amountPaid >= bill.total ? 'Paid' : `Paid ${formatINR(bill.amountPaid)}`}
+              </Text>
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setFailed(false);
+                downloadProtected(`/api/v1/account/invoices/${bill.id}/pdf`, `${bill.invoiceNumber}.pdf`).catch(() => setFailed(true));
+              }}
+            >
+              <Download aria-hidden /> PDF
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
