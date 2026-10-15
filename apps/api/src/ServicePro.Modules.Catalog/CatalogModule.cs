@@ -43,8 +43,10 @@ public sealed class CatalogModule : IModule
             .Produces<IReadOnlyList<PriceListItemResponse>>()
             .WithName("GetPriceList");
 
+        // Public: brand names are offered as suggestions on the booking form.
         catalog.MapGet("/brands", async (ListBrands useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(ct)))
-            .RequireAuthorization()
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Public)
             .Produces<IReadOnlyList<BrandResponse>>()
             .WithName("ListBrands");
 

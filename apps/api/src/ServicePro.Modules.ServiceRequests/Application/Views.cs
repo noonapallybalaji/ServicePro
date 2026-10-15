@@ -79,7 +79,11 @@ public sealed record ServiceRequestDetail(
     IReadOnlyList<AttachmentResponse> Attachments,
     IReadOnlyList<AvailableTransition> AvailableTransitions,
     InvoiceSummary? Invoice,
-    ReviewResponse? Review = null);
+    ReviewResponse? Review = null,
+    VisitDetailsView? VisitDetails = null);
+
+/// <summary>Access notes, the person at home (when not the booker) and the warranty answer.</summary>
+public sealed record VisitDetailsView(string? AccessNotes, string? ContactName, string? ContactPhone, bool? UnderWarranty);
 
 /// <summary>The customer's rating of the job.</summary>
 public sealed record ReviewResponse(int Rating, string? Comment, DateTimeOffset SubmittedAt);

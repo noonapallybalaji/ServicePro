@@ -36,6 +36,17 @@ export interface Draft extends BookingAddress {
   phone: string;
   /** Remember this address on this device for the next booking. */
   rememberAddress: boolean;
+  // Optional details for the technician.
+  accessNotes: string;
+  someoneElse: boolean;
+  contactName: string;
+  contactPhone: string;
+  applianceBrand: string;
+  applianceModel: string;
+  purchaseYear: string;
+  underWarranty: '' | 'yes' | 'no' | 'unsure';
+  /** Photos of the problem, uploaded after the booking is made (kept in memory only). */
+  photos: File[];
 }
 
 export const EMPTY_DRAFT: Draft = {
@@ -57,6 +68,15 @@ export const EMPTY_DRAFT: Draft = {
   fullName: '',
   phone: '',
   rememberAddress: true,
+  accessNotes: '',
+  someoneElse: false,
+  contactName: '',
+  contactPhone: '',
+  applianceBrand: '',
+  applianceModel: '',
+  purchaseYear: '',
+  underWarranty: '',
+  photos: [],
 };
 
 export const addressOneLine = (a: Pick<BookingAddress, 'line1' | 'line2' | 'locality' | 'city' | 'pincode'>): string =>

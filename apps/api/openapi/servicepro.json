@@ -3929,6 +3929,86 @@
         }
       }
     },
+    "/api/v1/account/bookings/{id}/photos": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "AddMyBookingPhoto",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/account/bookings/{id}/availability": {
       "get": {
         "tags": [
@@ -9114,6 +9194,64 @@
           }
         }
       },
+      "BookingExtras": {
+        "required": [
+          "accessNotes",
+          "contactName",
+          "contactPhone",
+          "applianceBrand",
+          "applianceModel",
+          "purchaseYear",
+          "underWarranty"
+        ],
+        "type": "object",
+        "properties": {
+          "accessNotes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "applianceBrand": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "applianceModel": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "purchaseYear": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "underWarranty": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "Optional details that help the technician: how to get in, who will be there (when it isn't\r\nthe person booking), and what the appliance is."
+      },
       "BrandResponse": {
         "required": [
           "id",
@@ -11180,6 +11318,16 @@
           "acceptedPolicies": {
             "type": "boolean",
             "default": false
+          },
+          "extras": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BookingExtras"
+              }
+            ]
           }
         }
       },
@@ -11187,7 +11335,8 @@
         "required": [
           "srNumber",
           "trackingPath",
-          "session"
+          "session",
+          "serviceRequestId"
         ],
         "type": "object",
         "properties": {
@@ -11206,6 +11355,10 @@
                 "$ref": "#/components/schemas/CustomerSessionResponse"
               }
             ]
+          },
+          "serviceRequestId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "description": "Session is set when this booking signed the customer in (their phone was just verified);\r\nit is null when they were already signed in."
@@ -12519,6 +12672,16 @@
               },
               {
                 "$ref": "#/components/schemas/ReviewResponse"
+              }
+            ]
+          },
+          "visitDetails": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/VisitDetailsView"
               }
             ]
           }
@@ -14056,6 +14219,42 @@
           "DISPATCHER",
           "TECHNICIAN"
         ]
+      },
+      "VisitDetailsView": {
+        "required": [
+          "accessNotes",
+          "contactName",
+          "contactPhone",
+          "underWarranty"
+        ],
+        "type": "object",
+        "properties": {
+          "accessNotes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "contactPhone": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "underWarranty": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        },
+        "description": "Access notes, the person at home (when not the booker) and the warranty answer."
       },
       "WaivePaymentRequest": {
         "required": [

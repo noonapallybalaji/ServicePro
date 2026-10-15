@@ -15,4 +15,5 @@ export interface OnlineBookingResponse {
   srNumber: string;
   trackingPath: string;
   session: OnlineBookingResponseSession;
+  serviceRequestId: string;
 }

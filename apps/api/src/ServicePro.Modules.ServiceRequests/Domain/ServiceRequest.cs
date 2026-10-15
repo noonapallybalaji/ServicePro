@@ -115,6 +115,17 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
 
     public DateTimeOffset LastStatusChangeAt { get; private set; }
 
+    /// <summary>Gate code, floor, "call on arrival": what the technician needs to get in.</summary>
+    public string? AccessNotes { get; private set; }
+
+    /// <summary>Who will be at the address when it isn't the person who booked (e.g. parents).</summary>
+    public string? VisitContactName { get; private set; }
+
+    public PhoneNumber? VisitContactPhone { get; private set; }
+
+    /// <summary>The customer's answer to "is it under the maker's warranty?" (null: didn't say).</summary>
+    public bool? ApplianceUnderWarranty { get; private set; }
+
     /// <summary>When we asked the customer to rate the visit (once per job).</summary>
     public DateTimeOffset? FeedbackRequestedAt { get; private set; }
 
@@ -303,6 +314,14 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
                 new TransitionInput(ReasonCode: "ESTIMATE_APPROVED"), now)
             : Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.UnableToRepair), ServiceRequestStatus.UnableToRepair, actor,
                 new TransitionInput(ReasonCode: "ESTIMATE_DECLINED"), now);
+
+    public void SetVisitDetails(string? accessNotes, string? contactName, PhoneNumber? contactPhone, bool? underWarranty)
+    {
+        AccessNotes = string.IsNullOrWhiteSpace(accessNotes) ? null : accessNotes.Trim();
+        VisitContactName = string.IsNullOrWhiteSpace(contactName) || contactPhone is null ? null : contactName.Trim();
+        VisitContactPhone = VisitContactName is null ? null : contactPhone;
+        ApplianceUnderWarranty = underWarranty;
+    }
 
     public void RequestFeedback(DateTimeOffset now)
     {

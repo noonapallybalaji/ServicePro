@@ -2036,6 +2036,11 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("accepted_at");
 
+                    b.Property<string>("AccessNotes")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("access_notes");
+
                     b.Property<Guid>("AddressId")
                         .HasColumnType("uuid")
                         .HasColumnName("address_id");
@@ -2043,6 +2048,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ApplianceId")
                         .HasColumnType("uuid")
                         .HasColumnName("appliance_id");
+
+                    b.Property<bool?>("ApplianceUnderWarranty")
+                        .HasColumnType("boolean")
+                        .HasColumnName("appliance_under_warranty");
 
                     b.Property<DateTimeOffset?>("ArrivedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2208,6 +2217,16 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("visit_charge");
+
+                    b.Property<string>("VisitContactName")
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)")
+                        .HasColumnName("visit_contact_name");
+
+                    b.Property<string>("VisitContactPhone")
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("visit_contact_phone");
 
                     b.HasKey("Id")
                         .HasName("pk_service_requests");

@@ -42,6 +42,7 @@ import { AddressStep } from './address-step';
 import { EMPTY_DRAFT, addressOneLine, saveAddress, type Draft } from './draft';
 import { dayLabel, slotRange } from './slots';
 import { TimeStep } from './time-step';
+import { ApplianceDetails, ProblemPhotos, SomeoneElse, bookingExtras, uploadPhotos } from './extras';
 
 const STEPS = [
   { id: 'appliance', label: 'Appliance', title: 'What needs repairing?' },
@@ -62,6 +63,7 @@ export function BookingPage() {
   const [step, setStep] = useState(0);
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [booked, setBooked] = useState<OnlineBookingResponse | null>(null);
+  const [photosFailed, setPhotosFailed] = useState(0);
 
   const categories = (catalog.data ?? []).filter((c) => c.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
   const preset = categories.find((c) => c.code === params.get('service')?.toUpperCase());
@@ -86,7 +88,7 @@ export function BookingPage() {
     <SiteLayout>
         <Container className="py-6 md:py-10">
           {booked ? (
-            <BookingDone booking={booked} draft={draft} category={category} />
+            <BookingDone booking={booked} draft={draft} category={category} photosFailed={photosFailed} />
           ) : (
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
               <Card padding="lg" className="flex min-w-0 flex-col gap-6 lg:col-span-2">
@@ -132,7 +134,7 @@ export function BookingPage() {
                     failed={availability.isError}
                   />
                 ) : category ? (
-                  <DetailsStep draft={draft} update={update} category={category} onBooked={setBooked} />
+                  <DetailsStep draft={draft} update={update} category={category} onBooked={(b, failed) => (setPhotosFailed(failed), setBooked(b))} />
                 ) : null}
               </Card>
 
@@ -210,9 +212,11 @@ function ProblemStep({ category, draft, update, onNext }: StepProps & { category
           </RadioGroup>
         </fieldset>
       ) : null}
-      <Field label="Tell us more" optional={draft.issueTypeId !== ''} hint="Brand, model, what you've noticed — anything helps the technician come prepared.">
+      <Field label="Tell us more" optional={draft.issueTypeId !== ''} hint="What you've noticed: sounds, error codes, when it started.">
         <Textarea rows={4} value={draft.description} onChange={(e) => update({ description: e.target.value })} maxLength={1000} />
       </Field>
+      <ApplianceDetails draft={draft} update={update} />
+      <ProblemPhotos draft={draft} update={update} />
       <StepActions>
         <Button type="submit" size="lg" disabled={!ready}>
           Continue
@@ -229,8 +233,9 @@ function DetailsStep({
   update,
   category,
   onBooked,
-}: Omit<StepProps, 'onNext'> & { category: CategoryResponse; onBooked: (booking: OnlineBookingResponse) => void }) {
+}: Omit<StepProps, 'onNext'> & { category: CategoryResponse; onBooked: (booking: OnlineBookingResponse, photosFailed: number) => void }) {
   const [code, setCode] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [sentTo, setSentTo] = useState<{ phone: string; length: number; developmentCode: string | null | undefined } | null>(null);
   const requestCode = useRequestBookingCode({ mutation: { meta: { silent: true } } });
   const book = useBookServiceOnline({ mutation: { meta: { silent: true } } });
@@ -283,14 +288,18 @@ function DetailsStep({
           preferredSlotStart: visit.start,
           preferredSlotEnd: visit.end,
           acceptedPolicies: true,
+          extras: bookingExtras(draft),
         },
       },
       {
-        onSuccess: (booking) => {
+        onSuccess: async (booking) => {
           if (draft.rememberAddress) saveAddress(draft);
           // A verified booking signs the customer in, so "My bookings" works straight away.
           if (booking.session) signInWith(booking.session);
-          onBooked(booking);
+          setUploading(draft.photos.length > 0);
+          const failed = await uploadPhotos(booking.serviceRequestId, draft.photos);
+          setUploading(false);
+          onBooked(booking, failed);
         },
       },
     );
@@ -317,6 +326,7 @@ function DetailsStep({
           </Button>
         </div>
 
+        <SomeoneElse draft={draft} update={update} />
         {bookError ? <Alert role="alert" tone="error" title={bookError} /> : null}
 
         <Text variant="caption" tone="muted">
@@ -325,7 +335,7 @@ function DetailsStep({
         <PolicyNotice action="confirming this booking" />
 
         <StepActions>
-          <Button type="submit" size="lg" loading={book.isPending}>
+          <Button type="submit" size="lg" loading={book.isPending || uploading}>
             <CircleCheck aria-hidden /> Confirm booking
           </Button>
         </StepActions>
@@ -361,6 +371,7 @@ function DetailsStep({
         </Field>
       ) : null}
 
+      <SomeoneElse draft={draft} update={update} />
       {bookError ? <Alert role="alert" tone="error" title={bookError} /> : null}
 
       <Text variant="caption" tone="muted">
@@ -374,7 +385,7 @@ function DetailsStep({
             <Button type="button" variant="outline" size="lg" loading={requestCode.isPending} onClick={sendCode}>
               Resend code
             </Button>
-            <Button type="submit" size="lg" loading={book.isPending} disabled={code.length !== sentTo.length}>
+            <Button type="submit" size="lg" loading={book.isPending || uploading} disabled={code.length !== sentTo.length}>
               <CircleCheck aria-hidden /> Confirm booking
             </Button>
           </>
@@ -488,12 +499,19 @@ function Promises() {
 
 /* ── Done ───────────────────────────────────────────────────────────────── */
 
-function BookingDone({ booking, draft, category }: { booking: OnlineBookingResponse; draft: Draft; category: CategoryResponse | undefined }) {
+function BookingDone({ booking, draft, category, photosFailed }: { booking: OnlineBookingResponse; draft: Draft; category: CategoryResponse | undefined; photosFailed: number }) {
   return (
     <Card padding="lg" className="mx-auto flex max-w-sheet flex-col items-center gap-6 text-center" role="status">
       <SpotArt kind="done" className="size-32" />
       <div className="flex flex-col gap-2">
         <Heading level={1}>Booking received</Heading>
+        {photosFailed > 0 ? (
+          <Alert
+            tone="warning"
+            title={`${photosFailed} photo${photosFailed > 1 ? 's' : ''} didn't upload`}
+            description="Your booking is made. You can add photos from My bookings."
+          />
+        ) : null}
         <Text tone="secondary">
           Thanks{draft.fullName ? `, ${draft.fullName.split(' ')[0]}` : ''}! Your {category?.name ?? 'service'} request is{' '}
           <span className="font-semibold text-foreground">{booking.srNumber}</span>. We'll confirm your visit on WhatsApp shortly.

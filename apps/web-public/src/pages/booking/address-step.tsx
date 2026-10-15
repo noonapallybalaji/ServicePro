@@ -5,6 +5,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 
 import { ADDRESS_LABELS, addressOneLine, forgetSavedAddress, loadSavedAddress, type AddressLabel, type BookingAddress, type Draft } from './draft';
 import { LocationPin } from './location-pin';
+import { AccessNotes } from './extras';
 
 const PINCODE = /^[1-9][0-9]{5}$/;
 const LABEL_ICONS: Record<AddressLabel, ReactNode> = {
@@ -113,6 +114,8 @@ export function AddressStep({ draft, update, onNext, actions }: AddressStepProps
             <Input placeholder="e.g. Opposite City Park" value={draft.landmark} onChange={(e) => update({ landmark: e.target.value })} />
           </Field>
         </div>
+
+        <AccessNotes draft={draft} update={update} />
 
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-2 text-sm font-semibold text-foreground">Save address as</legend>

@@ -137,6 +137,32 @@ public sealed class LegalOptions
 
 internal sealed class CustomerRegistry(DbContext db, IOptions<LegalOptions> legal, IClock clock) : ICustomerRegistry
 {
+    public async Task<Guid> AddApplianceAsync(Guid customerId, SelfServiceAppliance appliance, CancellationToken ct)
+    {
+        // A customer created in this same booking isn't saved yet: use the tracked one.
+        var customer = db.Set<Customer>().Local.FirstOrDefault(c => c.Id == customerId)
+            ?? await db.Set<Customer>().Include(c => c.Appliances).FirstAsync(c => c.Id == customerId, ct);
+        if (db.Entry(customer).State != EntityState.Added)
+        {
+            await db.Entry(customer).Collection(c => c.Appliances).LoadAsync(ct);
+        }
+
+        // The same appliance described again (same type, brand and model) is reused, not duplicated.
+        var existing = customer.Appliances.FirstOrDefault(a =>
+            a.CategoryId == appliance.CategoryId &&
+            string.Equals(a.Brand, appliance.Brand?.Trim(), StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(a.ModelNumber, appliance.ModelNumber?.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (existing is not null)
+        {
+            return existing.Id;
+        }
+
+        return customer.AddAppliance(new ApplianceDetails(
+            appliance.CategoryId, Clean(appliance.Brand), null, null, Clean(appliance.ModelNumber), null, appliance.PurchaseYear, null)).Id;
+    }
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     public async Task RecordConsentAsync(Guid customerId, RequestChannel source, CancellationToken ct)
     {
         var customer = await db.Set<Customer>().Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId, ct);

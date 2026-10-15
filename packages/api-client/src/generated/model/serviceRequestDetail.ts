@@ -28,6 +28,7 @@ import type { AttachmentResponse } from './attachmentResponse';
 import type { AvailableTransition } from './availableTransition';
 import type { ServiceRequestDetailInvoice } from './serviceRequestDetailInvoice';
 import type { ServiceRequestDetailReview } from './serviceRequestDetailReview';
+import type { ServiceRequestDetailVisitDetails } from './serviceRequestDetailVisitDetails';
 
 export interface ServiceRequestDetail {
   card: ServiceRequestCard;
@@ -59,4 +60,5 @@ export interface ServiceRequestDetail {
   availableTransitions: AvailableTransition[];
   invoice: ServiceRequestDetailInvoice;
   review?: ServiceRequestDetailReview;
+  visitDetails?: ServiceRequestDetailVisitDetails;
 }

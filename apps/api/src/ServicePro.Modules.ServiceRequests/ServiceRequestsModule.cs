@@ -264,6 +264,19 @@ public sealed class ServiceRequestsModule : IModule
             .WithStandardErrors()
             .WithName("GetMyBooking");
 
+        endpoints.MapPost("/api/v1/account/bookings/{id:guid}/photos", async (Guid id, IFormFile file, AddMyBookingPhoto useCase, CancellationToken ct) =>
+            {
+                await using var stream = file.OpenReadStream();
+                return (await useCase.HandleAsync(id, stream, file.ContentType, file.Length, ct)).ToHttp();
+            })
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .DisableAntiforgery()
+            .Produces<int>()
+            .WithStandardErrors()
+            .WithName("AddMyBookingPhoto");
+
         endpoints.MapGet("/api/v1/account/bookings/{id:guid}/availability", async (Guid id, GetMyBookingAvailability useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, ct)).ToHttp())
             .WithTags("Customer account")

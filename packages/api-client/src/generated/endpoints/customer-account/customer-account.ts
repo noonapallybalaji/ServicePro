@@ -27,6 +27,7 @@ import type {
 import type {
   AccountResponse,
   AddAccountAddressRequest,
+  AddMyBookingPhotoBody,
   AvailabilityResponse,
   CancelBookingRequest,
   HttpValidationProblemDetails,
@@ -636,7 +637,75 @@ export function useGetMyBooking<TData = Awaited<ReturnType<typeof getMyBooking>>
 
 
 
-export const getGetMyBookingAvailabilityUrl = (id: string,) => {
+export const getAddMyBookingPhotoUrl = (id: string,) => {
+
+
+  
+
+  return `/api/v1/account/bookings/${id}/photos`
+}
+
+export const addMyBookingPhoto = async (id: string,
+    addMyBookingPhotoBody: AddMyBookingPhotoBody, options?: RequestInit): Promise<number> => {
+    const formData = new FormData();
+formData.append(`file`, addMyBookingPhotoBody.file)
+
+  return apiFetch<number>(getAddMyBookingPhotoUrl(id),
+  {      
+    ...options,
+    method: 'POST'
+    ,
+    body: 
+      formData,
+  }
+);}
+
+
+
+
+export const getAddMyBookingPhotoMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addMyBookingPhoto>>, TError,{id: string;data: AddMyBookingPhotoBody}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addMyBookingPhoto>>, TError,{id: string;data: AddMyBookingPhotoBody}, TContext> => {
+
+const mutationKey = ['addMyBookingPhoto'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addMyBookingPhoto>>, {id: string;data: AddMyBookingPhotoBody}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addMyBookingPhoto(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddMyBookingPhotoMutationResult = NonNullable<Awaited<ReturnType<typeof addMyBookingPhoto>>>
+    export type AddMyBookingPhotoMutationBody = AddMyBookingPhotoBody
+    export type AddMyBookingPhotoMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useAddMyBookingPhoto = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addMyBookingPhoto>>, TError,{id: string;data: AddMyBookingPhotoBody}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof addMyBookingPhoto>>,
+        TError,
+        {id: string;data: AddMyBookingPhotoBody},
+        TContext
+      > => {
+
+      const mutationOptions = getAddMyBookingPhotoMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getGetMyBookingAvailabilityUrl = (id: string,) => {
 
 
   

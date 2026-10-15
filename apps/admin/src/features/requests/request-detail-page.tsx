@@ -150,9 +150,30 @@ function RequestDetail({ request }: { request: ServiceRequestDetail }) {
               {request.applianceDescription ? (
                 <Text variant="sm" tone="secondary">
                   Appliance: {request.applianceDescription}
+                  {request.visitDetails?.underWarranty === true ? ' · customer says it is under warranty' : ''}
                 </Text>
               ) : null}
             </div>
+            {request.visitDetails?.contactName || request.visitDetails?.accessNotes ? (
+              <div className="flex flex-col gap-1 border-t border-border pt-4">
+                <Text variant="overline" tone="muted">
+                  For the visit
+                </Text>
+                {request.visitDetails.contactName ? (
+                  <Text variant="sm">
+                    At home: {request.visitDetails.contactName} ·{' '}
+                    <a className="link" href={`tel:${request.visitDetails.contactPhone}`}>
+                      {request.visitDetails.contactPhone}
+                    </a>
+                  </Text>
+                ) : null}
+                {request.visitDetails.accessNotes ? (
+                  <Text variant="sm" className="whitespace-pre-wrap">
+                    Directions: {request.visitDetails.accessNotes}
+                  </Text>
+                ) : null}
+              </div>
+            ) : null}
           </Card>
 
           <Tabs defaultValue="activity">

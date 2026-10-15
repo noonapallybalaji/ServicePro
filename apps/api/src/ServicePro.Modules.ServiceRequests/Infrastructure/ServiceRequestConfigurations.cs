@@ -1,3 +1,4 @@
+using ServicePro.SharedKernel.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ServicePro.Modules.ServiceRequests.Domain;
@@ -17,6 +18,11 @@ internal sealed class ServiceRequestConfiguration : IEntityTypeConfiguration<Ser
         builder.ToTable("service_requests", OpsSchema.Name);
         builder.Property(s => s.SrNumber).HasMaxLength(20);
         builder.Property(s => s.ProblemDescription).HasMaxLength(2000);
+        builder.Property(s => s.AccessNotes).HasMaxLength(300);
+        builder.Property(s => s.VisitContactName).HasMaxLength(120);
+        builder.Property(s => s.VisitContactPhone)
+            .HasConversion(p => p!.Value, v => PhoneNumber.FromTrusted(v))
+            .HasMaxLength(16);
         builder.Property(s => s.StatusReason).HasMaxLength(80);
         builder.Property(s => s.VisitCharge).HasPrecision(12, 2);
         builder.Property(s => s.FinalAmount).HasPrecision(12, 2);

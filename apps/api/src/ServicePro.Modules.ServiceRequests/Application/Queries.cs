@@ -164,7 +164,8 @@ public sealed class GetServiceRequestDetail(
                 a.Id, a.Kind, a.ContentType, a.SizeBytes, $"/api/v1/service-requests/{request.Id}/attachments/{a.Id}", a.CreatedAt))],
             [.. request.AvailableTransitions(actorType).Select(ServiceRequestViewBuilder.ToAvailable)],
             invoice,
-            review is null ? null : new ReviewResponse(review.Rating, review.Comment, review.SubmittedAt));
+            review is null ? null : new ReviewResponse(review.Rating, review.Comment, review.SubmittedAt),
+            new VisitDetailsView(request.AccessNotes, request.VisitContactName, request.VisitContactPhone?.Value, request.ApplianceUnderWarranty));
     }
 }
 

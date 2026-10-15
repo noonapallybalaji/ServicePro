@@ -8,6 +8,7 @@
 import type { OnlineBookingRequestIssueTypeId } from './onlineBookingRequestIssueTypeId';
 import type { OnlineBookingRequestCode } from './onlineBookingRequestCode';
 import type { BookingAddressRequest } from './bookingAddressRequest';
+import type { OnlineBookingRequestExtras } from './onlineBookingRequestExtras';
 
 export interface OnlineBookingRequest {
   categoryId: string;
@@ -20,4 +21,5 @@ export interface OnlineBookingRequest {
   preferredSlotStart: string;
   preferredSlotEnd: string;
   acceptedPolicies?: boolean;
+  extras?: OnlineBookingRequestExtras;
 }

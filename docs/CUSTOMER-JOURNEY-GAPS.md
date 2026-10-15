@@ -49,10 +49,10 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 3.1 | 5-step booking: appliance, problem, address, time, details | ✅ | With pincode check, saved address, optional device pin, signed-in fast path. | — | — |
 | 3.2 | **Real slot availability** (only show times we can serve) | ✅ | `GET /public/availability`: windows (`booking.windows`, 7 days, 2 h notice) open only when technicians with the skill, covering the pincode, on shift and not on leave have room (`booking.jobs_per_technician_per_window`, 2). Website, WhatsApp bookings and customer reschedules re-check at submit (`booking.slot_full`). No hold while the customer fills the form. Staff bookings can still overbook. `booking.capacity_check` off = old behaviour. | **P0** | L |
 | 3.3 | Instant or urgent booking ("as soon as possible") | ❌ | Priority exists for staff (HIGH/EMERGENCY) but the customer can't request it; no surge or urgent fee. | P1 | M |
-| 3.4 | Photos or video of the problem at booking | 🟡 | Attachments exist for staff and technicians (`PHOTO_ISSUE` kind) but the booking form has no upload. | P1 | S |
-| 3.5 | Appliance details: brand, model, age, under warranty? | 🟡 | The customer appliance model exists (staff side). The booking doesn't ask, so technicians arrive without parts info. | P1 | S |
-| 3.6 | Book for someone else (contact person at the address) | ❌ | Booking phone = visit contact. Common case: children booking for parents. | P1 | S |
-| 3.7 | Access notes (gate code, floor, "call on arrival") | ❌ | Only "landmark". | P1 | S |
+| 3.4 | Photos or video of the problem at booking | ✅ | Up to 3 photos on the problem step, uploaded right after booking; more (up to 5) from the booking page until the job is done. Technicians and staff see them. No video. | P1 | S |
+| 3.5 | Appliance details: brand, model, age, under warranty? | ✅ | Optional "Add brand and model" on the problem step (brand suggestions, model, year bought, under the maker's warranty?). Saved as the customer's appliance and shown to the technician. | P1 | S |
+| 3.6 | Book for someone else (contact person at the address) | ✅ | "Someone else will be at home": their name and number; the technician's Call button calls them. Messages still go to the person who booked. | P1 | S |
+| 3.7 | Access notes (gate code, floor, "call on arrival") | ✅ | "Directions for the technician" on the address step; shown to the technician and staff. | P1 | S |
 | 3.8 | Multiple appliances or services in one booking (cart) | ❌ | One appliance per request. | P2 | M |
 | 3.9 | Map pin picker with drag to adjust | ❌ | Device GPS pin only (optional). Needs a maps provider (Google Maps API key). | P2 | M |
 | 3.10 | Price summary and taxes before confirming | 🟡 | Visiting charge shown; no GST breakdown, convenience fee or coupon line. | P1 | S |

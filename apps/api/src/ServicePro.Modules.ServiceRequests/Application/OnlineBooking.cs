@@ -74,13 +74,27 @@ public sealed record OnlineBookingRequest(
     BookingAddressRequest Address,
     DateTimeOffset PreferredSlotStart,
     DateTimeOffset PreferredSlotEnd,
-    bool AcceptedPolicies = false);
+    bool AcceptedPolicies = false,
+    BookingExtras? Extras = null);
+
+/// <summary>
+/// Optional details that help the technician: how to get in, who will be there (when it isn't
+/// the person booking), and what the appliance is.
+/// </summary>
+public sealed record BookingExtras(
+    string? AccessNotes,
+    string? ContactName,
+    string? ContactPhone,
+    string? ApplianceBrand,
+    string? ApplianceModel,
+    int? PurchaseYear,
+    bool? UnderWarranty);
 
 /// <summary>
 /// Session is set when this booking signed the customer in (their phone was just verified);
 /// it is null when they were already signed in.
 /// </summary>
-public sealed record OnlineBookingResponse(string SrNumber, string TrackingPath, CustomerSessionResponse? Session);
+public sealed record OnlineBookingResponse(string SrNumber, string TrackingPath, CustomerSessionResponse? Session, Guid ServiceRequestId);
 
 /// <summary>The response plus the refresh token, which the endpoint puts in an HttpOnly cookie.</summary>
 public sealed record OnlineBookingOutcome(OnlineBookingResponse Response, IssuedCustomerSession? Session);
@@ -110,6 +124,19 @@ internal sealed class OnlineBookingRequestValidator : AbstractValidator<OnlineBo
         RuleFor(r => r.Address).Must(a => a.Latitude.HasValue == a.Longitude.HasValue)
             .WithMessage("Send both latitude and longitude, or neither.");
         RuleFor(r => r.PreferredSlotEnd).GreaterThan(r => r.PreferredSlotStart).WithMessage("Choose a time slot.");
+        When(r => r.Extras is not null, () =>
+        {
+            RuleFor(r => r.Extras!.AccessNotes).MaximumLength(300);
+            RuleFor(r => r.Extras!.ContactName).MaximumLength(120);
+            RuleFor(r => r.Extras!.ContactName).NotEmpty().WithMessage("Enter the name of the person who will be there.")
+                .When(r => !string.IsNullOrWhiteSpace(r.Extras!.ContactPhone));
+            RuleFor(r => r.Extras!.ContactPhone).NotEmpty().WithMessage("Enter their mobile number.")
+                .When(r => !string.IsNullOrWhiteSpace(r.Extras!.ContactName));
+            RuleFor(r => r.Extras!.ApplianceBrand).MaximumLength(80);
+            RuleFor(r => r.Extras!.ApplianceModel).MaximumLength(80);
+            RuleFor(r => r.Extras!.PurchaseYear).InclusiveBetween(1980, 2100).WithMessage("Enter the year it was bought.")
+                .When(r => r.Extras!.PurchaseYear.HasValue);
+        });
     }
 }
 
@@ -182,12 +209,30 @@ public sealed class BookServiceOnline(
             return customer.Error!;
         }
 
+        var extras = request.Extras;
+        PhoneNumber? contactPhone = null;
+        if (!string.IsNullOrWhiteSpace(extras?.ContactPhone))
+        {
+            var parsed = PhoneNumber.Create(extras.ContactPhone);
+            if (parsed.IsFailure)
+            {
+                return Error.Validation("booking.contact_phone_invalid", "Enter a valid 10-digit mobile number for the person at home.");
+            }
+
+            contactPhone = parsed.Value;
+        }
+
+        Guid? applianceId = extras is { ApplianceBrand: { Length: > 0 } } or { ApplianceModel: { Length: > 0 } } or { PurchaseYear: not null }
+            ? await customers.AddApplianceAsync(customer.Value.Customer.Id,
+                new SelfServiceAppliance(request.CategoryId, extras!.ApplianceBrand, extras.ApplianceModel, extras.PurchaseYear), ct)
+            : null;
+
         var serviceRequest = ServiceRequest.Create(
             new NewServiceRequest(
                 await srNumbers.NextAsync(ct),
                 customer.Value.Customer.Id,
                 customer.Value.AddressId,
-                ApplianceId: null,
+                ApplianceId: applianceId,
                 request.CategoryId,
                 request.IssueTypeId,
                 request.ProblemDescription,
@@ -204,6 +249,7 @@ public sealed class BookServiceOnline(
             Actor.Customer,
             clock.UtcNow);
 
+        serviceRequest.SetVisitDetails(extras?.AccessNotes, extras?.ContactName, contactPhone, extras?.UnderWarranty);
         db.Set<ServiceRequest>().Add(serviceRequest);
 
         // The phone was just verified: sign the customer in, in the same save as the booking,
@@ -211,7 +257,7 @@ public sealed class BookServiceOnline(
         var session = signedIn ? null : await sessions.IssueAsync(customer.Value.Customer, ct);
         await db.SaveChangesAsync(ct);
 
-        var response = new OnlineBookingResponse(serviceRequest.SrNumber, $"/t/{serviceRequest.TrackingToken}", session?.Response);
+        var response = new OnlineBookingResponse(serviceRequest.SrNumber, $"/t/{serviceRequest.TrackingToken}", session?.Response, serviceRequest.Id);
         return new OnlineBookingOutcome(response, session);
     }
 }

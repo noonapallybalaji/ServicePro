@@ -137,7 +137,12 @@ public interface ICustomerRegistry
 
     /// <summary>Records that the customer accepted the current terms and privacy policy (once per version).</summary>
     Task RecordConsentAsync(Guid customerId, RequestChannel source, CancellationToken ct);
+
+    /// <summary>Saves the appliance a customer described when booking (brand, model, year); returns its id.</summary>
+    Task<Guid> AddApplianceAsync(Guid customerId, SelfServiceAppliance appliance, CancellationToken ct);
 }
+
+public sealed record SelfServiceAppliance(Guid CategoryId, string? Brand, string? ModelNumber, int? PurchaseYear);
 
 public interface ICustomerDirectory
 {

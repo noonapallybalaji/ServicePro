@@ -140,10 +140,11 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
                 </span>
               </Text>
             </div>
+            <VisitNotes job={job} />
             <div className="flex gap-3 *:flex-1">
               <Button asChild variant="outline">
-                <a href={`tel:${job.card.customerPhone}`}>
-                  <Phone aria-hidden /> Call
+                <a href={`tel:${job.visitDetails?.contactPhone ?? job.card.customerPhone}`}>
+                  <Phone aria-hidden /> Call{job.visitDetails?.contactName ? ` ${job.visitDetails.contactName.split(' ')[0]}` : ''}
                 </a>
               </Button>
               <Button asChild variant="outline">
@@ -304,4 +305,39 @@ function toTimeline(job: ServiceRequestDetail): TimelineStep[] {
     timestamp: formatDateTime(entry.occurredAt),
     state: index === 0 ? 'current' : 'complete',
   }));
+}
+
+/** What the customer told us for the visit: who is at home, how to get in, and the warranty answer. */
+function VisitNotes({ job }: { job: ServiceRequestDetail }) {
+  const details = job.visitDetails;
+  if (!details || (!details.accessNotes && !details.contactName && details.underWarranty == null && !job.applianceDescription)) return null;
+
+  return (
+    <dl className="flex flex-col gap-2 rounded-control bg-surface-sunken p-3 text-sm">
+      {details.contactName ? (
+        <div>
+          <dt className="text-caption text-foreground-muted">At home</dt>
+          <dd>
+            {details.contactName} · <a className="link" href={`tel:${details.contactPhone}`}>{details.contactPhone}</a>
+            <span className="block text-caption text-foreground-muted">Booked by {job.card.customerName}</span>
+          </dd>
+        </div>
+      ) : null}
+      {details.accessNotes ? (
+        <div>
+          <dt className="text-caption text-foreground-muted">Directions</dt>
+          <dd className="whitespace-pre-wrap">{details.accessNotes}</dd>
+        </div>
+      ) : null}
+      {job.applianceDescription || details.underWarranty != null ? (
+        <div>
+          <dt className="text-caption text-foreground-muted">Appliance</dt>
+          <dd>
+            {job.applianceDescription || 'Brand not given'}
+            {details.underWarranty === true ? ' · customer says it is under the maker’s warranty' : details.underWarranty === false ? ' · not under warranty' : ''}
+          </dd>
+        </div>
+      ) : null}
+    </dl>
+  );
 }
