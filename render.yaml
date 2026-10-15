@@ -52,7 +52,11 @@ services:
       - key: Network__ClientIpHeader
         value: CF-Connecting-IP
       - key: Notifications__PublicSiteUrl
-        value: https://servicepro-site.onrender.com
+        value: https://servicepro-site-b4ig.onrender.com
+      # SHA-256 hash of the key n8n sends (X-ServicePro-Integration-Key). Generate both with
+      # apps/api/scripts/new-integration-key.ps1: the hash goes here, the key into n8n only.
+      - key: Integrations__Keys__n8n
+        sync: false
 
   # ── Customer website (pre-rendered static pages) ──────────────────────────
   - type: web
@@ -65,7 +69,7 @@ services:
       - key: NODE_VERSION
         value: "22"
       - key: VITE_SITE_URL
-        value: https://servicepro-site.onrender.com
+        value: https://servicepro-site-b4ig.onrender.com
       - key: VITE_BUSINESS_NAME
         value: ServicePro
     routes:
