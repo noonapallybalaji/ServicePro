@@ -41,9 +41,16 @@ internal sealed class ExposureGuard(
             problems.Add("Auth:SigningKey is the development key from the repo. Set Auth__SigningKey to a new random secret.");
         }
 
-        if (auth.Value.ExposeOtpInResponse)
+        // A test deployment (no SMS provider yet) may show codes on screen, but only when it says
+        // so explicitly. It must never hold real customers' data.
+        var testMode = configuration.GetValue("Auth:TestMode", false);
+        if (auth.Value.ExposeOtpInResponse && !testMode)
         {
-            problems.Add("Auth:ExposeOtpInResponse is on: anyone could read sign-in codes. Turn it off.");
+            problems.Add("Auth:ExposeOtpInResponse is on: anyone could read sign-in codes. Turn it off (or set Auth__TestMode=true for a test-only deployment).");
+        }
+        else if (auth.Value.ExposeOtpInResponse)
+        {
+            logger.LogWarning("TEST MODE: sign-in codes are shown on screen to anyone. Do not use this deployment for real customers.");
         }
 
         await using (var scope = scopes.CreateAsyncScope())

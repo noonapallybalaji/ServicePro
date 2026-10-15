@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+tests/
+.storage/
+.env*
+!public.env.example

@@ -95,12 +95,21 @@ public static class ClientAddress
     /// from the local cloudflared process, so Cloudflare's CF-Connecting-IP is used — but only
     /// when the connection itself is from this machine (the API listens on localhost), so a remote
     /// caller can't pick its own rate-limit bucket by sending the header.
+    /// <para>
+    /// On a platform where the API is reachable only through the provider's edge, which
+    /// overwrites the header (Render puts Cloudflare in front of every web service), set
+    /// Network:TrustClientIpHeader=true. Never set it where the API can be reached directly.
+    /// </para>
     /// </summary>
     public static string For(HttpContext http)
     {
         var remote = http.Connection.RemoteIpAddress;
-        if (remote is not null && System.Net.IPAddress.IsLoopback(remote) &&
-            http.Request.Headers["CF-Connecting-IP"].ToString() is { Length: > 0 and <= 45 } forwarded &&
+        var configuration = (http.RequestServices as IServiceProvider)?.GetService<Microsoft.Extensions.Configuration.IConfiguration>();
+        var header = configuration?["Network:ClientIpHeader"] is { Length: > 0 } configured ? configured : "CF-Connecting-IP";
+        var trustedSource = (remote is not null && System.Net.IPAddress.IsLoopback(remote)) ||
+                            string.Equals(configuration?["Network:TrustClientIpHeader"], "true", StringComparison.OrdinalIgnoreCase);
+        if (trustedSource &&
+            http.Request.Headers[header].ToString() is { Length: > 0 and <= 45 } forwarded &&
             System.Net.IPAddress.TryParse(forwarded, out var client))
         {
             return client.ToString();

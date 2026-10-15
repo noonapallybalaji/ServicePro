@@ -1,0 +1,125 @@
+# Render Blueprint: a TEST deployment of ServicePro on Render's free plan.
+# Guide: docs/DEPLOY-RENDER.md. Read it first: free databases expire after 30 days, the API
+# sleeps when idle, uploaded photos are lost on restart, and sign-in codes are shown on screen.
+#
+# Service URLs (<name>.onrender.com) are only known once Render creates the services. If a name
+# below is taken, Render adds a suffix: then update the three "rewrite" destinations, VITE_SITE_URL
+# and Notifications__PublicSiteUrl to the real URLs (Dashboard > service > Redirects/Rewrites, Environment).
+
+databases:
+  - name: servicepro-db
+    plan: free
+    databaseName: servicepro
+    user: servicepro
+
+services:
+  # ── API (.NET, Docker) ────────────────────────────────────────────────────
+  - type: web
+    name: servicepro-api
+    runtime: docker
+    plan: free
+    rootDir: apps/api
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health/ready
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Public
+      - key: ConnectionStrings__Database
+        fromDatabase:
+          name: servicepro-db
+          property: connectionString
+      - key: Auth__SigningKey
+        generateValue: true
+      # TEST ONLY: no SMS/WhatsApp provider yet, so codes are shown on screen. Remove both
+      # before any real customer uses the site (the API then refuses to show codes).
+      - key: Auth__TestMode
+        value: "true"
+      - key: Auth__ExposeOtpInResponse
+        value: "true"
+      # Demo technicians, customers and jobs to try the flows with.
+      - key: Database__SeedDemoData
+        value: "true"
+      # Your owner login, created on first start. Enter them in the dashboard (not stored here).
+      - key: Seed__OwnerEmail
+        sync: false
+      - key: Seed__OwnerPassword
+        sync: false
+      # Render puts Cloudflare in front of every web service; it overwrites this header.
+      - key: Network__TrustClientIpHeader
+        value: "true"
+      - key: Network__ClientIpHeader
+        value: CF-Connecting-IP
+      - key: Notifications__PublicSiteUrl
+        value: https://servicepro-site.onrender.com
+
+  # ── Customer website (pre-rendered static pages) ──────────────────────────
+  - type: web
+    name: servicepro-site
+    runtime: static
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @servicepro/web-public build
+    staticPublishPath: apps/web-public/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_SITE_URL
+        value: https://servicepro-site.onrender.com
+      - key: VITE_BUSINESS_NAME
+        value: ServicePro
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://servicepro-api.onrender.com/api/*
+      - type: rewrite
+        source: /book
+        destination: /app.html
+      - type: rewrite
+        source: /account
+        destination: /app.html
+      - type: rewrite
+        source: /t/*
+        destination: /app.html
+
+  # ── Admin (owner and dispatcher) ──────────────────────────────────────────
+  - type: web
+    name: servicepro-admin
+    runtime: static
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @servicepro/admin build
+    staticPublishPath: apps/admin/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://servicepro-api.onrender.com/api/*
+      - type: rewrite
+        source: /hubs/*
+        destination: https://servicepro-api.onrender.com/hubs/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # ── Technician app ────────────────────────────────────────────────────────
+  - type: web
+    name: servicepro-tech
+    runtime: static
+    rootDir: .
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @servicepro/tech build
+    staticPublishPath: apps/tech/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://servicepro-api.onrender.com/api/*
+      - type: rewrite
+        source: /hubs/*
+        destination: https://servicepro-api.onrender.com/hubs/*
+      - type: rewrite
+        source: /*
+        destination: /index.html
