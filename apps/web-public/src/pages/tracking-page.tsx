@@ -4,6 +4,7 @@ import {
   useCheckOnlinePayment,
   useGetTracking,
   useStartOnlinePayment,
+  useTrackingUpdates,
   type ServiceRequestStatus,
   type TrackingResponse,
 } from '@servicepro/api-client';
@@ -30,8 +31,8 @@ import {
   type TimelineStep,
 } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { CreditCard, FileDown, Link2Off, MessageCircle, Phone } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { CreditCard, FileDown, Link2Off, MessageCircle, Navigation, Phone } from 'lucide-react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 import { SITE, whatsappLink } from '../site';
@@ -114,7 +115,7 @@ function milestones(t: TrackingResponse): TimelineStep[] {
 export function TrackingPage() {
   usePageMeta(PAGES.tracking);
   const { token = '' } = useParams();
-  // Customers keep this open while waiting: poll gently (PLAN.md §12.5).
+  // Customers keep this open while waiting: live updates, with a gentle poll as the fallback (PLAN.md §12.5).
   const tracking = useGetTracking(token, { query: { refetchInterval: 30_000, retry: false } });
 
   return (
@@ -156,6 +157,12 @@ export function Tracking({ data, token, inAccount = false }: { data: TrackingRes
   const attention = ATTENTION.has(data.status);
   const beforePhotos = data.photos.filter((p) => p.kind === 'PHOTO_BEFORE');
   const afterPhotos = data.photos.filter((p) => p.kind === 'PHOTO_AFTER');
+  const queryClient = useQueryClient();
+  // Pushes only say "something changed": refetch this page (and the My bookings view of it).
+  useTrackingUpdates(token, () => {
+    void queryClient.invalidateQueries({ queryKey: getGetTrackingQueryKey(token) });
+    void queryClient.invalidateQueries({ predicate: (q) => typeof q.queryKey[0] === 'string' && q.queryKey[0].startsWith('/api/v1/account/bookings') });
+  });
 
   return (
     <Stack gap={6}>
@@ -223,6 +230,8 @@ export function Tracking({ data, token, inAccount = false }: { data: TrackingRes
               }
             />
           ) : null}
+
+          {data.status === 'EN_ROUTE' && data.live ? <OnTheWay live={data.live} name={data.technician?.fullName.split(' ')[0]} /> : null}
 
           <Card>
             <StatusTimeline steps={milestones(data)} />
@@ -408,4 +417,30 @@ function PaymentReturn({ token }: { token: string }) {
       />
     );
   return null;
+}
+
+const LiveMap = lazy(() => import('./live-map'));
+
+/** Where the technician is and roughly when they'll arrive (gap analysis 6.2, 4.5). */
+function OnTheWay({ live, name = 'Your technician' }: { live: NonNullable<TrackingResponse['live']>; name?: string }) {
+  return (
+    <Card className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <Text weight="semibold" className="inline-flex items-center gap-2">
+          <Navigation aria-hidden className="size-4 text-primary" />
+          {live.etaMinutes != null ? `About ${live.etaMinutes} min away` : `${name} is on the way`}
+        </Text>
+        <Text variant="caption" tone="muted" className="tabular-nums">
+          Updated {formatTime(live.at)}
+        </Text>
+      </div>
+      <Suspense fallback={<Skeleton className="aspect-4/3 w-full rounded-card sm:aspect-video" />}>
+        <LiveMap latitude={live.latitude} longitude={live.longitude} label={`${name}'s location at ${formatTime(live.at)}`} />
+      </Suspense>
+      <Text variant="caption" tone="muted">
+        {live.etaMinutes != null ? 'An estimate from the distance; traffic can change it. ' : ''}
+        The map stops once {name === 'Your technician' ? 'they arrive' : `${name} arrives`}.
+      </Text>
+    </Card>
+  );
 }

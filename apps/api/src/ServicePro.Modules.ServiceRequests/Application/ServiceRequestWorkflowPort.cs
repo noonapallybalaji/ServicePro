@@ -83,6 +83,22 @@ internal sealed class ServiceRequestWorkflowPort(DbContext db, ICustomerDirector
         return db.Set<ServiceRequest>().AnyAsync(s => s.CustomerId == customerId && !finished.Contains(s.Status), ct);
     }
 
+    public async Task<Guid?> FindTrackableIdAsync(string trackingToken, CancellationToken ct)
+    {
+        var request = await db.Set<ServiceRequest>().IgnoreQueryFilters().AsNoTracking()
+            .Where(s => s.TrackingToken == trackingToken)
+            .Select(s => new { s.Id, s.ClosedAt, s.CancelledAt })
+            .FirstOrDefaultAsync(ct);
+        var endedAt = request?.ClosedAt ?? request?.CancelledAt;
+        return request is null || (endedAt is { } ended && clock.UtcNow - ended > TrackingRules.LinkLifetimeAfterClose) ? null : request.Id;
+    }
+
+    public async Task<IReadOnlyList<Guid>> FindEnRouteJobIdsAsync(Guid technicianId, CancellationToken ct) =>
+        await db.Set<ServiceRequest>().AsNoTracking()
+            .Where(s => s.CurrentTechnicianId == technicianId && s.Status == ServiceRequestStatus.EnRoute)
+            .Select(s => s.Id)
+            .ToListAsync(ct);
+
     private async Task<Result> MutateAsync(Guid serviceRequestId, Func<ServiceRequest, Result> change, CancellationToken ct)
     {
         var request = await db.Set<ServiceRequest>().FirstOrDefaultAsync(s => s.Id == serviceRequestId, ct);

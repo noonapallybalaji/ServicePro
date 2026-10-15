@@ -117,6 +117,7 @@ foreach (var module in ModuleCatalog.All)
 app.MapSettingsEndpoints();
 app.MapHub<OpsHub>("/hubs/ops");
 app.MapHub<TechHub>("/hubs/tech");
+app.MapHub<TrackingHub>("/hubs/tracking");
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new() { Predicate = check => check.Tags.Contains("ready") });
 

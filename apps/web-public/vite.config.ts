@@ -11,6 +11,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': { target: API_TARGET, changeOrigin: true },
+      '/hubs': { target: API_TARGET, changeOrigin: true, ws: true },
     },
   },
   preview: { port: 5192 },

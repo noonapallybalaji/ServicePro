@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using ServicePro.BuildingBlocks.Security;
+using ServicePro.Contracts.Ports;
 using ServicePro.SharedKernel.Abstractions;
 
 namespace ServicePro.Api.Realtime;
@@ -11,6 +12,9 @@ public static class RealtimeGroups
     public static string Ops(Guid tenantId) => $"tenant:{tenantId}:ops";
 
     public static string Technician(Guid tenantId, Guid technicianId) => $"tenant:{tenantId}:tech:{technicianId}";
+
+    /// <summary>Customers watching one job's tracking page (job ids are unique across tenants).</summary>
+    public static string Tracking(Guid serviceRequestId) => $"track:{serviceRequestId}";
 }
 
 /// <summary>Messages pushed to clients. Clients treat them as "refetch" signals, never as data of record.</summary>
@@ -22,6 +26,7 @@ public static class RealtimeMessages
     public const string OfferReceived = "offerReceived";
     public const string OfferResolved = "offerResolved";
     public const string SupportChanged = "supportChanged";
+    public const string TrackingChanged = "trackingChanged";
 }
 
 /// <summary>Live board for the owner/dispatcher (PLAN.md §5.2).</summary>
@@ -47,5 +52,25 @@ public sealed class TechHub(ITenantContext tenant, ICurrentUser user) : Hub
         }
 
         await base.OnConnectedAsync();
+    }
+}
+
+/// <summary>
+/// Live updates for a customer's tracking page. Anyone holding the link may listen, exactly as
+/// they may open the page; messages only say "refetch", so nothing leaks through the hub itself.
+/// </summary>
+[AllowAnonymous]
+public sealed class TrackingHub(IServiceRequestWorkflow requests) : Hub
+{
+    /// <summary>Starts updates for the job behind the link; false when the link is unknown or expired.</summary>
+    public async Task<bool> Join(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token) || token.Length > 64 || await requests.FindTrackableIdAsync(token, Context.ConnectionAborted) is not { } id)
+        {
+            return false;
+        }
+
+        await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Tracking(id));
+        return true;
     }
 }

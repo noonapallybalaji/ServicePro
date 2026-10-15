@@ -1,6 +1,7 @@
 // Serves the production build the way the hosting rules do (public/_redirects, public/_headers):
 // pre-rendered files as-is, /book and /t/* via the app shell, everything else 404.html with a 404
-// status. /api is proxied to the local API so booking and tracking work.
+// status. /api and /hubs (including WebSockets) are proxied to the local API so booking and live
+// tracking work.
 // Usage: node scripts/serve-dist.mjs   (PORT, HOST, SERVICEPRO_API override the defaults)
 import fs from 'node:fs';
 import http from 'node:http';
@@ -49,7 +50,7 @@ http
       return;
     }
 
-    if (pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/') || pathname.startsWith('/hubs/')) {
       const upstream = http.request({ host: api.hostname, port: api.port, path: req.url, method: req.method, headers: req.headers }, (r) => {
         res.writeHead(r.statusCode ?? 502, r.headers);
         r.pipe(res);
@@ -70,5 +71,22 @@ http
     }
 
     return send(res, path.join(dist, '404.html'), 404);
+  })
+  // Live tracking updates use WebSockets: pass the upgrade through to the API untouched.
+  .on('upgrade', (req, socket, head) => {
+    if (!req.url?.startsWith('/hubs/')) return socket.destroy();
+    const upstream = http.request({ host: api.hostname, port: api.port, path: req.url, method: req.method, headers: req.headers });
+    upstream.on('upgrade', (r, apiSocket, apiHead) => {
+      const headers = Object.entries(r.headers).map(([name, value]) => `${name}: ${value}\r\n`).join('');
+      socket.write(`HTTP/1.1 101 Switching Protocols\r\n${headers}\r\n`);
+      if (apiHead.length) socket.write(apiHead);
+      if (head.length) apiSocket.write(head);
+      apiSocket.pipe(socket).pipe(apiSocket);
+      apiSocket.on('error', () => socket.destroy());
+      socket.on('error', () => apiSocket.destroy());
+    });
+    upstream.on('response', (r) => socket.end(`HTTP/1.1 ${r.statusCode ?? 502} ${r.statusMessage ?? ''}\r\n\r\n`));
+    upstream.on('error', () => socket.destroy());
+    upstream.end();
   })
   .listen(port, host, () => console.log(`Production build on http://${host}:${port}`));

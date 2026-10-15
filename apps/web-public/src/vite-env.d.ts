@@ -21,6 +21,8 @@ interface ImportMetaEnv {
   readonly VITE_GRIEVANCE_OFFICER_EMAIL?: string;
   readonly VITE_POLICY_EFFECTIVE_DATE?: string;
   readonly VITE_REFUND_WORKING_DAYS?: string;
+  readonly VITE_MAP_TILE_URL?: string;
+  readonly VITE_MAP_ATTRIBUTION?: string;
 }
 
 interface ImportMeta {

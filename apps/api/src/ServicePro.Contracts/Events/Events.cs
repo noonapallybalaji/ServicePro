@@ -94,3 +94,6 @@ public sealed record SupportTicketOpened(Guid TicketId, string Number, bool High
 
 /// <summary>Staff replied to a customer's support ticket.</summary>
 public sealed record SupportReplySent(Guid TicketId, string Number, Guid? CustomerId, string? ContactPhone, string Message) : IDomainEvent;
+
+/// <summary>A technician's phone reported where they are (shared while on the way to a job).</summary>
+public sealed record TechnicianLocationReported(Guid TechnicianId, DateTimeOffset At) : IDomainEvent;

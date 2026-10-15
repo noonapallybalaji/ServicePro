@@ -65,7 +65,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 4.2 | **Automatic confirmation and technician assignment** | ✅ (off by default) | Owner settings: `booking.auto_confirm_website` / `booking.auto_confirm_whatsapp` skip staff review; `dispatch.auto_offer` offers each queued job to the best recommended technician on shift at the job time, moving to the next on decline or timeout, never the same technician twice, up to `dispatch.auto_offer_max_attempts` (3), then it waits for staff. Jobs staff unassigned or reassigned are left to staff. Visit time is still confirmed by the office (`appointmentConfirmed` stays false). | **P0** | M |
 | 4.3 | **Customer notified at each step** (confirmed, assigned, on the way, done) | 🔌 | Self-booked requests get "received" and then a separate "confirmed" message when staff confirm (the old "is confirmed" wording at booking was wrong). Staff-created jobs get one "confirmed" message. Sends once 11.1 or 11.2 is live. | **P0** | S (after 11.1) |
 | 4.4 | Technician profile: photo, rating, jobs done, verified badge | 🟡 | Tracking shows name, rating and job count when available. No photo upload; "verified" needs a real ID-check process first. | P1 | S |
-| 4.5 | Promised arrival time (ETA) | ❌ | Only the preferred window. | P1 | M |
+| 4.5 | Promised arrival time (ETA) | ✅ | While the technician is on the way, tracking shows "About N min away": straight-line distance to the job's pin × 1.4 at 20 km/h, rounded up to 5 minutes and labelled an estimate. Before they set out, the booked window is the promise. | P1 | M |
 
 ## 5. Manage my booking (self-service)
 
@@ -84,8 +84,8 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 6.1 | Status timeline (6 milestones) | ✅ | Polls every 30 s. | — | — |
-| 6.2 | **Technician's live location on a map, with ETA** | ❌ | The technician app sends location only with status changes (`TransitionRequest.latitude/longitude`). No continuous GPS stream, map or ETA. | P1 | L |
-| 6.3 | Real-time updates (no refresh) | 🟡 | SignalR hubs exist for staff and technicians; customers poll. | P1 | S |
+| 6.2 | **Technician's live location on a map, with ETA** | ✅ | While a job is EN_ROUTE the technician app shares the phone's position every 30 s (with a note on screen, or a warning if location is off); the tracking page shows it on a map (Leaflet; OpenStreetMap tiles by default, `VITE_MAP_TILE_URL` for a paid provider) with the ETA. Shown only while on the way and only if reported in the last 10 minutes; the customer's own pin is never in the tracking response. | P1 | L |
+| 6.3 | Real-time updates (no refresh) | ✅ | Anonymous `/hubs/tracking`: the page joins with its link token and refetches when the job's status changes or the technician moves; the 30 s poll remains as a fallback. `/hubs/*` must be routed to the API like `/api/*` (done in `render.yaml`, `serve-dist.mjs`, the Vite dev proxy). | P1 | S |
 | 6.4 | Push notifications (web push or app) | ❌ | | P1 | M |
 | 6.5 | Arrival verification (start code or OTP at the door) | 🟡 | Completion code exists (sent on arrival, checked at completion). No start-of-job check. | P2 | S |
 

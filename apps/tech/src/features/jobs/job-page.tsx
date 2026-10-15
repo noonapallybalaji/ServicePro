@@ -24,7 +24,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { paths } from '../../app/paths';
-import { directionsUrl } from '../../lib/location';
+import { directionsUrl, useShareLocation } from '../../lib/location';
 import { FORWARD_ACTIONS, primaryAction, problemActions } from './job-actions';
 import { BillSheet } from './sheets/bill-sheet';
 import { CompletionSheet } from './sheets/completion-sheet';
@@ -65,6 +65,7 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
   const invoice = job.invoice;
   const outstanding = invoice ? invoice.total - invoice.amountPaid : 0;
   const status = job.card.status;
+  const sharing = useShareLocation(status === 'EN_ROUTE');
   const canCollect = status === 'COMPLETED' && invoice != null && outstanding > 0;
   const needsBill = status === 'COMPLETED' && invoice == null;
   const addressLine = [job.address.line1, job.address.line2, job.address.locality, job.address.city, job.address.pincode].filter(Boolean).join(', ');
@@ -110,6 +111,11 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
 
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+          {sharing === 'sharing' ? (
+            <Alert tone="info" title="Sharing your location" description="The customer can see you on a map until you mark that you've arrived." />
+          ) : sharing === 'denied' || sharing === 'unsupported' ? (
+            <Alert tone="warning" title="Location is off" description="Allow location for this app so the customer can see you're on the way." />
+          ) : null}
           {status === 'AWAITING_ESTIMATE_APPROVAL' ? (
             <Alert tone="info" title="Waiting for the customer" description="They're reviewing the estimate. You'll be notified when they respond." />
           ) : null}

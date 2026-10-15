@@ -77,3 +77,53 @@ export function useRealtime({ hub, enabled, invalidate, onMessage }: UseRealtime
 
   return enabled ? health : 'offline';
 }
+
+/**
+ * Live updates for a customer's tracking page. Anonymous: the link token is the permission, as it
+ * is for the page itself. Groups don't survive a reconnect, so the hub is re-joined each time.
+ * Returns whether updates are live; callers keep a slower poll as the fallback.
+ */
+export function useTrackingUpdates(token: string | undefined, onChange: () => void): boolean {
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    const connection = new HubConnectionBuilder()
+      .withUrl(apiUrl('/hubs/tracking'))
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(LogLevel.Error)
+      .build();
+    let cancelled = false;
+    const join = () =>
+      connection
+        .invoke<boolean>('Join', token)
+        .then((joined) => !cancelled && setLive(joined))
+        .catch(() => !cancelled && setLive(false));
+
+    connection.on('trackingChanged', onChange);
+    connection.onreconnecting(() => setLive(false));
+    connection.onreconnected(() => {
+      onChange();
+      void join();
+    });
+    connection.onclose(() => setLive(false));
+    connection
+      .start()
+      .then(join)
+      .catch(() => !cancelled && setLive(false));
+
+    return () => {
+      cancelled = true;
+      if (connection.state !== HubConnectionState.Disconnected) {
+        void connection.stop();
+      }
+    };
+    // onChange is a refetch callback; reconnect only when the link changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  return token ? live : false;
+}

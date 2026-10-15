@@ -151,6 +151,7 @@ public sealed class Technician : TenantOwnedAggregateRoot, IAudited
         LastLatitude = location.Latitude;
         LastLongitude = location.Longitude;
         LastLocationAt = at;
+        Raise(new TechnicianLocationReported(Id, at));
     }
 
     /// <summary>Applies the desired skill set as a diff, so unchanged rows are kept (no key churn).</summary>

@@ -171,7 +171,9 @@ public sealed record TechnicianInfo(
     string Specialty,
     decimal? RatingAverage,
     int CompletedJobs,
-    TechnicianDutyStatus DutyStatus);
+    TechnicianDutyStatus DutyStatus,
+    GeoLocation? LastLocation = null,
+    DateTimeOffset? LastLocationAt = null);
 
 public sealed record WeeklyShift(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
@@ -263,6 +265,15 @@ public interface IServiceRequestWorkflow
 
     /// <summary>Whether the customer has a job that isn't closed or cancelled yet (blocks account deletion).</summary>
     Task<bool> HasOpenRequestsAsync(Guid customerId, CancellationToken ct);
+
+    /// <summary>
+    /// Resolves a tracking link to its job across tenants (anonymous live updates); null when the
+    /// link is unknown or has expired.
+    /// </summary>
+    Task<Guid?> FindTrackableIdAsync(string trackingToken, CancellationToken ct);
+
+    /// <summary>The technician's jobs that are on the way, so their location reaches those customers only.</summary>
+    Task<IReadOnlyList<Guid>> FindEnRouteJobIdsAsync(Guid technicianId, CancellationToken ct);
 }
 
 // ── Billing ─────────────────────────────────────────────────────────────────

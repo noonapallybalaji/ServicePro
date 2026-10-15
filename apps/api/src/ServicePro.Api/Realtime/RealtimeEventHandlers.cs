@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using ServicePro.BuildingBlocks.Messaging;
 using ServicePro.Contracts;
 using ServicePro.Contracts.Events;
+using ServicePro.Contracts.Ports;
 using ServicePro.SharedKernel.Abstractions;
 
 namespace ServicePro.Api.Realtime;
@@ -18,12 +19,14 @@ public sealed class PushServiceRequestCreated(IHubContext<OpsHub> ops, ITenantCo
             .SendAsync(RealtimeMessages.ServiceRequestChanged, new { e.ServiceRequestId, e.SrNumber, status = ServiceRequestStatus.ReadyForAssignment }, ct);
 }
 
-public sealed class PushStatusChange(IHubContext<OpsHub> ops, IHubContext<TechHub> tech, ITenantContext tenant) : IEventHandler<ServiceRequestStatusChanged>
+public sealed class PushStatusChange(IHubContext<OpsHub> ops, IHubContext<TechHub> tech, IHubContext<TrackingHub> tracking, ITenantContext tenant)
+    : IEventHandler<ServiceRequestStatusChanged>
 {
     public async Task HandleAsync(ServiceRequestStatusChanged e, CancellationToken ct)
     {
         var payload = new { e.ServiceRequestId, e.SrNumber, status = e.To, from = e.From };
         await ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId)).SendAsync(RealtimeMessages.ServiceRequestChanged, payload, ct);
+        await tracking.Clients.Group(RealtimeGroups.Tracking(e.ServiceRequestId)).SendAsync(RealtimeMessages.TrackingChanged, ct);
 
         if (e.TechnicianId is { } technicianId)
         {
@@ -73,4 +76,16 @@ public sealed class PushSupportTicketOpened(IHubContext<OpsHub> ops, ITenantCont
 {
     public Task HandleAsync(SupportTicketOpened e, CancellationToken ct) =>
         ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId)).SendAsync(RealtimeMessages.SupportChanged, new { e.TicketId, e.Number, e.HighPriority }, ct);
+}
+
+/// <summary>The technician moved: customers waiting for them refresh the map and arrival estimate.</summary>
+public sealed class PushTechnicianLocation(IHubContext<TrackingHub> tracking, IServiceRequestWorkflow requests) : IEventHandler<TechnicianLocationReported>
+{
+    public async Task HandleAsync(TechnicianLocationReported e, CancellationToken ct)
+    {
+        foreach (var id in await requests.FindEnRouteJobIdsAsync(e.TechnicianId, ct))
+        {
+            await tracking.Clients.Group(RealtimeGroups.Tracking(id)).SendAsync(RealtimeMessages.TrackingChanged, ct);
+        }
+    }
 }

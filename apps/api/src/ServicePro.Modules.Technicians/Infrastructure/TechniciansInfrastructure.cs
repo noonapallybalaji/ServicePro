@@ -87,7 +87,7 @@ internal sealed class TechnicianDirectory(DbContext db, ICatalogDirectory catalo
 
         return technicians.ToDictionary(t => t.Id, t => new TechnicianInfo(
             t.Id, t.UserId, t.FullName, t.Phone, PhotoUrl(t), Specialty.Describe(t, categories),
-            t.RatingAverage, t.CompletedJobsCount, t.DutyStatus));
+            t.RatingAverage, t.CompletedJobsCount, t.DutyStatus, t.LastLocation, t.LastLocationAt));
     }
 
     public async Task<Guid?> FindIdByUserIdAsync(Guid userId, CancellationToken ct) =>

@@ -235,5 +235,5 @@ node apps\api\scripts\verify-public-api.mjs
 ## 8. Known limitations
 
 - **No live slot availability:** customers choose a preferred window and the office confirms. Adding real availability would need a scheduling model (technician calendars); not in scope.
-- **Website server:** `serve-dist.mjs` is a small static server with an `/api` proxy, fine for one machine behind the tunnel. For more traffic, host the built site on Cloudflare Pages (its `_redirects` and `_headers` files are included) and route `/api/*` to the tunnel.
+- **Website server:** `serve-dist.mjs` is a small static server with an `/api` proxy, fine for one machine behind the tunnel. For more traffic, host the built site on Cloudflare Pages (its `_redirects` and `_headers` files are included) and route `/api/*` and `/hubs/*` (live tracking updates) to the tunnel.
 - **Idempotency scope:** keys are unique per channel and are kept permanently on the job. Reusing a key for a *different* booking returns the original booking (by design: never create on doubt).

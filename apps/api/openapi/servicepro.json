@@ -11062,6 +11062,37 @@
           }
         }
       },
+      "LiveLocationResponse": {
+        "required": [
+          "latitude",
+          "longitude",
+          "at",
+          "etaMinutes"
+        ],
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "etaMinutes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          }
+        },
+        "description": "Where the technician is while on the way, and roughly how long until they arrive. Only while\r\nEN_ROUTE and only from a recent report; the customer's own pin is never included, because\r\ntracking links can be forwarded."
+      },
       "MeResponse": {
         "required": [
           "id",
@@ -14162,6 +14193,16 @@
           "canReview": {
             "type": "boolean",
             "default": false
+          },
+          "live": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/LiveLocationResponse"
+              }
+            ]
           }
         },
         "description": "What the customer sees at /t/{token} (UX-ARCHITECTURE.md §7): what's happening, who, what it costs,\r\nwhat's next. Deliberately minimal personal data: first name, locality, no full address."
