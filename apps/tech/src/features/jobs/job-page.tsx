@@ -113,6 +113,10 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
           {sharing === 'sharing' ? (
             <Alert tone="info" title="Sharing your location" description="The customer can see you on a map until you mark that you've arrived." />
+          ) : sharing === 'locating' ? (
+            <Alert tone="info" title="Finding your location…" description="The customer will see you on a map as soon as your phone finds you." />
+          ) : sharing === 'unavailable' ? (
+            <Alert tone="warning" title="Can't find your location" description="Turn on location (GPS) on your phone. We'll keep trying." />
           ) : sharing === 'denied' || sharing === 'unsupported' ? (
             <Alert tone="warning" title="Location is off" description="Allow location for this app so the customer can see you're on the way." />
           ) : null}

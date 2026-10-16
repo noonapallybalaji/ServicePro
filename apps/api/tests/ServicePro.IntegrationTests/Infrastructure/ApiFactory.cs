@@ -89,6 +89,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("RateLimits:IntegrationPerMinute", "10000");
         builder.UseSetting("Integrations:Keys:n8n", ServicePro.BuildingBlocks.Security.SecureTokens.Hash(IntegrationKey));
         builder.UseSetting("Notifications:PublicSiteUrl", "https://track.test");
+        builder.UseSetting("Realtime:AllowedOrigins", "https://track.test, https://tech.test/");
         builder.UseSetting("Payments:Razorpay:WebhookSecret", WebhookSecret);
         builder.UseSetting("Storage:Local:RootPath", Path.Combine(Path.GetTempPath(), "servicepro-tests", Guid.NewGuid().ToString("N")));
 

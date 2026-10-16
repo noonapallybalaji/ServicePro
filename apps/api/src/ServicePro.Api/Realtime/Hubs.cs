@@ -74,3 +74,18 @@ public sealed class TrackingHub(IServiceRequestWorkflow requests) : Hub
         return true;
     }
 }
+
+/// <summary>
+/// Origins allowed to open live connections from another site: <c>Realtime:AllowedOrigins</c>, comma
+/// separated (for example the public site, admin and technician app). Empty means same-origin only.
+/// </summary>
+public static class RealtimeCors
+{
+    public const string Policy = "realtime";
+
+    public static string[] Origins(IConfiguration configuration) =>
+        (configuration["Realtime:AllowedOrigins"] ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(origin => origin.TrimEnd('/'))
+            .ToArray();
+}

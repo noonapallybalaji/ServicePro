@@ -38,6 +38,8 @@ each other:
 | servicepro-site, servicepro-admin, servicepro-tech > Redirects/Rewrites | `/api/*` (and `/hubs/*`) destination | the real API address + `/api/*` (`/hubs/*`) |
 | servicepro-site > Environment | `VITE_SITE_URL` | the real site address (then redeploy the site) |
 | servicepro-api > Environment | `Notifications__PublicSiteUrl` | the real site address |
+| servicepro-site, servicepro-admin, servicepro-tech > Environment | `VITE_REALTIME_URL` | the real API address (then redeploy each site) |
+| servicepro-api > Environment | `Realtime__AllowedOrigins` | the three real site addresses, comma separated |
 
 ## 3. Try it
 
@@ -45,7 +47,8 @@ each other:
 - **Admin:** open the admin site and sign in with the owner email and password from step 1. Demo technicians, customers and jobs are already there.
 - **Technician app:** sign in with a demo technician's phone, for example `9876500001` (Ravi Kumar). The code is shown on screen in test mode.
 - **Customer site:** book a repair; the code is shown on screen.
-- **Live updates** in the admin may fall back from WebSockets to polling through Render's rewrite. That is fine.
+- **Live updates** (the admin board, the technician app's "Live" badge, the customer's tracking map) connect straight to the API: Render's static-site rewrites don't carry WebSockets. If the technician app shows "Offline", check `VITE_REALTIME_URL` and `Realtime__AllowedOrigins` above.
+- **Completion codes:** with no WhatsApp or SMS provider, messages to customers are only logged. To finish a job in testing, open it in the admin and read the code from its **Messages** tab (or the API's log).
 
 ## 4. Before anyone real uses it
 

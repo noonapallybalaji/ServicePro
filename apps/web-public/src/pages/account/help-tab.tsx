@@ -214,7 +214,7 @@ function Thread({ number, onBack }: { number: string; onBack: () => void }) {
     </Button>
   );
 
-  if (ticket.isPending) return <Skeleton className="h-64 w-full rounded-card" />;
+  if (ticket.isPending) return <Skeleton className="h-[16rem] w-full rounded-card" />;
   if (!ticket.data) {
     return (
       <div className="flex flex-col gap-3">

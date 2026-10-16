@@ -18,7 +18,7 @@ export function MenuContent({ className, align = 'end', sideOffset = 8, ...props
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'z-(--z-overlay) min-w-56 rounded-card border border-border bg-surface p-1 text-foreground shadow-lg',
+          'z-(--z-overlay) min-w-[14rem] rounded-card border border-border bg-surface p-1 text-foreground shadow-lg',
           'data-[state=open]:animate-fade-in',
           className,
         )}

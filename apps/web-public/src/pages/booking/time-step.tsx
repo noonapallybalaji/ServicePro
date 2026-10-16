@@ -29,7 +29,7 @@ export function TimeStep({ draft, update, onNext, actions, availability, loading
     if (ready) onNext();
   }
 
-  if (loading) return <Skeleton className="h-64 w-full rounded-card" />;
+  if (loading) return <Skeleton className="h-[16rem] w-full rounded-card" />;
   if (failed || !availability) {
     return <Alert tone="error" title="We couldn't load the visit times" description="Check your connection and try again, or call us to book." />;
   }

@@ -49,6 +49,20 @@ export function apiUrl(path: string): string {
   return `${baseUrl}${path}`;
 }
 
+let realtimeBaseUrl = '';
+
+/**
+ * Where live connections (/hubs/*) go when the host can't proxy them: Render static-site
+ * rewrites don't pass WebSockets. Unset, hubs follow the API base like every other request.
+ */
+export function configureRealtimeBaseUrl(url: string | undefined) {
+  realtimeBaseUrl = (url ?? '').trim().replace(/\/$/, '');
+}
+
+export function hubUrl(hub: string): string {
+  return realtimeBaseUrl ? `${realtimeBaseUrl}${hub}` : apiUrl(hub);
+}
+
 const NO_REFRESH_PATHS = ['/api/v1/auth/login', '/api/v1/auth/otp/', '/api/v1/auth/refresh', '/api/v1/auth/logout', '/api/v1/customer-auth/'];
 
 export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<T> {

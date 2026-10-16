@@ -28,7 +28,8 @@ export function TechShell() {
     invalidate: {
       offerReceived: [getListMyOffersQueryKey()[0]],
       offerResolved: [getListMyOffersQueryKey()[0], getListMyJobsQueryKey()[0]],
-      jobChanged: [getListMyJobsQueryKey()[0]],
+      // A job's estimates and bill live under /service-requests/{id}: refresh them too (an approval moves the job).
+      jobChanged: [getListMyJobsQueryKey()[0], '/api/v1/service-requests/'],
     },
     onMessage: (message) => {
       if (message === 'offerReceived') {

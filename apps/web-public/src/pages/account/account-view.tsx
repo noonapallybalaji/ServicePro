@@ -257,7 +257,7 @@ function ProfileTab() {
   const account = useGetMyAccount();
 
   if (account.isPending) {
-    return <Skeleton className="h-48 w-full rounded-card" />;
+    return <Skeleton className="h-[12rem] w-full rounded-card" />;
   }
 
   if (account.isError) {

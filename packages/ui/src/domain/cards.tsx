@@ -183,7 +183,7 @@ export function TechnicianCard({
                 </span>
               ) : null}
               {completedJobs !== undefined ? (
-                <span className="tabular-nums">{completedJobs.toLocaleString('en-IN')} jobs completed</span>
+                <span className="tabular-nums">{completedJobs.toLocaleString('en-IN')} {completedJobs === 1 ? 'job' : 'jobs'} completed</span>
               ) : null}
             </p>
           ) : null}

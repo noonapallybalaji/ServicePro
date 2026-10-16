@@ -84,6 +84,14 @@ builder.Services.AddRateLimiter(o =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Configuration.GetValue("RateLimits:IntegrationPerMinute", 60), Window = TimeSpan.FromMinutes(1) }));
 });
 
+// Live connections may come straight from the sites (Render static-site rewrites don't carry
+// WebSockets): allow only the configured site origins, and only on /hubs.
+builder.Services.AddCors(o => o.AddPolicy(RealtimeCors.Policy, policy => policy
+    .WithOrigins(RealtimeCors.Origins(builder.Configuration))
+    .WithMethods("GET", "POST")
+    .AllowAnyHeader()
+    .AllowCredentials()));
+
 builder.Services.AddHealthChecks().AddDbContextCheck<ServiceProDbContext>("database", tags: ["ready"]);
 
 var app = builder.Build();
@@ -100,6 +108,7 @@ app.Use(async (context, next) =>
 app.UseStatusCodePages();
 app.UseSerilogRequestLogging();
 app.UseRateLimiter();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -115,9 +124,9 @@ foreach (var module in ModuleCatalog.All)
 }
 
 app.MapSettingsEndpoints();
-app.MapHub<OpsHub>("/hubs/ops");
-app.MapHub<TechHub>("/hubs/tech");
-app.MapHub<TrackingHub>("/hubs/tracking");
+app.MapHub<OpsHub>("/hubs/ops").RequireCors(RealtimeCors.Policy);
+app.MapHub<TechHub>("/hubs/tech").RequireCors(RealtimeCors.Policy);
+app.MapHub<TrackingHub>("/hubs/tracking").RequireCors(RealtimeCors.Policy);
 app.MapHealthChecks("/health/live", new() { Predicate = _ => false });
 app.MapHealthChecks("/health/ready", new() { Predicate = check => check.Tags.Contains("ready") });
 

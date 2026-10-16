@@ -43,7 +43,7 @@ export function AccountPage() {
         {state.status === 'unknown' ? (
           <div className="flex flex-col gap-4" aria-busy>
             <Skeleton className="h-10 w-1/2" />
-            <Skeleton className="h-40 w-full rounded-card" />
+            <Skeleton className="h-[10rem] w-full rounded-card" />
           </div>
         ) : customer ? (
           <AccountView fullName={customer.fullName} />

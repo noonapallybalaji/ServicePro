@@ -40,39 +40,52 @@ export function directionsUrl(destination: { latitude?: number | null; longitude
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(target)}`;
 }
 
-export type SharingState = 'off' | 'sharing' | 'denied' | 'unsupported';
+/** locating: waiting for the first fix; unavailable: the device can't get one (no GPS signal, location services off). */
+export type SharingState = 'off' | 'locating' | 'sharing' | 'denied' | 'unavailable' | 'unsupported';
 
 /** How often the customer's map moves; frequent enough to feel live, light on battery and data. */
 const SHARE_EVERY_MS = 30_000;
 
 /**
  * Shares the technician's position with the customer while `active` (on the way to a job).
- * Stops when the job moves on or the screen closes; nothing is sent in the background.
+ * The newest position is sent straight away and then every 30 s, whether or not the phone
+ * reports movement (a phone waiting at a signal sends nothing new, and the customer's map
+ * would otherwise go stale). Stops when the job moves on or the screen closes.
  */
 export function useShareLocation(active: boolean): SharingState {
   const supported = typeof navigator !== 'undefined' && 'geolocation' in navigator;
-  const [state, setState] = useState<SharingState>('off');
+  const [state, setState] = useState<SharingState>('locating');
 
   useEffect(() => {
     if (!active || !supported) {
       return;
     }
 
-    let lastSent = 0;
+    let latest: GeolocationCoordinates | null = null;
+    let sentAny = false;
+    // A missed report is fine: the next one follows shortly.
+    const send = () => latest && void reportMyLocation({ latitude: latest.latitude, longitude: latest.longitude }).catch(() => undefined);
+
     const watch = navigator.geolocation.watchPosition(
       (position) => {
+        latest = position.coords;
         setState('sharing');
-        const now = Date.now();
-        if (now - lastSent < SHARE_EVERY_MS) return;
-        lastSent = now;
-        // A missed report is fine: the next one follows shortly.
-        void reportMyLocation({ latitude: position.coords.latitude, longitude: position.coords.longitude }).catch(() => undefined);
+        if (!sentAny) {
+          sentAny = true;
+          send();
+        }
       },
-      (error) => setState(error.code === error.PERMISSION_DENIED ? 'denied' : 'off'),
+      // Timeouts and lost signal are retried by the watch itself; only a refusal is final.
+      (error) => setState(error.code === error.PERMISSION_DENIED ? 'denied' : latest ? 'sharing' : 'unavailable'),
       { enableHighAccuracy: true, maximumAge: 15_000, timeout: 30_000 },
     );
+    const timer = window.setInterval(send, SHARE_EVERY_MS);
 
-    return () => navigator.geolocation.clearWatch(watch);
+    return () => {
+      navigator.geolocation.clearWatch(watch);
+      window.clearInterval(timer);
+      setState('locating');
+    };
   }, [active, supported]);
 
   if (!active) return 'off';

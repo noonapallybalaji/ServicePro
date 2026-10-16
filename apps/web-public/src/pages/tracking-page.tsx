@@ -124,8 +124,8 @@ export function TrackingPage() {
           {tracking.isPending ? (
             <Stack gap={4}>
               <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-40 w-full rounded-card" />
-              <Skeleton className="h-64 w-full rounded-card" />
+              <Skeleton className="h-[10rem] w-full rounded-card" />
+              <Skeleton className="h-[16rem] w-full rounded-card" />
             </Stack>
           ) : tracking.isError ? (
             <>

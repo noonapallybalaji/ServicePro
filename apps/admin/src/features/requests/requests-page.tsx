@@ -99,7 +99,7 @@ export function RequestsPage() {
             ))}
           </ul>
         </nav>
-        <form role="search" onSubmit={submitSearch} className="lg:w-72">
+        <form role="search" onSubmit={submitSearch} className="lg:w-[18rem]">
           <Input type="search" aria-label="Find by SR number" placeholder="SR number" leadingIcon={Search} value={search} onChange={(event) => setSearch(event.target.value)} />
         </form>
       </div>

@@ -1,5 +1,6 @@
 import './styles.css';
 
+import { configureRealtimeBaseUrl } from '@servicepro/api-client';
 import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router';
@@ -14,6 +15,8 @@ import { routes } from './routes';
  * (PLAN.md §6.1).
  */
 const router = createBrowserRouter(routes);
+// Live tracking updates go straight to the API where the host can't proxy WebSockets (see render.yaml).
+configureRealtimeBaseUrl(import.meta.env.VITE_REALTIME_URL);
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element #root not found');

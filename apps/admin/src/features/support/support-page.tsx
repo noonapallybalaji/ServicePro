@@ -66,7 +66,7 @@ export function SupportPage() {
             <Checkbox label="Mine" checked={mine} onCheckedChange={(v) => setMine(v === true)} />
           </div>
           {tickets.isPending ? (
-            <Skeleton className="h-64 w-full rounded-card" />
+            <Skeleton className="h-[16rem] w-full rounded-card" />
           ) : tickets.data && tickets.data.length > 0 ? (
             <ul className="flex flex-col gap-2">
               {tickets.data.map((ticket) => (
@@ -134,7 +134,7 @@ function TicketDetail({ id }: { id: string }) {
   const reply = useReplyToTicket({ mutation: { meta: { silent: true }, onSuccess: async () => (setMessage(''), await refresh()) } });
   const update = useUpdateTicket({ mutation: { meta: { silent: true }, onSuccess: refresh } });
 
-  if (ticket.isPending) return <Skeleton className="h-96 w-full rounded-card" />;
+  if (ticket.isPending) return <Skeleton className="h-[24rem] w-full rounded-card" />;
   if (!ticket.data) return <Alert tone="error" title="Couldn't load this request" />;
   const t = ticket.data;
 

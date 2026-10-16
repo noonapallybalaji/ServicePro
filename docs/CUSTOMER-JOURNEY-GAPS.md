@@ -85,7 +85,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 |---|---|---|---|---|---|
 | 6.1 | Status timeline (6 milestones) | ✅ | Polls every 30 s. | — | — |
 | 6.2 | **Technician's live location on a map, with ETA** | ✅ | While a job is EN_ROUTE the technician app shares the phone's position every 30 s (with a note on screen, or a warning if location is off); the tracking page shows it on a map (Leaflet; OpenStreetMap tiles by default, `VITE_MAP_TILE_URL` for a paid provider) with the ETA. Shown only while on the way and only if reported in the last 10 minutes; the customer's own pin is never in the tracking response. | P1 | L |
-| 6.3 | Real-time updates (no refresh) | ✅ | Anonymous `/hubs/tracking`: the page joins with its link token and refetches when the job's status changes or the technician moves; the 30 s poll remains as a fallback. `/hubs/*` must be routed to the API like `/api/*` (done in `render.yaml`, `serve-dist.mjs`, the Vite dev proxy). | P1 | S |
+| 6.3 | Real-time updates (no refresh) | ✅ | Anonymous `/hubs/tracking`: the page joins with its link token and refetches when the job's status changes or the technician moves; the 30 s poll remains as a fallback. Locally `/hubs/*` is proxied like `/api/*` (`serve-dist.mjs`, the Vite dev proxy); on Render the apps connect straight to the API (`VITE_REALTIME_URL`, allowed by `Realtime__AllowedOrigins`) because static-site rewrites don't carry WebSockets. | P1 | S |
 | 6.4 | Push notifications (web push or app) | ❌ | | P1 | M |
 | 6.5 | Arrival verification (start code or OTP at the door) | 🟡 | Completion code exists (sent on arrival, checked at completion). No start-of-job check. | P2 | S |
 

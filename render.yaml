@@ -53,6 +53,10 @@ services:
         value: CF-Connecting-IP
       - key: Notifications__PublicSiteUrl
         value: https://servicepro-site-b4ig.onrender.com
+      # Live updates connect straight to the API (static-site rewrites don't carry WebSockets):
+      # the sites allowed to do so. Keep in step with VITE_REALTIME_URL on the three sites below.
+      - key: Realtime__AllowedOrigins
+        value: https://servicepro-site-b4ig.onrender.com,https://servicepro-admin.onrender.com,https://servicepro-tech.onrender.com
       # SHA-256 hash of the key n8n sends (X-ServicePro-Integration-Key). Generate both with
       # apps/api/scripts/new-integration-key.ps1: the hash goes here, the key into n8n only.
       - key: Integrations__Keys__n8n
@@ -72,6 +76,8 @@ services:
         value: https://servicepro-site-b4ig.onrender.com
       - key: VITE_BUSINESS_NAME
         value: ServicePro
+      - key: VITE_REALTIME_URL
+        value: https://servicepro-api-x3te.onrender.com
     routes:
       - type: rewrite
         source: /api/*
@@ -102,6 +108,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: VITE_REALTIME_URL
+        value: https://servicepro-api-x3te.onrender.com
     routes:
       - type: rewrite
         source: /api/*
@@ -123,6 +131,8 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: VITE_REALTIME_URL
+        value: https://servicepro-api-x3te.onrender.com
     routes:
       - type: rewrite
         source: /api/*

@@ -28,7 +28,7 @@ export function BookingDetailPage() {
           </Link>
         </Button>
         {state.status === 'unknown' ? (
-          <Skeleton className="h-64 w-full rounded-card" />
+          <Skeleton className="h-[16rem] w-full rounded-card" />
         ) : customer ? (
           <Detail />
         ) : (
@@ -54,8 +54,8 @@ function Detail() {
   if (booking.isPending) {
     return (
       <Stack gap={4}>
-        <Skeleton className="h-40 w-full rounded-card" />
-        <Skeleton className="h-64 w-full rounded-card" />
+        <Skeleton className="h-[10rem] w-full rounded-card" />
+        <Skeleton className="h-[16rem] w-full rounded-card" />
       </Stack>
     );
   }

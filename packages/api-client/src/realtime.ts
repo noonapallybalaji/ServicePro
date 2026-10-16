@@ -1,8 +1,8 @@
-import { HubConnectionBuilder, HubConnectionState, LogLevel, type HubConnection } from '@microsoft/signalr';
+import type { HubConnection } from '@microsoft/signalr';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 
-import { apiUrl } from './http';
+import { hubUrl } from './http';
 import { session } from './session';
 
 /**
@@ -14,6 +14,15 @@ export type RealtimeHub = '/hubs/ops' | '/hubs/tech';
 export type RealtimeMessage = 'serviceRequestChanged' | 'technicianChanged' | 'jobChanged' | 'offerReceived' | 'offerResolved' | 'supportChanged';
 
 export type ConnectionHealth = 'connecting' | 'live' | 'reconnecting' | 'offline';
+
+/** Loaded on first use, so pages without live updates (the public landing pages) don't download it. */
+const loadSignalR = () => import('@microsoft/signalr');
+
+function stop(connection: HubConnection | null) {
+  if (connection && connection.state !== 'Disconnected') {
+    void connection.stop();
+  }
+}
 
 interface UseRealtimeOptions {
   hub: RealtimeHub;
@@ -33,43 +42,44 @@ export function useRealtime({ hub, enabled, invalidate, onMessage }: UseRealtime
       return;
     }
 
-    const connection: HubConnection = new HubConnectionBuilder()
-      .withUrl(apiUrl(hub), { accessTokenFactory: () => session.getAccessToken() ?? '' })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-      .configureLogging(LogLevel.Warning)
-      .build();
+    let cancelled = false;
+    let connection: HubConnection | null = null;
+    void loadSignalR()
+      .then(({ HubConnectionBuilder, LogLevel }) => {
+        if (cancelled) return;
+        const live = new HubConnectionBuilder()
+          .withUrl(hubUrl(hub), { accessTokenFactory: () => session.getAccessToken() ?? '' })
+          .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+          .configureLogging(LogLevel.Warning)
+          .build();
+        connection = live;
 
-    for (const [message, prefixes] of Object.entries(invalidate) as [RealtimeMessage, readonly string[]][]) {
-      connection.on(message, (payload: unknown) => {
-        for (const prefix of prefixes) {
-          void queryClient.invalidateQueries({
-            predicate: (query) => typeof query.queryKey[0] === 'string' && query.queryKey[0].startsWith(prefix),
+        for (const [message, prefixes] of Object.entries(invalidate) as [RealtimeMessage, readonly string[]][]) {
+          live.on(message, (payload: unknown) => {
+            for (const prefix of prefixes) {
+              void queryClient.invalidateQueries({
+                predicate: (query) => typeof query.queryKey[0] === 'string' && query.queryKey[0].startsWith(prefix),
+              });
+            }
+
+            onMessage?.(message, payload);
           });
         }
 
-        onMessage?.(message, payload);
-      });
-    }
-
-    connection.onreconnecting(() => setHealth('reconnecting'));
-    connection.onreconnected(() => {
-      setHealth('live');
-      // Anything may have changed while we were away.
-      void queryClient.invalidateQueries();
-    });
-    connection.onclose(() => setHealth('offline'));
-
-    let cancelled = false;
-    connection
-      .start()
-      .then(() => !cancelled && setHealth('live'))
+        live.onreconnecting(() => setHealth('reconnecting'));
+        live.onreconnected(() => {
+          setHealth('live');
+          // Anything may have changed while we were away.
+          void queryClient.invalidateQueries();
+        });
+        live.onclose(() => setHealth('offline'));
+        return live.start().then(() => !cancelled && setHealth('live'));
+      })
       .catch(() => !cancelled && setHealth('offline'));
 
     return () => {
       cancelled = true;
-      if (connection.state !== HubConnectionState.Disconnected) {
-        void connection.stop();
-      }
+      stop(connection);
     };
     // The invalidation map is static per app; reconnect only when the hub or auth changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,35 +101,37 @@ export function useTrackingUpdates(token: string | undefined, onChange: () => vo
       return;
     }
 
-    const connection = new HubConnectionBuilder()
-      .withUrl(apiUrl('/hubs/tracking'))
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-      .configureLogging(LogLevel.Error)
-      .build();
     let cancelled = false;
-    const join = () =>
-      connection
-        .invoke<boolean>('Join', token)
-        .then((joined) => !cancelled && setLive(joined))
-        .catch(() => !cancelled && setLive(false));
+    let connection: HubConnection | null = null;
+    void loadSignalR()
+      .then(({ HubConnectionBuilder, LogLevel }) => {
+        if (cancelled) return;
+        const hub = new HubConnectionBuilder()
+          .withUrl(hubUrl('/hubs/tracking'))
+          .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+          .configureLogging(LogLevel.Error)
+          .build();
+        connection = hub;
+        const join = () =>
+          hub
+            .invoke<boolean>('Join', token)
+            .then((joined) => !cancelled && setLive(joined))
+            .catch(() => !cancelled && setLive(false));
 
-    connection.on('trackingChanged', onChange);
-    connection.onreconnecting(() => setLive(false));
-    connection.onreconnected(() => {
-      onChange();
-      void join();
-    });
-    connection.onclose(() => setLive(false));
-    connection
-      .start()
-      .then(join)
+        hub.on('trackingChanged', onChange);
+        hub.onreconnecting(() => setLive(false));
+        hub.onreconnected(() => {
+          onChange();
+          void join();
+        });
+        hub.onclose(() => setLive(false));
+        return hub.start().then(join);
+      })
       .catch(() => !cancelled && setLive(false));
 
     return () => {
       cancelled = true;
-      if (connection.state !== HubConnectionState.Disconnected) {
-        void connection.stop();
-      }
+      stop(connection);
     };
     // onChange is a refetch callback; reconnect only when the link changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps

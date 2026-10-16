@@ -67,7 +67,7 @@ export function TypographySection() {
       <Card padding="none" className="divide-y divide-border">
         {TYPE_SPECIMENS.map((specimen) => (
           <div key={specimen.name} className="flex flex-col gap-2 p-4 md:flex-row md:items-baseline md:gap-6 md:p-5">
-            <div className="flex shrink-0 flex-col md:w-40">
+            <div className="flex shrink-0 flex-col md:w-[10rem]">
               <Text variant="sm" weight="semibold">
                 {specimen.name}
               </Text>
