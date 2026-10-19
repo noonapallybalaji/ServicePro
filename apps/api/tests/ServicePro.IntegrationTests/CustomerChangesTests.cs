@@ -14,15 +14,9 @@ using ServicePro.Modules.ServiceRequests.Application;
 
 namespace ServicePro.IntegrationTests;
 
-/// <summary>Customers cancelling and moving their own bookings from "My bookings".</summary>
+/// <summary>Customers cancelling their own bookings from "My bookings" (visit times are agreed with the office).</summary>
 public sealed class CustomerChangesTests(ApiFactory factory)
 {
-    private static (DateTimeOffset Start, DateTimeOffset End) Slot(int daysAhead)
-    {
-        var start = DateTimeOffset.UtcNow.Date.AddDays(daysAhead).AddHours(4.5); // 10:00 IST
-        return (start, start.AddHours(3));
-    }
-
     /// <summary>A staff-created job, optionally accepted by Priya, and its customer signed in.</summary>
     internal static async Task<(TestApi Owner, TestApi Customer, Guid JobId)> JobWithSignedInCustomerAsync(ApiFactory factory, bool accepted)
     {
@@ -48,46 +42,12 @@ public sealed class CustomerChangesTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Moving_an_accepted_visit_sends_it_back_to_the_office_and_tells_the_technician()
-    {
-        var (owner, customer, jobId) = await JobWithSignedInCustomerAsync(factory, accepted: true);
-        customer.Client.DefaultRequestHeaders.Authorization.ShouldNotBeNull();
-        (await customer.GetAsync<List<MyBookingResponse>>("/api/v1/account/bookings")).Single().CanReschedule.ShouldBeTrue();
-        var (start, end) = Slot(3);
-
-        (await customer.Client.PostAsync($"/api/v1/account/bookings/{jobId}/reschedule", Json(new RescheduleBookingRequest(start, end))))
-            .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-
-        var job = await owner.GetAsync<ServiceRequestDetail>($"/api/v1/admin/service-requests/{jobId}");
-        job.Card.Status.ShouldBe(ServiceRequestStatus.Rescheduled);
-        job.PreferredSlotStart.ShouldBe(start);
-        var messages = await MessagesAsync(factory, owner, jobId);
-        messages.ShouldContain("BOOKING_MOVED");
-        messages.ShouldContain("TECH_JOB_MOVED");
-        messages.ShouldNotContain("RESCHEDULED"); // one message to the customer, not two
-    }
-
-    [Fact]
-    public async Task A_booking_can_be_moved_only_as_often_as_the_setting_allows()
+    public async Task Customers_cant_move_a_booking_online_any_more()
     {
         var (_, customer, jobId) = await JobWithSignedInCustomerAsync(factory, accepted: false);
 
-        for (var day = 2; day <= 3; day++)
-        {
-            var (start, end) = Slot(day);
-            (await customer.Client.PostAsync($"/api/v1/account/bookings/{jobId}/reschedule", Json(new RescheduleBookingRequest(start, end))))
-                .StatusCode.ShouldBe(HttpStatusCode.NoContent);
-        }
-
-        (await customer.GetAsync<List<MyBookingResponse>>("/api/v1/account/bookings")).Single().CanReschedule.ShouldBeFalse();
-        var (s, e) = Slot(4);
-        (await TestApi.ProblemAsync(await customer.Client.PostAsync($"/api/v1/account/bookings/{jobId}/reschedule", Json(new RescheduleBookingRequest(s, e)))))
-            .Code.ShouldBe("booking.reschedule_limit");
-
-        var (past, pastEnd) = Slot(-1);
-        var (_, other, otherJob) = await JobWithSignedInCustomerAsync(factory, accepted: false);
-        (await TestApi.ProblemAsync(await other.Client.PostAsync($"/api/v1/account/bookings/{otherJob}/reschedule", Json(new RescheduleBookingRequest(past, pastEnd)))))
-            .Code.ShouldBe("booking.slot_invalid");
+        (await customer.Client.PostAsync($"/api/v1/account/bookings/{jobId}/reschedule", Json(new { })))
+            .StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -119,7 +79,6 @@ public sealed class CustomerChangesTests(ApiFactory factory)
 
         var booking = (await customer.GetAsync<List<MyBookingResponse>>("/api/v1/account/bookings")).Single();
         booking.CanCancel.ShouldBeFalse();
-        booking.CanReschedule.ShouldBeFalse();
         (await TestApi.ProblemAsync(await customer.Client.PostAsync($"/api/v1/account/bookings/{jobId}/cancel", Json(new CancelBookingRequest(null)))))
             .Code.ShouldBe("booking.too_late_to_change");
     }

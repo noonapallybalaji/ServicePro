@@ -5,7 +5,6 @@ using ServicePro.BuildingBlocks.Messaging;
 using ServicePro.BuildingBlocks.Settings;
 using ServicePro.Contracts;
 using ServicePro.Contracts.Events;
-using ServicePro.Contracts.Ports;
 using ServicePro.Modules.ServiceRequests.Domain;
 using ServicePro.SharedKernel.Abstractions;
 using ServicePro.SharedKernel.Results;
@@ -84,14 +83,13 @@ public sealed class WarrantyCards(DbContext db, ISettingsStore settings, IClock 
     }
 }
 
-public sealed record RevisitRequest(string Description, DateTimeOffset PreferredSlotStart, DateTimeOffset PreferredSlotEnd);
+public sealed record RevisitRequest(string Description);
 
 internal sealed class RevisitRequestValidator : AbstractValidator<RevisitRequest>
 {
     public RevisitRequestValidator()
     {
         RuleFor(r => r.Description).NotEmpty().WithMessage("Tell us what's happening again.").MaximumLength(1000);
-        RuleFor(r => r.PreferredSlotEnd).GreaterThan(r => r.PreferredSlotStart).WithMessage("Choose a time slot.");
     }
 }
 
@@ -102,8 +100,6 @@ public sealed class RequestWarrantyRevisit(
     DbContext db,
     ICurrentUser currentUser,
     WarrantyCards warranty,
-    SlotAvailability availability,
-    ICustomerDirectory customers,
     SrNumberGenerator srNumbers,
     IClock clock) : IUseCase
 {
@@ -127,17 +123,6 @@ public sealed class RequestWarrantyRevisit(
             return Error.Conflict("warranty.revisit_open", $"We already have a re-visit for this ({open}). You can follow it in My bookings.");
         }
 
-        if (BookingRules.ValidateSlot(clock, request.PreferredSlotStart, request.PreferredSlotEnd) is { } invalid)
-        {
-            return invalid;
-        }
-
-        var address = await customers.GetAddressAsync(job.AddressId, ct);
-        if (await availability.CheckAsync(job.CategoryId, address?.Pincode ?? string.Empty, request.PreferredSlotStart, request.PreferredSlotEnd, null, ct) is { } full)
-        {
-            return full;
-        }
-
         var revisit = ServiceRequest.Create(
             new NewServiceRequest(
                 await srNumbers.NextAsync(ct),
@@ -150,8 +135,8 @@ public sealed class RequestWarrantyRevisit(
                 RequestChannel.Website,
                 Priority.High,
                 0m,
-                request.PreferredSlotStart,
-                request.PreferredSlotEnd,
+                PreferredSlotStart: null,
+                PreferredSlotEnd: null,
                 ScheduledStart: null,
                 ScheduledEnd: null,
                 IsWarrantyVisit: true,

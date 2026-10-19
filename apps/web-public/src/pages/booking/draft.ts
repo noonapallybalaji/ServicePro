@@ -2,7 +2,7 @@
 export const ADDRESS_LABELS = ['Home', 'Work', 'Other'] as const;
 export type AddressLabel = (typeof ADDRESS_LABELS)[number];
 
-/** A point reported by the customer's device ("Use my current location"). */
+/** A point reported by the customer's device ("Detect my location" / "Use my current location"). */
 export interface Pin {
   latitude: number;
   longitude: number;
@@ -12,7 +12,7 @@ export interface Pin {
 
 export interface BookingAddress {
   label: AddressLabel;
-  /** House / flat / floor number */
+  /** House / flat / floor number (optional: the technician has the pin and calls). */
   line1: string;
   /** Building, apartment or street */
   line2: string;
@@ -23,36 +23,26 @@ export interface BookingAddress {
   pin: Pin | null;
 }
 
+/**
+ * What the customer fills in: the appliance, where, and who to call, plus an optional note about
+ * the problem. No time: the office agrees the date.
+ */
 export interface Draft extends BookingAddress {
   categoryId: string;
-  issueTypeId: string;
-  description: string;
-  date: string;
-  /** Window id from the server, and its exact start and end (ISO). */
-  slot: string;
-  slotStart: string;
-  slotEnd: string;
+  /** Optional, in the customer's words; without it the technician finds the fault on the visit. */
+  problem: string;
   fullName: string;
   phone: string;
-  /** Remember this address on this device for the next booking. */
-  rememberAddress: boolean;
   // Optional details for the technician.
   accessNotes: string;
   someoneElse: boolean;
   contactName: string;
   contactPhone: string;
-  applianceBrand: string;
-  applianceModel: string;
-  purchaseYear: string;
-  underWarranty: '' | 'yes' | 'no' | 'unsure';
-  /** Photos of the problem, uploaded after the booking is made (kept in memory only). */
-  photos: File[];
 }
 
 export const EMPTY_DRAFT: Draft = {
   categoryId: '',
-  issueTypeId: '',
-  description: '',
+  problem: '',
   label: 'Home',
   line1: '',
   line2: '',
@@ -61,62 +51,23 @@ export const EMPTY_DRAFT: Draft = {
   city: '',
   pincode: '',
   pin: null,
-  date: '',
-  slot: '',
-  slotStart: '',
-  slotEnd: '',
   fullName: '',
   phone: '',
-  rememberAddress: true,
   accessNotes: '',
   someoneElse: false,
   contactName: '',
   contactPhone: '',
-  applianceBrand: '',
-  applianceModel: '',
-  purchaseYear: '',
-  underWarranty: '',
-  photos: [],
 };
 
 export const addressOneLine = (a: Pick<BookingAddress, 'line1' | 'line2' | 'locality' | 'city' | 'pincode'>): string =>
   [a.line1, a.line2, a.locality, a.city, a.pincode].filter((part) => part.trim()).join(', ');
 
-/* ── Saved on this device ─────────────────────────────────────────────── */
+/* ── Old device storage ───────────────────────────────────────────────── */
 
+// Earlier versions remembered the last address in the browser; addresses now live in the account.
 const STORAGE_KEY = 'servicepro.saved-address.v1';
 
-/** The address from the last booking on this device, if the customer chose to keep it. */
-export function loadSavedAddress(): BookingAddress | null {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const saved = JSON.parse(raw) as Partial<BookingAddress>;
-    if (!saved.line1 || !saved.pincode || !saved.locality || !saved.city) return null;
-    return {
-      label: ADDRESS_LABELS.includes(saved.label as AddressLabel) ? (saved.label as AddressLabel) : 'Home',
-      line1: saved.line1,
-      line2: saved.line2 ?? '',
-      locality: saved.locality,
-      landmark: saved.landmark ?? '',
-      city: saved.city,
-      pincode: saved.pincode,
-      pin: saved.pin && Number.isFinite(saved.pin.latitude) && Number.isFinite(saved.pin.longitude) ? saved.pin : null,
-    };
-  } catch {
-    return null; // private mode, blocked storage or a corrupt value
-  }
-}
-
-export function saveAddress(address: BookingAddress) {
-  try {
-    const { label, line1, line2, locality, landmark, city, pincode, pin } = address;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ label, line1, line2, locality, landmark, city, pincode, pin }));
-  } catch {
-    // Remembering the address is a convenience; booking already succeeded.
-  }
-}
-
+/** Clears an address an earlier version left in this browser. */
 export function forgetSavedAddress() {
   try {
     window.localStorage.removeItem(STORAGE_KEY);

@@ -28,14 +28,17 @@ import type {
   AccountResponse,
   AddAccountAddressRequest,
   AddMyBookingPhotoBody,
-  AvailabilityResponse,
   CancelBookingRequest,
+  ChangePhoneRequest,
+  CustomerNotificationsResponse,
   HttpValidationProblemDetails,
+  ListMyNotificationsParams,
   MyBookingDetailResponse,
   MyBookingResponse,
   MyInvoiceResponse,
+  PhoneChangeCodeRequest,
+  PhoneChangeCodeResponse,
   ProblemDetails,
-  RescheduleBookingRequest,
   RevisitRequest,
   RevisitResponse,
   UpdateAccountRequest
@@ -263,6 +266,136 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
 
       const mutationOptions = getDeleteMyAccountMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getRequestPhoneChangeCodeUrl = () => {
+
+
+  
+
+  return `/api/v1/account/phone/code`
+}
+
+export const requestPhoneChangeCode = async (phoneChangeCodeRequest: PhoneChangeCodeRequest, options?: RequestInit): Promise<PhoneChangeCodeResponse> => {
+  
+  return apiFetch<PhoneChangeCodeResponse>(getRequestPhoneChangeCodeUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      phoneChangeCodeRequest,)
+  }
+);}
+
+
+
+
+export const getRequestPhoneChangeCodeMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPhoneChangeCode>>, TError,{data: PhoneChangeCodeRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestPhoneChangeCode>>, TError,{data: PhoneChangeCodeRequest}, TContext> => {
+
+const mutationKey = ['requestPhoneChangeCode'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestPhoneChangeCode>>, {data: PhoneChangeCodeRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestPhoneChangeCode(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestPhoneChangeCodeMutationResult = NonNullable<Awaited<ReturnType<typeof requestPhoneChangeCode>>>
+    export type RequestPhoneChangeCodeMutationBody = PhoneChangeCodeRequest
+    export type RequestPhoneChangeCodeMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useRequestPhoneChangeCode = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestPhoneChangeCode>>, TError,{data: PhoneChangeCodeRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof requestPhoneChangeCode>>,
+        TError,
+        {data: PhoneChangeCodeRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getRequestPhoneChangeCodeMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getChangeMyPhoneUrl = () => {
+
+
+  
+
+  return `/api/v1/account/phone`
+}
+
+export const changeMyPhone = async (changePhoneRequest: ChangePhoneRequest, options?: RequestInit): Promise<AccountResponse> => {
+  
+  return apiFetch<AccountResponse>(getChangeMyPhoneUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      changePhoneRequest,)
+  }
+);}
+
+
+
+
+export const getChangeMyPhoneMutationOptions = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeMyPhone>>, TError,{data: ChangePhoneRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof changeMyPhone>>, TError,{data: ChangePhoneRequest}, TContext> => {
+
+const mutationKey = ['changeMyPhone'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof changeMyPhone>>, {data: ChangePhoneRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  changeMyPhone(data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChangeMyPhoneMutationResult = NonNullable<Awaited<ReturnType<typeof changeMyPhone>>>
+    export type ChangeMyPhoneMutationBody = ChangePhoneRequest
+    export type ChangeMyPhoneMutationError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useChangeMyPhone = <TError = HttpValidationProblemDetails | ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof changeMyPhone>>, TError,{data: ChangePhoneRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof changeMyPhone>>,
+        TError,
+        {data: ChangePhoneRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getChangeMyPhoneMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }
@@ -773,96 +906,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
-    export const getGetMyBookingAvailabilityUrl = (id: string,) => {
-
-
-  
-
-  return `/api/v1/account/bookings/${id}/availability`
-}
-
-export const getMyBookingAvailability = async (id: string, options?: RequestInit): Promise<AvailabilityResponse> => {
-  
-  return apiFetch<AvailabilityResponse>(getGetMyBookingAvailabilityUrl(id),
-  {      
-    ...options,
-    method: 'GET'
-    
-    
-  }
-);}
-
-
-
-export const getGetMyBookingAvailabilityQueryKey = (id?: string,) => {
-    return [`/api/v1/account/bookings/${id}/availability`] as const;
-    }
-
-    
-export const getGetMyBookingAvailabilityQueryOptions = <TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetMyBookingAvailabilityQueryKey(id);
-
-  
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyBookingAvailability>>> = ({ signal }) => getMyBookingAvailability(id, { signal, ...requestOptions });
-
-      
-
-      
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetMyBookingAvailabilityQueryResult = NonNullable<Awaited<ReturnType<typeof getMyBookingAvailability>>>
-export type GetMyBookingAvailabilityQueryError = ProblemDetails | ProblemDetails | ProblemDetails
-
-
-export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
- id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMyBookingAvailability>>,
-          TError,
-          Awaited<ReturnType<typeof getMyBookingAvailability>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getMyBookingAvailability>>,
-          TError,
-          Awaited<ReturnType<typeof getMyBookingAvailability>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-
-export function useGetMyBookingAvailability<TData = Awaited<ReturnType<typeof getMyBookingAvailability>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
- id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMyBookingAvailability>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
- , queryClient?: QueryClient 
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetMyBookingAvailabilityQueryOptions(id,options)
-
-  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  query.queryKey = queryOptions.queryKey ;
-
-  return query;
-}
-
-
-
-export const getCancelMyBookingUrl = (id: string,) => {
+    export const getCancelMyBookingUrl = (id: string,) => {
 
 
   
@@ -928,35 +972,129 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
-    export const getRescheduleMyBookingUrl = (id: string,) => {
+    export const getListMyNotificationsUrl = (params?: ListMyNotificationsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
 
-  
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/v1/account/bookings/${id}/reschedule`
+  return stringifiedParams.length > 0 ? `/api/v1/account/notifications?${stringifiedParams}` : `/api/v1/account/notifications`
 }
 
-export const rescheduleMyBooking = async (id: string,
-    rescheduleBookingRequest: RescheduleBookingRequest, options?: RequestInit): Promise<void> => {
+export const listMyNotifications = async (params?: ListMyNotificationsParams, options?: RequestInit): Promise<CustomerNotificationsResponse> => {
   
-  return apiFetch<void>(getRescheduleMyBookingUrl(id),
+  return apiFetch<CustomerNotificationsResponse>(getListMyNotificationsUrl(params),
   {      
     ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(
-      rescheduleBookingRequest,)
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getListMyNotificationsQueryKey = (params?: ListMyNotificationsParams,) => {
+    return [`/api/v1/account/notifications`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getListMyNotificationsQueryOptions = <TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMyNotificationsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMyNotifications>>> = ({ signal }) => listMyNotifications(params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListMyNotificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listMyNotifications>>>
+export type ListMyNotificationsQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ params: undefined |  ListMyNotificationsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyNotifications>>,
+          TError,
+          Awaited<ReturnType<typeof listMyNotifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listMyNotifications>>,
+          TError,
+          Awaited<ReturnType<typeof listMyNotifications>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListMyNotifications<TData = Awaited<ReturnType<typeof listMyNotifications>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ params?: ListMyNotificationsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listMyNotifications>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListMyNotificationsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getMarkMyNotificationReadUrl = (notificationId: string,) => {
+
+
+  
+
+  return `/api/v1/account/notifications/${notificationId}/read`
+}
+
+export const markMyNotificationRead = async (notificationId: string, options?: RequestInit): Promise<CustomerNotificationsResponse> => {
+  
+  return apiFetch<CustomerNotificationsResponse>(getMarkMyNotificationReadUrl(notificationId),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
   }
 );}
 
 
 
 
-export const getRescheduleMyBookingMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rescheduleMyBooking>>, TError,{id: string;data: RescheduleBookingRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof rescheduleMyBooking>>, TError,{id: string;data: RescheduleBookingRequest}, TContext> => {
+export const getMarkMyNotificationReadMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markMyNotificationRead>>, TError,{notificationId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markMyNotificationRead>>, TError,{notificationId: string}, TContext> => {
 
-const mutationKey = ['rescheduleMyBooking'];
+const mutationKey = ['markMyNotificationRead'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -966,10 +1104,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rescheduleMyBooking>>, {id: string;data: RescheduleBookingRequest}> = (props) => {
-          const {id,data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markMyNotificationRead>>, {notificationId: string}> = (props) => {
+          const {notificationId} = props ?? {};
 
-          return  rescheduleMyBooking(id,data,requestOptions)
+          return  markMyNotificationRead(notificationId,requestOptions)
         }
 
         
@@ -977,20 +1115,84 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type RescheduleMyBookingMutationResult = NonNullable<Awaited<ReturnType<typeof rescheduleMyBooking>>>
-    export type RescheduleMyBookingMutationBody = RescheduleBookingRequest
-    export type RescheduleMyBookingMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+    export type MarkMyNotificationReadMutationResult = NonNullable<Awaited<ReturnType<typeof markMyNotificationRead>>>
+    
+    export type MarkMyNotificationReadMutationError = ProblemDetails | ProblemDetails | ProblemDetails
 
-    export const useRescheduleMyBooking = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rescheduleMyBooking>>, TError,{id: string;data: RescheduleBookingRequest}, TContext>, request?: SecondParameter<typeof apiFetch>}
+    export const useMarkMyNotificationRead = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markMyNotificationRead>>, TError,{notificationId: string}, TContext>, request?: SecondParameter<typeof apiFetch>}
  , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof rescheduleMyBooking>>,
+        Awaited<ReturnType<typeof markMyNotificationRead>>,
         TError,
-        {id: string;data: RescheduleBookingRequest},
+        {notificationId: string},
         TContext
       > => {
 
-      const mutationOptions = getRescheduleMyBookingMutationOptions(options);
+      const mutationOptions = getMarkMyNotificationReadMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    export const getMarkAllMyNotificationsReadUrl = () => {
+
+
+  
+
+  return `/api/v1/account/notifications/read-all`
+}
+
+export const markAllMyNotificationsRead = async ( options?: RequestInit): Promise<CustomerNotificationsResponse> => {
+  
+  return apiFetch<CustomerNotificationsResponse>(getMarkAllMyNotificationsReadUrl(),
+  {      
+    ...options,
+    method: 'POST'
+    
+    
+  }
+);}
+
+
+
+
+export const getMarkAllMyNotificationsReadMutationOptions = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, TError,void, TContext> => {
+
+const mutationKey = ['markAllMyNotificationsRead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, void> = () => {
+          
+
+          return  markAllMyNotificationsRead(requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkAllMyNotificationsReadMutationResult = NonNullable<Awaited<ReturnType<typeof markAllMyNotificationsRead>>>
+    
+    export type MarkAllMyNotificationsReadMutationError = ProblemDetails | ProblemDetails | ProblemDetails
+
+    export const useMarkAllMyNotificationsRead = <TError = ProblemDetails | ProblemDetails | ProblemDetails,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markAllMyNotificationsRead>>, TError,void, TContext>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof markAllMyNotificationsRead>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getMarkAllMyNotificationsReadMutationOptions(options);
 
       return useMutation(mutationOptions , queryClient);
     }

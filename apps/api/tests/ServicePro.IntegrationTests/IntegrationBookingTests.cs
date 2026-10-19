@@ -26,9 +26,7 @@ public sealed class IntegrationBookingTests(ApiFactory factory)
             "AC not cooling (integration test)",
             "WhatsApp Customer",
             "91" + phone,
-            new BookingAddressRequest("Home", "Flat 3", null, null, "Madhapur", "Hyderabad", null, "500081", null, null),
-            start,
-            start.AddHours(3));
+            new BookingAddressRequest("Home", "Flat 3", null, null, "Madhapur", "Hyderabad", null, "500081", null, null));
     }
 
     private static HttpRequestMessage Post(object body, string? key = ApiFactory.IntegrationKey)

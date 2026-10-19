@@ -1836,6 +1836,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(200)")
                         .HasColumnName("provider_message_id");
 
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
                     b.Property<string>("RecipientAddress")
                         .IsRequired()
                         .HasMaxLength(254)
@@ -1891,6 +1895,9 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("TenantId")
                         .HasDatabaseName("ix_notifications_tenant_id");
+
+                    b.HasIndex("RecipientId", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_recipient_id_created_at");
 
                     b.HasIndex("ServiceRequestId", "CreatedAt")
                         .HasDatabaseName("ix_notifications_service_request_id_created_at");
@@ -2103,10 +2110,6 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid")
                         .HasColumnName("customer_id");
-
-                    b.Property<int>("CustomerRescheduleCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("customer_reschedule_count");
 
                     b.Property<DateTimeOffset?>("EnRouteAt")
                         .HasColumnType("timestamp with time zone")

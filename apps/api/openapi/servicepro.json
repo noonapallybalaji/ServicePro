@@ -637,6 +637,56 @@
         }
       }
     },
+    "/api/v1/catalog/serviceability/near": {
+      "get": {
+        "tags": [
+          "Catalog"
+        ],
+        "operationId": "LocateServiceability",
+        "parameters": [
+          {
+            "name": "latitude",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "name": "longitude",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocatedServiceabilityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/catalog/price-list": {
       "get": {
         "tags": [
@@ -1651,6 +1701,136 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/phone/code": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "RequestPhoneChangeCode",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhoneChangeCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhoneChangeCodeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/phone": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "ChangeMyPhone",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePhoneRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpValidationProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountResponse"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -3833,75 +4013,6 @@
         }
       }
     },
-    "/api/v1/public/availability": {
-      "get": {
-        "tags": [
-          "Online booking"
-        ],
-        "operationId": "GetAvailability",
-        "parameters": [
-          {
-            "name": "categoryId",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "pincode",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AvailabilityResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/account/bookings/{id}": {
       "get": {
         "tags": [
@@ -4124,67 +4235,6 @@
         }
       }
     },
-    "/api/v1/account/bookings/{id}/availability": {
-      "get": {
-        "tags": [
-          "Customer account"
-        ],
-        "operationId": "GetMyBookingAvailability",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AvailabilityResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Unprocessable Entity",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/account/bookings/{id}/cancel": {
       "post": {
         "tags": [
@@ -4259,15 +4309,75 @@
         }
       }
     },
-    "/api/v1/account/bookings/{id}/reschedule": {
+    "/api/v1/account/notifications": {
+      "get": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "ListMyNotifications",
+        "parameters": [
+          {
+            "name": "take",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerNotificationsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/notifications/{notificationId}/read": {
       "post": {
         "tags": [
           "Customer account"
         ],
-        "operationId": "RescheduleMyBooking",
+        "operationId": "MarkMyNotificationRead",
         "parameters": [
           {
-            "name": "id",
+            "name": "notificationId",
             "in": "path",
             "required": true,
             "schema": {
@@ -4276,19 +4386,66 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RescheduleBookingRequest"
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerNotificationsResponse"
+                }
               }
             }
           },
-          "required": true
-        },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/account/notifications/read-all": {
+      "post": {
+        "tags": [
+          "Customer account"
+        ],
+        "operationId": "MarkAllMyNotificationsRead",
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerNotificationsResponse"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not Found",
@@ -8624,6 +8781,20 @@
           },
           "makeDefault": {
             "type": "boolean"
+          },
+          "latitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
           }
         }
       },
@@ -9241,68 +9412,6 @@
           }
         }
       },
-      "AvailabilityDay": {
-        "required": [
-          "date",
-          "slots"
-        ],
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "format": "date"
-          },
-          "slots": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AvailabilitySlot"
-            }
-          }
-        }
-      },
-      "AvailabilityResponse": {
-        "required": [
-          "days"
-        ],
-        "type": "object",
-        "properties": {
-          "days": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AvailabilityDay"
-            }
-          }
-        }
-      },
-      "AvailabilitySlot": {
-        "required": [
-          "id",
-          "label",
-          "start",
-          "end",
-          "available"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "label": {
-            "type": "string"
-          },
-          "start": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "end": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "available": {
-            "type": "boolean"
-          }
-        }
-      },
       "AvailableTransition": {
         "required": [
           "to",
@@ -9367,7 +9476,10 @@
             ]
           },
           "line1": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "line2": {
             "type": [
@@ -9411,7 +9523,7 @@
             "format": "double"
           }
         },
-        "description": "Latitude/longitude come from the customer's device (\"Use my current location\"), if shared."
+        "description": "Latitude/longitude come from the customer's device (\"Detect my location\"), if shared. Line1 (house\r\nor flat number) is optional on the website: the technician has the pin and calls the customer."
       },
       "BookingCodeRequest": {
         "required": [
@@ -9666,6 +9778,21 @@
             "items": {
               "$ref": "#/components/schemas/IssueTypeResponse"
             }
+          }
+        }
+      },
+      "ChangePhoneRequest": {
+        "required": [
+          "phone",
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
           }
         }
       },
@@ -9995,6 +10122,62 @@
           "sentAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "CustomerNotificationResponse": {
+        "required": [
+          "id",
+          "title",
+          "body",
+          "serviceRequestId",
+          "createdAt",
+          "isRead"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "serviceRequestId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isRead": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CustomerNotificationsResponse": {
+        "required": [
+          "items",
+          "unreadCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomerNotificationResponse"
+            }
+          },
+          "unreadCount": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -10595,9 +10778,7 @@
           "problemDescription",
           "fullName",
           "phone",
-          "address",
-          "preferredSlotStart",
-          "preferredSlotEnd"
+          "address"
         ],
         "type": "object",
         "properties": {
@@ -10629,14 +10810,6 @@
           },
           "address": {
             "$ref": "#/components/schemas/BookingAddressRequest"
-          },
-          "preferredSlotStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "preferredSlotEnd": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -10646,8 +10819,6 @@
           "status",
           "statusText",
           "appointmentConfirmed",
-          "preferredSlotStart",
-          "preferredSlotEnd",
           "trackingUrl",
           "duplicate"
         ],
@@ -10665,14 +10836,6 @@
           "appointmentConfirmed": {
             "type": "boolean"
           },
-          "preferredSlotStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "preferredSlotEnd": {
-            "type": "string",
-            "format": "date-time"
-          },
           "trackingUrl": {
             "type": "string"
           },
@@ -10680,7 +10843,7 @@
             "type": "boolean"
           }
         },
-        "description": "What the assistant may tell the customer. bool IntegrationBookingResponse.AppointmentConfirmed is always false at\r\ncreation: the office confirms the visit time later (the customer is told on WhatsApp)."
+        "description": "What the assistant may tell the customer. bool IntegrationBookingResponse.AppointmentConfirmed is always false at\r\ncreation: the office agrees the visit time with the customer later (on WhatsApp or a call)."
       },
       "InvoiceLineInput": {
         "required": [
@@ -11093,6 +11256,43 @@
         },
         "description": "Where the technician is while on the way, and roughly how long until they arrive. Only while\r\nEN_ROUTE and only from a recent report; the customer's own pin is never included, because\r\ntracking links can be forwarded."
       },
+      "LocatedServiceabilityResponse": {
+        "required": [
+          "located",
+          "pincode",
+          "locality",
+          "isServiceable",
+          "areas"
+        ],
+        "type": "object",
+        "properties": {
+          "located": {
+            "type": "boolean"
+          },
+          "pincode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "locality": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isServiceable": {
+            "type": "boolean"
+          },
+          "areas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Located: a provider answered. Pincode is what it found (null if nothing trustworthy); serviceability\r\nis then checked exactly as for a typed PIN code."
+      },
       "MeResponse": {
         "required": [
           "id",
@@ -11199,8 +11399,7 @@
           "visitCharge",
           "finalAmount",
           "trackingPath",
-          "canCancel",
-          "canReschedule"
+          "canCancel"
         ],
         "type": "object",
         "properties": {
@@ -11282,9 +11481,6 @@
             "type": "string"
           },
           "canCancel": {
-            "type": "boolean"
-          },
-          "canReschedule": {
             "type": "boolean"
           }
         },
@@ -11572,9 +11768,7 @@
           "fullName",
           "phone",
           "code",
-          "address",
-          "preferredSlotStart",
-          "preferredSlotEnd"
+          "address"
         ],
         "type": "object",
         "properties": {
@@ -11590,7 +11784,10 @@
             "format": "uuid"
           },
           "problemDescription": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "fullName": {
             "type": "string"
@@ -11607,14 +11804,6 @@
           "address": {
             "$ref": "#/components/schemas/BookingAddressRequest"
           },
-          "preferredSlotStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "preferredSlotEnd": {
-            "type": "string",
-            "format": "date-time"
-          },
           "acceptedPolicies": {
             "type": "boolean",
             "default": false
@@ -11628,6 +11817,19 @@
                 "$ref": "#/components/schemas/BookingExtras"
               }
             ]
+          },
+          "requestId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "addressId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
@@ -12042,6 +12244,41 @@
           }
         }
       },
+      "PhoneChangeCodeRequest": {
+        "required": [
+          "phone"
+        ],
+        "type": "object",
+        "properties": {
+          "phone": {
+            "type": "string"
+          }
+        }
+      },
+      "PhoneChangeCodeResponse": {
+        "required": [
+          "expiresAt",
+          "codeLength",
+          "developmentCode"
+        ],
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "codeLength": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "developmentCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "PriceListItemResponse": {
         "required": [
           "id",
@@ -12361,23 +12598,6 @@
         ],
         "description": "Where a request came from (PLAN.md §7.6 `leads.source`, Phase 1 subset)."
       },
-      "RescheduleBookingRequest": {
-        "required": [
-          "preferredSlotStart",
-          "preferredSlotEnd"
-        ],
-        "type": "object",
-        "properties": {
-          "preferredSlotStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "preferredSlotEnd": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "ReviewListItem": {
         "required": [
           "serviceRequestId",
@@ -12446,22 +12666,12 @@
       },
       "RevisitRequest": {
         "required": [
-          "description",
-          "preferredSlotStart",
-          "preferredSlotEnd"
+          "description"
         ],
         "type": "object",
         "properties": {
           "description": {
             "type": "string"
-          },
-          "preferredSlotStart": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "preferredSlotEnd": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -14771,10 +14981,10 @@
       "name": "Service requests"
     },
     {
-      "name": "Online booking"
+      "name": "Dashboard"
     },
     {
-      "name": "Dashboard"
+      "name": "Online booking"
     },
     {
       "name": "Dispatch"

@@ -21,6 +21,26 @@ public sealed class CatalogModule : IModule
     {
         services.AddScoped<ICatalogDirectory, CatalogDirectory>();
         services.AddSetting(PublicPriceSettings.ShowToCustomers);
+
+        // "Detect my location": position -> PIN code. Provider by configuration (ADR 0009).
+        var geocoding = configuration.GetSection(GeocodingOptions.Section).Get<GeocodingOptions>() ?? new GeocodingOptions();
+        if (string.Equals(geocoding.Provider, "OpenStreetMap", StringComparison.OrdinalIgnoreCase))
+        {
+            var userAgent = geocoding.OpenStreetMap.UserAgent
+                ?? $"ServicePro/1.0 (+{configuration["Notifications:PublicSiteUrl"] ?? "self-hosted"})";
+            services.AddMemoryCache();
+            services.AddHttpClient<OpenStreetMapGeocoder>(c =>
+            {
+                c.BaseAddress = new Uri(geocoding.OpenStreetMap.BaseUrl.TrimEnd('/') + "/");
+                c.Timeout = TimeSpan.FromSeconds(8);
+                c.DefaultRequestHeaders.UserAgent.ParseAdd(userAgent);
+            });
+            services.AddScoped<IReverseGeocoder>(sp => sp.GetRequiredService<OpenStreetMapGeocoder>());
+        }
+        else
+        {
+            services.AddSingleton<IReverseGeocoder, NullReverseGeocoder>();
+        }
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
@@ -40,6 +60,17 @@ public sealed class CatalogModule : IModule
             .RequireRateLimiting(RateLimitPolicies.Public)
             .Produces<ServiceabilityResponse>()
             .WithName("CheckServiceability");
+
+        // The device's position -> PIN code -> serviceability. Located=false: type the PIN code instead.
+        catalog.MapGet("/serviceability/near", async (double latitude, double longitude, LocateServiceability useCase, CancellationToken ct) =>
+                latitude is < -90 or > 90 || longitude is < -180 or > 180
+                    ? Results.ValidationProblem(new Dictionary<string, string[]> { ["latitude"] = ["Send a valid position."] })
+                    : Results.Ok(await useCase.HandleAsync(new LocateRequest(latitude, longitude), ct)))
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .Produces<LocatedServiceabilityResponse>()
+            .ProducesValidationProblem()
+            .WithName("LocateServiceability");
 
         catalog.MapGet("/price-list", async (Guid? categoryId, ListPriceList useCase, CancellationToken ct) =>
                 Results.Ok(await useCase.HandleAsync(categoryId, ct)))

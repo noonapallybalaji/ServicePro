@@ -17,8 +17,8 @@ Verified against the source and over HTTPS. Error bodies are RFC 9457 problem de
 | Service catalogue | `GET /api/v1/catalog/categories` | none | — | `[{ id, code, name, baseVisitCharge, requiresPhotos, sortOrder, isActive, issueTypes: [{ id, categoryId, code, name, typicalDurationMinutes, minSkillLevel, defaultPriority, isActive }] }]` | — | Yes (read-only, public data) |
 | Serviceability | `GET /api/v1/catalog/serviceability/{pincode}` | none · rate limit 120/min/IP | `pincode` in path | `{ pincode, isServiceable, areas: [string] }` | Malformed pincode → **200** with `isServiceable: false` (not an error) | Yes |
 | Booking code (website) | `POST /api/v1/public/bookings/code` | none · 10/min/IP in Public mode | `{ phone }` | `{ expiresAt, codeLength, developmentCode }`. `developmentCode` is **always null outside Development** | 400 bad phone, 409 cooldown, 429 | Yes (sends an SMS) |
-| Booking (website) | `POST /api/v1/public/bookings` | none (SMS code) or signed-in customer · 10/min/IP | `{ categoryId, issueTypeId?, problemDescription, fullName, phone, code?, address: { label?, line1, line2?, landmark?, locality, city, state?, pincode, latitude?, longitude? }, preferredSlotStart, preferredSlotEnd }` | `{ srNumber, trackingPath, session? }`. **`session` contains an access token**; it is for the website only | 400 validation / wrong code / not serviceable / slot invalid, 403 blocked customer | Yes, but **not for n8n** (needs an SMS code and returns a session) |
-| **Booking (n8n) — new** | `POST /api/v1/integrations/bookings` | **integration key** header `X-ServicePro-Integration-Key` · 60/min/IP | `{ idempotencyKey, customerConfirmed: true, categoryId, issueTypeId?, problemDescription, fullName, phone, address: {…same…}, preferredSlotStart, preferredSlotEnd }` | `{ srNumber, status, statusText, appointmentConfirmed, preferredSlotStart, preferredSlotEnd, trackingUrl, duplicate }`. **No session, token or code** | 401 missing/wrong key, 400 validation (`customerConfirmed` false, `booking.not_serviceable`, `booking.category_invalid`, `booking.issue_invalid`, `booking.slot_invalid`, `phone.invalid`), 403 blocked customer, 429 | Only with the key |
+| Booking (website) | `POST /api/v1/public/bookings` | none (SMS code) or signed-in customer · 10/min/IP | `{ categoryId, issueTypeId?, problemDescription, fullName, phone, code?, address: { label?, line1?, line2?, landmark?, locality, city, state?, pincode, latitude?, longitude? }, requestId? }` | `{ srNumber, trackingPath, session? }`. **`session` contains an access token**; it is for the website only | 400 validation / wrong code / not serviceable, 403 blocked customer | Yes, but **not for n8n** (needs an SMS code and returns a session) |
+| **Booking (n8n) — new** | `POST /api/v1/integrations/bookings` | **integration key** header `X-ServicePro-Integration-Key` · 60/min/IP | `{ idempotencyKey, customerConfirmed: true, categoryId, issueTypeId?, problemDescription, fullName, phone, address: {…same…} }` | `{ srNumber, status, statusText, appointmentConfirmed, trackingUrl, duplicate }`. **No session, token or code** | 401 missing/wrong key, 400 validation (`customerConfirmed` false, `booking.not_serviceable`, `booking.category_invalid`, `booking.issue_invalid`, `phone.invalid`), 403 blocked customer, 429 | Only with the key |
 | Public tracking | `GET /api/v1/public/track/{token}` | none · 120/min/IP | `token` in path | status, technician (name, rating), timeline, bill, photos | 404 unknown token | Yes (the token is the secret; 24 random characters) |
 | Tracking **page** (customer) | `GET /t/{token}` on the **website** | — | — | HTML (noindex) | — | Yes |
 | Price list | `GET /api/v1/catalog/price-list?categoryId=` | **staff or technician** sign-in | — | — | 401 | **No** (not usable by n8n) |
@@ -31,7 +31,7 @@ Verified against the source and over HTTPS. Error bodies are RFC 9457 problem de
 - **Price list and brands:** not public. They require a staff or technician session, so n8n can't call them. Use `baseVisitCharge` from the catalogue for prices.
 - **Customer lookup:** `by-phone` is an admin endpoint. n8n doesn't need it, because both booking endpoints **find or create the customer by phone automatically** (a matching address is reused). Don't add a separate customer-creation call.
 - **Public booking endpoint:** `POST /api/v1/public/bookings` needs an SMS code (or a signed-in customer) and returns a customer session. It isn't suitable for a WhatsApp bot. Use the new `POST /api/v1/integrations/bookings` instead (§3).
-- **Slots:** there are **no live available slots**. The API accepts a *preferred* window (any start within the next 30 days, at most 8 hours long). Every booking starts as **NEW**, and the office confirms the visit time later.
+- **No visit times:** customers don't choose a time, on the website or on WhatsApp. Every booking starts as **NEW** with no time; the office calls or messages the customer to agree the date and then schedules it.
 
 ## 2. Security model
 
@@ -172,9 +172,7 @@ For each tool, set **Options → Timeout** = `15000` ms. Turn **Options → Resp
       pincode: $fromAI('pincode', 'serviceable 6-digit pincode', 'string'),
       latitude: null,
       longitude: null
-    },
-    preferredSlotStart: $fromAI('preferredSlotStart', 'start of the preferred window, ISO 8601 with +05:30, e.g. 2026-10-14T15:00:00+05:30, within the next 30 days', 'string'),
-    preferredSlotEnd: $fromAI('preferredSlotEnd', 'end of the preferred window, same format, at most 8 hours after the start', 'string')
+    }
   }) }}
   ```
   - **Phone and idempotency key come from the trigger, not the AI.** Check the field paths against your WhatsApp Trigger's output (open an execution). The usual shape is `messages[0].from` and `messages[0].id`.
@@ -205,11 +203,9 @@ Add these to *ServicePro Support Agent*:
 ```
 - Use only ids from get_service_catalog. Never invent category or issue type ids.
 - Check the pincode with check_serviceability before collecting more details. If isServiceable is false, say we don't cover that area yet and offer escalate_to_human; do not book.
-- Before booking, send one summary: appliance, problem, name, address with pincode, preferred day and time window. Ask "Shall I book this? Reply YES to confirm."
+- Before booking, send one summary: appliance, problem, name, address with pincode. Ask "Shall I book this? Reply YES to confirm." Don't ask for or offer a visit time.
 - Call create_booking only when the customer's latest message is a clear yes to that summary. If they change anything, update and re-confirm.
-- Offer only visit times we can serve: call get_availability (GET {apiBaseUrl}/api/v1/public/availability?categoryId=…&pincode=…, no key needed) and suggest windows where available is true, using their start and end exactly.
-- If create_booking returns code booking.slot_full or booking.slot_invalid, say that time isn't available, offer two other available windows, and re-confirm before booking again.
-- After booking, reply with the srNumber, the statusText and the trackingUrl exactly as returned. Say the visit time is a preference our team will confirm on WhatsApp. Never say the appointment is confirmed unless appointmentConfirmed is true.
+- After booking, reply with the srNumber, the statusText and the trackingUrl exactly as returned. Say our team will call or WhatsApp them to agree a visit time. Never say the appointment is confirmed unless appointmentConfirmed is true.
 - If create_booking returns duplicate=true, say the request was already received and give the same details. Do not book again.
 - On an error (400/401/429/5xx or timeout): do not retry more than once, apologise, and use escalate_to_human. Never show raw error text, tokens or ids to the customer.
 - Never ask for or repeat OTPs, passwords or payment details.
@@ -234,6 +230,6 @@ node apps\api\scripts\verify-public-api.mjs
 
 ## 8. Known limitations
 
-- **No live slot availability:** customers choose a preferred window and the office confirms. Adding real availability would need a scheduling model (technician calendars); not in scope.
+- **No visit times at booking:** the office agrees the date with each customer after the booking (by design).
 - **Website server:** `serve-dist.mjs` is a small static server with an `/api` proxy, fine for one machine behind the tunnel. For more traffic, host the built site on Cloudflare Pages (its `_redirects` and `_headers` files are included) and route `/api/*` and `/hubs/*` (live tracking updates) to the tunnel.
 - **Idempotency scope:** keys are unique per channel and are kept permanently on the job. Reusing a key for a *different* booking returns the original booking (by design: never create on doubt).

@@ -36,5 +36,4 @@ export interface MyBookingResponse {
   finalAmount: MyBookingResponseFinalAmount;
   trackingPath: string;
   canCancel: boolean;
-  canReschedule: boolean;
 }

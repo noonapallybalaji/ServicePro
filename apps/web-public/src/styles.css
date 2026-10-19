@@ -2,3 +2,36 @@
 @import '@servicepro/ui/styles.css';
 
 @source '../../../packages/ui/src';
+
+/*
+ * Phones: a tighter type scale for the public site (staff apps keep the shared one). Body text stays
+ * 16px so form fields don't make iOS zoom in.
+ */
+@media (width < 48rem) {
+  :root {
+    --text-display: 1.875rem;
+    --text-h1: 1.375rem;
+    --text-h2: 1.1875rem;
+    --text-h3: 1rem;
+    --text-body-lg: 1rem;
+    --text-button: 0.875rem;
+    --text-button-lg: 0.9375rem;
+  }
+}
+
+/* The home page's promise strip: scrolls slowly unless the visitor prefers reduced motion. */
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ticker-track {
+    animation: ticker 28s linear infinite;
+  }
+
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+}

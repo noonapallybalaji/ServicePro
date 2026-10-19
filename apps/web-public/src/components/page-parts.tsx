@@ -123,17 +123,21 @@ export function PromiseList() {
   );
 }
 
+/** Phones: compact numbered rows. Tablet and up: three cards. */
 export function StepList() {
   return (
-    <ol className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <ol className="flex flex-col gap-4 md:grid md:grid-cols-3">
       {STEPS.map((step, index) => (
-        <li key={step.title} className="flex flex-col gap-4 rounded-card bg-background p-6">
-          <span aria-hidden className={cn('flex size-12 items-center justify-center rounded-full text-h3 font-bold', HUE_CLASSES[step.hue].subtle)}>
+        <li key={step.title} className="flex items-start gap-3 md:flex-col md:gap-4 md:rounded-card md:bg-background md:p-6">
+          <span
+            aria-hidden
+            className={cn('flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold md:size-12 md:text-h3', HUE_CLASSES[step.hue].subtle)}
+          >
             {index + 1}
           </span>
-          <span className="flex flex-col gap-2">
-            <span className="text-h3 text-foreground">{step.title}</span>
-            <span className="text-body text-foreground-secondary">{step.text}</span>
+          <span className="flex flex-col gap-1 md:gap-2">
+            <span className="text-body font-semibold text-foreground md:text-h3">{step.title}</span>
+            <span className="text-sm text-foreground-secondary md:text-body">{step.text}</span>
           </span>
         </li>
       ))}

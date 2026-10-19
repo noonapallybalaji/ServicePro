@@ -24,9 +24,9 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | 1.1 | Landing page, service pages, FAQ, SEO | ✅ | Pre-rendered, sitemap, structured data | — | — |
 | 1.2 | Clear price per problem before booking | 🔌 | "Typical prices" on each service page and "Usually costs" on the booking problem step, from the active price-list items (Admin > catalog). Off until the owner turns on `catalog.show_prices_to_customers`, so no price is published unchecked. Also fixed: creating a price item ignored "active". | P1 | S |
 | 1.3 | Customer reviews and ratings shown on pages | ❌ | No review collection exists yet (see 9.1), so there's nothing to show. | P1 | S (after 9.1) |
-| 1.4 | Search ("fridge not cooling") | ❌ | Only browsing by appliance. | P2 | S |
+| 1.4 | Search ("fridge not cooling") | ✅ | Home page search over the live catalog's appliances and problems; picking a problem opens the booking with it chosen. | P2 | S |
 | 1.5 | Offers, coupons, first-booking discount | ❌ | No coupon model, pricing rules or redemption. | P2 | M |
-| 1.6 | City or area selector, "available in your area" banner | 🟡 | Pincode check at booking only; single city in config. | P2 | S |
+| 1.6 | City or area selector, "available in your area" banner | ✅ | Location first: "Detect my location" (position → PIN code through the server's geocoder, OpenStreetMap by default, `Geocoding__Provider=None` to turn off) or a typed PIN code, checked against the service areas, remembered on the device, changeable from the header. The booking API re-checks the PIN code. Still one city in config. | P2 | S |
 | 1.7 | Telugu and Hindi interface | 🟡 | Fonts and line-height support exist, but there are no translations and no language switch. | P1 | M |
 | 1.8 | Installable app (PWA) or Android/iOS apps | ❌ | The customer site isn't a PWA (the technician app is). No push notifications without it. | P1 | M (PWA) / L (native) |
 
@@ -47,12 +47,12 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 | | Capability | Status | Notes | Priority | Effort |
 |---|---|---|---|---|---|
 | 3.1 | 5-step booking: appliance, problem, address, time, details | ✅ | With pincode check, saved address, optional device pin, signed-in fast path. | — | — |
-| 3.2 | **Real slot availability** (only show times we can serve) | ✅ | `GET /public/availability`: windows (`booking.windows`, 7 days, 2 h notice) open only when technicians with the skill, covering the pincode, on shift and not on leave have room (`booking.jobs_per_technician_per_window`, 2). Website, WhatsApp bookings and customer reschedules re-check at submit (`booking.slot_full`). No hold while the customer fills the form. Staff bookings can still overbook. `booking.capacity_check` off = old behaviour. | **P0** | L |
+| 3.2 | Visit time at booking | ➖ Removed | By decision, customers don't pick times (website, WhatsApp, warranty re-visits): every booking is NEW with no time, and the office agrees the date with the customer, then schedules it. The availability engine, its settings and endpoints are gone. | — | — |
 | 3.3 | Instant or urgent booking ("as soon as possible") | ❌ | Priority exists for staff (HIGH/EMERGENCY) but the customer can't request it; no surge or urgent fee. | P1 | M |
-| 3.4 | Photos or video of the problem at booking | ✅ | Up to 3 photos on the problem step, uploaded right after booking; more (up to 5) from the booking page until the job is done. Technicians and staff see them. No video. | P1 | S |
-| 3.5 | Appliance details: brand, model, age, under warranty? | ✅ | Optional "Add brand and model" on the problem step (brand suggestions, model, year bought, under the maker's warranty?). Saved as the customer's appliance and shown to the technician. | P1 | S |
+| 3.4 | Photos or video of the problem at booking | ✅ | Not at booking any more (two-step booking); customers add photos to their booking from My bookings. | P1 | S |
+| 3.5 | Appliance details: brand, model, age, under warranty? | ➖ Removed from booking | Booking asks only for the appliance; the technician records brand and model on the visit. | — | — |
 | 3.6 | Book for someone else (contact person at the address) | ✅ | "Someone else will be at home": their name and number; the technician's Call button calls them. Messages still go to the person who booked. | P1 | S |
-| 3.7 | Access notes (gate code, floor, "call on arrival") | ✅ | "Directions for the technician" on the address step; shown to the technician and staff. | P1 | S |
+| 3.7 | Access notes (gate code, floor, "call on arrival") | ✅ | "Directions for the technician" when the customer enters an address; shown to the technician and staff. | P1 | S |
 | 3.8 | Multiple appliances or services in one booking (cart) | ❌ | One appliance per request. | P2 | M |
 | 3.9 | Map pin picker with drag to adjust | ❌ | Device GPS pin only (optional). Needs a maps provider (Google Maps API key). | P2 | M |
 | 3.10 | Price summary and taxes before confirming | 🟡 | Visiting charge shown; no GST breakdown, convenience fee or coupon line. | P1 | S |
@@ -73,7 +73,7 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 |---|---|---|---|---|---|
 | 5.1 | List of my bookings with status | ✅ | With filters. | — | — |
 | 5.2 | **Cancel a booking** (with a clear cancellation policy and fee rules) | ✅ | "Cancel booking" in My bookings until the technician sets out (signed in; a forwarded tracking link can't cancel). Offer/assignment released, technician told (`TECH_JOB_CANCELLED`). Settings: `booking.customer_can_cancel`, `booking.customer_change_cutoff_minutes`. No cancellation fee: nothing is paid upfront to charge it against (would need 8.5). | **P0** | M |
-| 5.3 | **Reschedule** | ✅ | "Change time" in My bookings (same day/time picker as booking). Before a technician accepts, only the time changes; after, the job goes to RESCHEDULED for the office to reconfirm, and the technician is told (`TECH_JOB_MOVED`). Customer gets `BOOKING_MOVED`. Limit `booking.customer_max_reschedules` (default 2). | **P0** | M |
+| 5.3 | Reschedule | ➖ Removed | Customers ask (Get help, WhatsApp or a call) and the office sets the new time. Cancel online stays (5.2). | — | — |
 | 5.4 | Booking detail page inside the account (not just the public tracking link) | ✅ | `/account/bookings/{id}`: the live tracking view (timeline, technician, estimate, bill, photos) plus change time, cancel and get help; only the customer's own bookings. | P1 | S |
 | 5.5 | Edit problem details, add notes or photos after booking | ❌ | | P1 | S |
 | 5.6 | Call or message the technician with **masked numbers** | 🟡 | Tracking exposes the technician's real phone (`TrackingTechnician.Phone`). Needs call masking (Exotel/Knowlarity) or in-app chat. | P1 | M |
@@ -180,12 +180,12 @@ A gap analysis of the customer portal (`apps/web-public`) and the APIs behind it
 1. ~~Message delivery (11.1, 11.2). This also unlocks sign-in codes (2.2) and step notifications (4.3).~~ Built; waiting on provider accounts.
 2. ~~Legal pages and consent (13.1, 2.3), and account deletion (2.4).~~ Built; pages need the business's legal details and a lawyer's review.
 3. ~~Online payment, plus pay link on tracking and WhatsApp, plus refunds (8.2–8.4).~~ Built; needs Razorpay keys and webhook.
-4. ~~Customer cancel and reschedule with policy (5.2, 5.3).~~ Built.
+4. ~~Customer cancel with policy (5.2).~~ Built. Reschedule (5.3) removed: the office sets times.
 5. ~~Digital estimate approval (7.1).~~ Built.
 6. ~~Ratings and reviews (9.1).~~ Built.
 7. ~~Auto-confirmation and auto-assignment (4.2).~~ Built, off until the owner turns it on.
 8. ~~Support: chat and tickets, with the staff console (10.2, 10.6, 14.5).~~ Built.
-9. ~~Real slot availability (3.2).~~ Built.
+9. ~~Slot availability (3.2).~~ Removed by decision: the office agrees visit times.
 10. Production hosting and backups (14.1, 14.2).
 
 **Phase B: feels like an on-demand app (P1)**

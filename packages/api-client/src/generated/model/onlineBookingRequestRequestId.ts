@@ -5,9 +5,5 @@
  * Service management & technician dispatch (PLAN.md).
  * OpenAPI spec version: v1
  */
-import type { AvailabilitySlot } from './availabilitySlot';
 
-export interface AvailabilityDay {
-  date: string;
-  slots: AvailabilitySlot[];
-}
+export type OnlineBookingRequestRequestId = null | string;

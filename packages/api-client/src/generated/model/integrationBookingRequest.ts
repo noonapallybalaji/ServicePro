@@ -17,6 +17,4 @@ export interface IntegrationBookingRequest {
   fullName: string;
   phone: string;
   address: BookingAddressRequest;
-  preferredSlotStart: string;
-  preferredSlotEnd: string;
 }

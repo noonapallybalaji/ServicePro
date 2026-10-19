@@ -8,6 +8,4 @@
 
 export interface RevisitRequest {
   description: string;
-  preferredSlotStart: string;
-  preferredSlotEnd: string;
 }

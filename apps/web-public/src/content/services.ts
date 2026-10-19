@@ -192,7 +192,7 @@ export const serviceHeading = (service: ServiceContent): string => `${service.he
 export const GENERAL_FAQS: Faq[] = [
   {
     question: 'How do I book a repair?',
-    answer: `Book online in a few steps: choose the appliance, describe the problem, enter your address and a preferred time, and confirm your mobile number with a one-time code. You can also call or message us on WhatsApp.`,
+    answer: `Book online in two steps: choose the appliance, then confirm your location and mobile number with a one-time code. We call or WhatsApp you to agree a visit time. You can also call or message us on WhatsApp.`,
   },
   {
     question: 'How much does a visit cost?',

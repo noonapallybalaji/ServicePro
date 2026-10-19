@@ -6,20 +6,23 @@
  * OpenAPI spec version: v1
  */
 import type { OnlineBookingRequestIssueTypeId } from './onlineBookingRequestIssueTypeId';
+import type { OnlineBookingRequestProblemDescription } from './onlineBookingRequestProblemDescription';
 import type { OnlineBookingRequestCode } from './onlineBookingRequestCode';
 import type { BookingAddressRequest } from './bookingAddressRequest';
 import type { OnlineBookingRequestExtras } from './onlineBookingRequestExtras';
+import type { OnlineBookingRequestRequestId } from './onlineBookingRequestRequestId';
+import type { OnlineBookingRequestAddressId } from './onlineBookingRequestAddressId';
 
 export interface OnlineBookingRequest {
   categoryId: string;
   issueTypeId: OnlineBookingRequestIssueTypeId;
-  problemDescription: string;
+  problemDescription: OnlineBookingRequestProblemDescription;
   fullName: string;
   phone: string;
   code: OnlineBookingRequestCode;
   address: BookingAddressRequest;
-  preferredSlotStart: string;
-  preferredSlotEnd: string;
   acceptedPolicies?: boolean;
   extras?: OnlineBookingRequestExtras;
+  requestId?: OnlineBookingRequestRequestId;
+  addressId?: OnlineBookingRequestAddressId;
 }

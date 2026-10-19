@@ -22,8 +22,8 @@ namespace ServicePro.Modules.ServiceRequests.Application;
  * Safety: the caller must state that the customer explicitly confirmed the summary, and must send
  * an idempotency key (the WhatsApp message id of that confirmation). The key is stored on the job
  * with a unique index, so a retried or duplicated request returns the first booking instead of
- * creating another. Like website bookings, the job starts in NEW: the time is a preference that the
- * office confirms, never a confirmed appointment.
+ * creating another. Like website bookings, the job starts in NEW and carries no time: the office
+ * agrees the visit date with the customer, so nothing here is ever a confirmed appointment.
  */
 
 public sealed record IntegrationBookingRequest(
@@ -34,21 +34,17 @@ public sealed record IntegrationBookingRequest(
     string ProblemDescription,
     string FullName,
     string Phone,
-    BookingAddressRequest Address,
-    DateTimeOffset PreferredSlotStart,
-    DateTimeOffset PreferredSlotEnd);
+    BookingAddressRequest Address);
 
 /// <summary>
 /// What the assistant may tell the customer. <see cref="AppointmentConfirmed"/> is always false at
-/// creation: the office confirms the visit time later (the customer is told on WhatsApp).
+/// creation: the office agrees the visit time with the customer later (on WhatsApp or a call).
 /// </summary>
 public sealed record IntegrationBookingResponse(
     string SrNumber,
     ServiceRequestStatus Status,
     string StatusText,
     bool AppointmentConfirmed,
-    DateTimeOffset PreferredSlotStart,
-    DateTimeOffset PreferredSlotEnd,
     string TrackingUrl,
     bool Duplicate);
 
@@ -74,7 +70,6 @@ internal sealed class IntegrationBookingRequestValidator : AbstractValidator<Int
         RuleFor(r => r.Address.Pincode).Matches("^[1-9][0-9]{5}$").WithMessage("Enter a 6-digit pincode.");
         RuleFor(r => r.Address.Latitude).InclusiveBetween(-90, 90).When(r => r.Address.Latitude.HasValue);
         RuleFor(r => r.Address.Longitude).InclusiveBetween(-180, 180).When(r => r.Address.Longitude.HasValue);
-        RuleFor(r => r.PreferredSlotEnd).GreaterThan(r => r.PreferredSlotStart).WithMessage("The preferred window must end after it starts.");
     }
 }
 
@@ -91,7 +86,6 @@ public sealed class BookViaIntegration(
     ICatalogDirectory catalog,
     IOptions<PublicSiteOptions> site,
     ISettingsStore settings,
-    SlotAvailability availability,
     IClock clock) : IUseCase
 {
     private const RequestChannel Channel = RequestChannel.WhatsApp;
@@ -115,16 +109,10 @@ public sealed class BookViaIntegration(
             return phone.Error!;
         }
 
-        var details = await BookingRules.ValidateAsync(
-            catalog, clock, request.CategoryId, request.IssueTypeId, request.Address.Pincode, request.PreferredSlotStart, request.PreferredSlotEnd, ct);
+        var details = await BookingRules.ValidateAsync(catalog, request.CategoryId, request.IssueTypeId, request.Address.Pincode, ct);
         if (details.IsFailure)
         {
             return details.Error!;
-        }
-
-        if (await availability.CheckAsync(request.CategoryId, request.Address.Pincode, request.PreferredSlotStart, request.PreferredSlotEnd, null, ct) is { } slotError)
-        {
-            return slotError;
         }
 
         var address = request.Address;
@@ -136,7 +124,7 @@ public sealed class BookViaIntegration(
 
         var customer = await customers.FindOrCreateAsync(
             new SelfServiceContact(request.FullName.Trim(), phone.Value, Channel),
-            new SelfServiceAddress(address.Label, address.Line1, address.Line2, address.Landmark, address.Locality, address.City,
+            new SelfServiceAddress(address.Label, address.Line1 ?? string.Empty, address.Line2, address.Landmark, address.Locality, address.City,
                 address.State ?? string.Empty, address.Pincode, pin?.Value),
             ct);
         if (customer.IsFailure)
@@ -156,8 +144,8 @@ public sealed class BookViaIntegration(
                 Channel,
                 Priority.Normal,
                 details.Value.BaseVisitCharge,
-                request.PreferredSlotStart,
-                request.PreferredSlotEnd,
+                PreferredSlotStart: null,
+                PreferredSlotEnd: null,
                 ScheduledStart: null,
                 ScheduledEnd: null,
                 IsWarrantyVisit: false,
@@ -195,8 +183,6 @@ public sealed class BookViaIntegration(
         request.Status,
         StatusText(request.Status),
         AppointmentConfirmed: request.ScheduledStart is not null,
-        request.PreferredSlotStart ?? default,
-        request.PreferredSlotEnd ?? default,
         $"{site.Value.PublicSiteUrl.TrimEnd('/')}/t/{request.TrackingToken}",
         duplicate);
 

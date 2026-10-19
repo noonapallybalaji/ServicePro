@@ -6,6 +6,7 @@
  * OpenAPI spec version: v1
  */
 import type { BookingAddressRequestLabel } from './bookingAddressRequestLabel';
+import type { BookingAddressRequestLine1 } from './bookingAddressRequestLine1';
 import type { BookingAddressRequestLine2 } from './bookingAddressRequestLine2';
 import type { BookingAddressRequestLandmark } from './bookingAddressRequestLandmark';
 import type { BookingAddressRequestState } from './bookingAddressRequestState';
@@ -13,11 +14,12 @@ import type { BookingAddressRequestLatitude } from './bookingAddressRequestLatit
 import type { BookingAddressRequestLongitude } from './bookingAddressRequestLongitude';
 
 /**
- * Latitude/longitude come from the customer's device ("Use my current location"), if shared.
+ * Latitude/longitude come from the customer's device ("Detect my location"), if shared. Line1 (house
+or flat number) is optional on the website: the technician has the pin and calls the customer.
  */
 export interface BookingAddressRequest {
   label: BookingAddressRequestLabel;
-  line1: string;
+  line1: BookingAddressRequestLine1;
   line2: BookingAddressRequestLine2;
   landmark: BookingAddressRequestLandmark;
   locality: string;

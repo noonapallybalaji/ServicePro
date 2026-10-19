@@ -42,6 +42,22 @@ public sealed class CustomersModule : IModule
             .WithStandardErrors()
             .WithName("UpdateMyAccount");
 
+        // Changing the sign-in number: a code to the new number, then the change. Both send or check codes: strict limit.
+        account.MapPost("/phone/code", async (PhoneChangeCodeRequest request, RequestPhoneChangeCode useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Produces<PhoneChangeCodeResponse>()
+            .WithStandardErrors()
+            .WithName("RequestPhoneChangeCode");
+
+        account.MapPost("/phone", async (ChangePhoneRequest request, ChangeMyPhone useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .Validate<ChangePhoneRequest>()
+            .Produces<AccountResponse>()
+            .WithStandardErrors()
+            .WithName("ChangeMyPhone");
+
         account.MapPost("/addresses", async (AddAccountAddressRequest request, AddMyAddress useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(request, ct)).ToHttp())
             .Validate<AddAccountAddressRequest>()

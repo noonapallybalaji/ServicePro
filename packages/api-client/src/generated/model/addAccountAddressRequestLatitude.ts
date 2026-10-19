@@ -6,7 +6,4 @@
  * OpenAPI spec version: v1
  */
 
-export type GetAvailabilityParams = {
-categoryId: string;
-pincode: string;
-};
+export type AddAccountAddressRequestLatitude = null | number;

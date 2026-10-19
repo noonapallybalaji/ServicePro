@@ -71,4 +71,7 @@ public enum OtpPurpose
 
     /// <summary>A customer approving a repair estimate from their tracking link.</summary>
     EstimateApproval,
+
+    /// <summary>A signed-in customer proving they own the new mobile number they're switching to.</summary>
+    ChangePhone,
 }

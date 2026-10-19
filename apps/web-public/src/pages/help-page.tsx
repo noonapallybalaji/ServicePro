@@ -32,15 +32,15 @@ const TOPICS: Topic[] = [
     icon: <CalendarClock aria-hidden />,
     answers: [
       {
-        q: 'Which times can I choose?',
-        a: 'The booking form shows the visit windows we offer for the next few days; a time we are already full for is greyed out. The office confirms the exact time on WhatsApp.',
+        q: 'When will the technician come?',
+        a: 'After you book, our team calls or messages you on WhatsApp to agree a visit time that suits you.',
       },
       {
         q: 'How do I change the time or cancel?',
         a: (
           <>
-            Open the booking in <Link className="link" to="/account">My bookings</Link> and use <strong>Change time</strong> or <strong>Cancel booking</strong>. They are
-            there until the technician sets out. If they aren't, contact us.
+            Open the booking in <Link className="link" to="/account">My bookings</Link> and use <strong>Cancel booking</strong> (until the technician sets out). To change the time,
+            choose <strong>Get help</strong> or message us and we'll fix a new one with you.
           </>
         ),
       },
@@ -111,7 +111,7 @@ const TOPICS: Topic[] = [
       },
       {
         q: 'The problem came back. What do I do?',
-        a: 'While the warranty lasts, open the booking and choose “Problem came back?”: pick a time and we send a technician at no visiting charge. Otherwise, ask us below.',
+        a: 'While the warranty lasts, open the booking and choose “Problem came back?”: we call you to fix a time and send a technician at no visiting charge. Otherwise, ask us below.',
       },
     ],
   },

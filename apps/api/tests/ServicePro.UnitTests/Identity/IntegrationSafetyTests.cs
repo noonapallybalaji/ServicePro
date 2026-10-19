@@ -101,9 +101,7 @@ public sealed class IntegrationSafetyTests
         "AC not cooling",
         "Ravi",
         "919876543210",
-        new BookingAddressRequest("Home", "Flat 1", null, null, "Madhapur", "Hyderabad", null, "500081", null, null),
-        DateTimeOffset.UtcNow.AddDays(1),
-        DateTimeOffset.UtcNow.AddDays(1).AddHours(3));
+        new BookingAddressRequest("Home", "Flat 1", null, null, "Madhapur", "Hyderabad", null, "500081", null, null));
 
     [Fact]
     public void A_booking_without_explicit_customer_confirmation_is_refused()
@@ -121,7 +119,7 @@ public sealed class IntegrationSafetyTests
     {
         var request = ServiceRequest.Create(
             new NewServiceRequest("SR-1", Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), null, "AC", RequestChannel.WhatsApp, Priority.Normal, 349,
-                DateTimeOffset.UtcNow.AddDays(1), DateTimeOffset.UtcNow.AddDays(1).AddHours(3), null, null, false, null, AwaitsReview: true, ExternalReference: " wamid.1 "),
+                null, null, null, null, false, null, AwaitsReview: true, ExternalReference: " wamid.1 "),
             new Actor(ActorType.AiAgent, null),
             DateTimeOffset.UtcNow);
 

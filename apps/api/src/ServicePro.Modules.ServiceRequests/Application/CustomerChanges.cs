@@ -2,7 +2,6 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Application;
 using ServicePro.BuildingBlocks.Settings;
-using ServicePro.Contracts.Ports;
 using ServicePro.Modules.ServiceRequests.Domain;
 using ServicePro.SharedKernel.Abstractions;
 using ServicePro.SharedKernel.Results;
@@ -10,10 +9,10 @@ using ServicePro.SharedKernel.Results;
 namespace ServicePro.Modules.ServiceRequests.Application;
 
 /*
- * Customers cancel or move their own booking from "My bookings" (signed in, so a forwarded
- * tracking link can't do it). Allowed until the technician sets out, and optionally until a
- * cut-off before the visit. No cancellation fee: nothing is paid upfront, so there is nothing
- * to charge it against (see the cancellation and refund policy page).
+ * Customers cancel their own booking from "My bookings" (signed in, so a forwarded tracking link
+ * can't do it). Allowed until the technician sets out, and optionally until a cut-off before the
+ * visit. Customers don't pick or move visit times: the office agrees the date with them and sets
+ * it. No cancellation fee: nothing is paid upfront, so there is nothing to charge it against.
  */
 
 public static class CustomerChangeSettings
@@ -23,49 +22,30 @@ public static class CustomerChangeSettings
         true,
         "Customers can cancel their own booking online until the technician sets out.");
 
-    public static readonly SettingDefinition<bool> CanReschedule = new(
-        "booking.customer_can_reschedule",
-        true,
-        "Customers can move their own booking to another time online until the technician sets out.");
-
-    public static readonly SettingDefinition<int> MaxReschedules = new(
-        "booking.customer_max_reschedules",
-        2,
-        "How many times a customer can move one booking online. After that, they call.");
-
     public static readonly SettingDefinition<int> CutoffMinutes = new(
         "booking.customer_change_cutoff_minutes",
         0,
-        "Stop online cancel/reschedule this many minutes before the visit starts. 0 = allowed until the technician sets out.");
+        "Stop online cancelling this many minutes before the scheduled visit. 0 = allowed until the technician sets out.");
 }
 
 /// <summary>What the customer may do with one booking right now, under the current settings.</summary>
 public sealed class CustomerChangePolicy(ISettingsStore settings, IClock clock)
 {
-    private (bool Cancel, bool Reschedule, int Max, int Cutoff)? _loaded;
+    private (bool Cancel, int Cutoff)? _loaded;
 
-    public async Task<(bool CanCancel, bool CanReschedule)> EvaluateAsync(ServiceRequest request, CancellationToken ct)
+    public async Task<bool> CanCancelAsync(ServiceRequest request, CancellationToken ct)
     {
-        var (cancel, reschedule, max, cutoff) = await LoadAsync(ct);
-        if (!request.CustomerCanChange || IsPastCutoff(request, cutoff))
-        {
-            return (false, false);
-        }
-
-        return (cancel, reschedule && request.CustomerRescheduleCount < max);
+        var (cancel, cutoff) = await LoadAsync(ct);
+        return cancel && request.CustomerCanChange && !IsPastCutoff(request, cutoff);
     }
 
-    public async Task<int> MaxReschedulesAsync(CancellationToken ct) => (await LoadAsync(ct)).Max;
-
-    /// <summary>The reason a change isn't allowed, in the customer's words; null when it is.</summary>
-    public async Task<Error?> CheckAsync(ServiceRequest request, bool cancelling, CancellationToken ct)
+    /// <summary>The reason cancelling isn't allowed, in the customer's words; null when it is.</summary>
+    public async Task<Error?> CheckCancelAsync(ServiceRequest request, CancellationToken ct)
     {
-        var (cancel, reschedule, _, cutoff) = await LoadAsync(ct);
-        if (cancelling ? !cancel : !reschedule)
+        var (cancel, cutoff) = await LoadAsync(ct);
+        if (!cancel)
         {
-            return Error.Conflict("booking.change_by_phone", cancelling
-                ? "Please call us to cancel this booking."
-                : "Please call us to change the time of this booking.");
+            return Error.Conflict("booking.change_by_phone", "Please call us to cancel this booking.");
         }
 
         return IsPastCutoff(request, cutoff)
@@ -75,14 +55,12 @@ public sealed class CustomerChangePolicy(ISettingsStore settings, IClock clock)
 
     private bool IsPastCutoff(ServiceRequest request, int cutoffMinutes) =>
         cutoffMinutes > 0 &&
-        (request.ScheduledStart ?? request.PreferredSlotStart) is { } start &&
+        request.ScheduledStart is { } start &&
         clock.UtcNow > start.AddMinutes(-cutoffMinutes);
 
-    private async Task<(bool Cancel, bool Reschedule, int Max, int Cutoff)> LoadAsync(CancellationToken ct) =>
+    private async Task<(bool Cancel, int Cutoff)> LoadAsync(CancellationToken ct) =>
         _loaded ??= (
             await settings.GetAsync(CustomerChangeSettings.CanCancel, ct),
-            await settings.GetAsync(CustomerChangeSettings.CanReschedule, ct),
-            await settings.GetAsync(CustomerChangeSettings.MaxReschedules, ct),
             await settings.GetAsync(CustomerChangeSettings.CutoffMinutes, ct));
 }
 
@@ -120,7 +98,7 @@ public sealed class CancelMyBooking(DbContext db, ICurrentUser currentUser, Cust
             return booking.Error!;
         }
 
-        if (await policy.CheckAsync(booking.Value, cancelling: true, ct) is { } refused)
+        if (await policy.CheckCancelAsync(booking.Value, ct) is { } refused)
         {
             return refused;
         }
@@ -129,52 +107,6 @@ public sealed class CancelMyBooking(DbContext db, ICurrentUser currentUser, Cust
         if (cancelled.IsFailure)
         {
             return cancelled;
-        }
-
-        await db.SaveChangesAsync(ct);
-        return Result.Success();
-    }
-}
-
-public sealed record RescheduleBookingRequest(DateTimeOffset PreferredSlotStart, DateTimeOffset PreferredSlotEnd);
-
-public sealed class RescheduleMyBooking(
-    DbContext db,
-    ICurrentUser currentUser,
-    CustomerChangePolicy policy,
-    SlotAvailability availability,
-    ICustomerDirectory customers,
-    IClock clock) : IUseCase
-{
-    public async Task<Result> HandleAsync(Guid id, RescheduleBookingRequest request, CancellationToken ct)
-    {
-        var booking = await MyBookingLookup.FindAsync(db, currentUser, id, ct);
-        if (booking.IsFailure)
-        {
-            return booking.Error!;
-        }
-
-        if (await policy.CheckAsync(booking.Value, cancelling: false, ct) is { } refused)
-        {
-            return refused;
-        }
-
-        if (BookingRules.ValidateSlot(clock, request.PreferredSlotStart, request.PreferredSlotEnd) is { } invalid)
-        {
-            return invalid;
-        }
-
-        var address = await customers.GetAddressAsync(booking.Value.AddressId, ct);
-        if (await availability.CheckAsync(booking.Value.CategoryId, address?.Pincode ?? string.Empty,
-                request.PreferredSlotStart, request.PreferredSlotEnd, booking.Value.Id, ct) is { } full)
-        {
-            return full;
-        }
-
-        var moved = booking.Value.RescheduleByCustomer(request.PreferredSlotStart, request.PreferredSlotEnd, await policy.MaxReschedulesAsync(ct), clock.UtcNow);
-        if (moved.IsFailure)
-        {
-            return moved;
         }
 
         await db.SaveChangesAsync(ct);

@@ -6,7 +6,4 @@
  * OpenAPI spec version: v1
  */
 
-export interface RescheduleBookingRequest {
-  preferredSlotStart: string;
-  preferredSlotEnd: string;
-}
+export type BookingAddressRequestLine1 = null | string;

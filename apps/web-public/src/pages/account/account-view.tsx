@@ -1,7 +1,6 @@
 import {
   getGetMyAccountQueryKey,
   isApiError,
-  listMyBookings,
   session,
   useAddMyAddress,
   useDeleteMyAccount,
@@ -10,7 +9,6 @@ import {
   useUpdateMyAddress,
   useGetMyAccount,
   useListMyBookings,
-  useUpdateMyAccount,
   type AccountAddressResponse,
   type AccountResponse,
   type MyBookingResponse,
@@ -31,7 +29,6 @@ import {
   Field,
   Heading,
   Input,
-  Select,
   Skeleton,
   SpotArt,
   StatusBadge,
@@ -44,17 +41,19 @@ import {
   formatDateTime,
   formatINR,
   formatWindow,
-  getInitials,
 } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { Briefcase, CalendarCheck, ChevronRight, Download, Home, LocateFixed, LogOut, Mail, MapPinned, Pencil, Phone, Plus, Search, Trash2 } from 'lucide-react';
+import { Briefcase, CalendarCheck, ChevronRight, Download, Home, LocateFixed, LogOut, MapPinned, Pencil, Plus, Search, Star, Trash2 } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
+import { clearServiceLocation } from '../../location/service-location';
 import { forgetSavedAddress } from '../booking/draft';
 import { downloadProtected } from './download';
+import { ANY_DATE, Chip, ChipRow, DateChips, matchesDate, type DateFilter } from './booking-filters';
 import { BookingChanges } from './booking-changes';
 import { HelpTab } from './help-tab';
+import { ProfileCard } from './profile-card';
 
 const TABS = ['bookings', 'profile', 'help'] as const;
 type Tab = (typeof TABS)[number];
@@ -117,7 +116,7 @@ function BookingsTab() {
   const bookings = useListMyBookings();
   const [appliance, setAppliance] = useState('');
   const [srNumber, setSrNumber] = useState('');
-  const [date, setDate] = useState('');
+  const [date, setDate] = useState<DateFilter>(ANY_DATE);
 
   const appliances = useMemo(() => [...new Set((bookings.data ?? []).map((b) => b.categoryName))].sort(), [bookings.data]);
   const filtered = useMemo(
@@ -126,11 +125,17 @@ function BookingsTab() {
         (b) =>
           (!appliance || b.categoryName === appliance) &&
           (!srNumber.trim() || b.srNumber.toLowerCase().includes(srNumber.trim().toLowerCase())) &&
-          (!date || bookingDay(b) === date),
+          matchesDate(date, bookingDay(b)),
       ),
     [bookings.data, appliance, srNumber, date],
   );
-  const filtering = Boolean(appliance || srNumber.trim() || date);
+  const filtering = Boolean(appliance || srNumber.trim() || date.kind !== 'any');
+  const bookedDays = useMemo(() => new Set((bookings.data ?? []).map(bookingDay)), [bookings.data]);
+  const clear = () => {
+    setAppliance('');
+    setSrNumber('');
+    setDate(ANY_DATE);
+  };
 
   if (bookings.isPending) {
     return (
@@ -184,37 +189,37 @@ function BookingsTab() {
         )}
       </section>
 
-      <Card className="flex flex-col gap-4 lg:sticky lg:top-20" role="search" aria-label="Find a booking">
-        <Heading level={2} size="h3">
-          Find a booking
-        </Heading>
-        <Field label="Appliance">
-          <Select value={appliance} onChange={(e) => setAppliance(e.target.value)}>
-            <option value="">All appliances</option>
-            {appliances.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label="Request number">
+      {/* Phones and tablets: compact, above the list. Desktop: a sticky panel beside it. */}
+      <Card className="flex flex-col gap-3 max-lg:order-first max-lg:p-4 lg:sticky lg:top-20 lg:gap-4" role="search" aria-label="Find a booking">
+        <div className="flex items-center justify-between gap-3">
+          <Heading level={2} size="h3">
+            Find a booking
+          </Heading>
+          {filtering ? (
+            <button type="button" className="link text-sm" onClick={clear}>
+              Clear all
+            </button>
+          ) : null}
+        </div>
+        <Field label="Request number" className="max-lg:[&_label]:text-caption">
           <Input leadingIcon={Search} placeholder="e.g. SR-10017" value={srNumber} onChange={(e) => setSrNumber(e.target.value)} />
         </Field>
-        <Field label="Date" hint="Visit day, or the day you booked.">
-          <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </Field>
-        <Button
-          variant="outline"
-          disabled={!filtering}
-          onClick={() => {
-            setAppliance('');
-            setSrNumber('');
-            setDate('');
-          }}
-        >
-          Clear filters
-        </Button>
+        {appliances.length > 1 ? (
+          <ChipRow label="Appliance">
+            <Chip selected={!appliance} onClick={() => setAppliance('')}>
+              All
+            </Chip>
+            {appliances.map((name) => (
+              <Chip key={name} selected={appliance === name} onClick={() => setAppliance(name)}>
+                {name}
+              </Chip>
+            ))}
+          </ChipRow>
+        ) : null}
+        <DateChips value={date} onChange={setDate} bookedDays={bookedDays} />
+        <Text variant="caption" tone="muted" className="max-lg:hidden">
+          Date: the visit day, or the day you booked.
+        </Text>
       </Card>
     </div>
   );
@@ -269,7 +274,7 @@ function ProfileTab() {
       <ProfileCard account={account.data} />
       <SavedAddresses account={account.data} />
       <MyBills />
-      <YourData account={account.data} />
+      <YourData />
       <div className="border-t border-border pt-6">
         <Button variant="outline" onClick={() => void session.signOut()}>
           <LogOut aria-hidden /> Sign out
@@ -279,31 +284,10 @@ function ProfileTab() {
   );
 }
 
-/* ── Your data: download and delete (DPDP Act) ──────────────────────────── */
+/* ── Your data: delete (DPDP Act) ──────────────────────────────────────── */
 
-function YourData({ account }: { account: AccountResponse }) {
-  const [downloading, setDownloading] = useState(false);
-  const [downloadFailed, setDownloadFailed] = useState(false);
+function YourData() {
   const [deleting, setDeleting] = useState(false);
-
-  async function download() {
-    setDownloading(true);
-    setDownloadFailed(false);
-    try {
-      const bookings = await listMyBookings();
-      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), account, bookings }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `my-data-${new Date().toISOString().slice(0, 10)}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      setDownloadFailed(true);
-    } finally {
-      setDownloading(false);
-    }
-  }
 
   return (
     <section aria-labelledby="your-data" className="flex flex-col gap-4">
@@ -312,18 +296,14 @@ function YourData({ account }: { account: AccountResponse }) {
           Your data
         </Heading>
         <Text variant="sm" tone="secondary">
-          See what we hold about you, or delete your account. Read our{' '}
+          Delete your account and the personal data we hold. To get a copy of your data, contact us. Read our{' '}
           <Link className="link" to="/privacy">
             privacy policy
           </Link>
           .
         </Text>
       </div>
-      {downloadFailed ? <Alert tone="error" title="Couldn't prepare your data" description="Check your connection and try again." /> : null}
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" loading={downloading} onClick={() => void download()}>
-          <Download aria-hidden /> Download my data
-        </Button>
         <Button variant="ghost" className="text-error" onClick={() => setDeleting(true)}>
           <Trash2 aria-hidden /> Delete my account
         </Button>
@@ -340,6 +320,7 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
       meta: { silent: true },
       onSuccess: async () => {
         forgetSavedAddress();
+        clearServiceLocation();
         await session.signOut();
       },
     },
@@ -377,86 +358,6 @@ function DeleteAccountDialog({ open, onOpenChange }: { open: boolean; onOpenChan
   );
 }
 
-function ProfileCard({ account }: { account: AccountResponse }) {
-  const queryClient = useQueryClient();
-  const [editing, setEditing] = useState(false);
-  const [fullName, setFullName] = useState(account.fullName);
-  const [email, setEmail] = useState(account.email ?? '');
-  const save = useUpdateMyAccount({
-    mutation: {
-      meta: { silent: true },
-      onSuccess: (updated) => {
-        queryClient.setQueryData(getGetMyAccountQueryKey(), updated);
-        setEditing(false);
-      },
-    },
-  });
-
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    save.mutate({ data: { fullName, email: email.trim() || null } });
-  }
-
-  return (
-    <Card padding="lg" className="flex flex-col gap-6 sm:flex-row sm:items-center">
-      <span
-        aria-hidden
-        className="flex size-24 shrink-0 items-center justify-center rounded-card bg-primary text-display text-primary-foreground sm:size-32"
-      >
-        {getInitials(account.fullName).charAt(0) || '?'}
-      </span>
-
-      {editing ? (
-        <form onSubmit={submit} className="flex flex-1 flex-col gap-4" noValidate>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Field label="Name" error={isApiError(save.error) ? save.error.fieldError('fullName') : undefined}>
-              <Input autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-            </Field>
-            <Field label="Email" optional error={isApiError(save.error) ? save.error.fieldError('email') : undefined}>
-              <Input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Field>
-          </div>
-          <div className="flex gap-3">
-            <Button type="submit" loading={save.isPending} disabled={!fullName.trim()}>
-              Save
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setFullName(account.fullName);
-                setEmail(account.email ?? '');
-                setEditing(false);
-              }}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <Heading level={2}>{account.fullName}</Heading>
-          <Text className="flex items-center gap-2 tabular-nums">
-            <Phone aria-hidden className="size-4 text-primary" /> {account.phone}
-          </Text>
-          <Text tone={account.email ? 'default' : 'muted'} className="flex items-center gap-2">
-            <Mail aria-hidden className="size-4 text-primary" /> {account.email ?? 'No email added'}
-          </Text>
-          <Text variant="caption" tone="muted">
-            Your mobile number is how you sign in, so it can't be changed here. Call us if it has changed.
-          </Text>
-        </div>
-      )}
-
-      {!editing ? (
-        <Button variant="outline" onClick={() => setEditing(true)} className="self-start sm:self-center">
-          <Pencil aria-hidden /> Edit
-        </Button>
-      ) : null}
-    </Card>
-  );
-}
-
 const LABEL_ICON: Record<string, ReactNode> = {
   Home: <Home aria-hidden />,
   Work: <Briefcase aria-hidden />,
@@ -480,7 +381,7 @@ function SavedAddresses({ account }: { account: AccountResponse }) {
       {account.addresses.length === 0 ? (
         <Card variant="sunken">
           <Text variant="sm" tone="secondary">
-            No saved addresses yet. Add one here, or it is saved when you book.
+            No saved addresses yet. Add one here; addresses you book with are saved too.
           </Text>
         </Card>
       ) : (
@@ -500,12 +401,13 @@ function SavedAddresses({ account }: { account: AccountResponse }) {
 }
 
 function AddressCard({ address, onEdit }: { address: AccountAddressResponse; onEdit: () => void }) {
-  const label = address.label ?? 'Address';
+  // Addresses saved from a booking may have no label: name them by their area.
+  const label = address.label || address.locality;
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
-  const remove = useRemoveMyAddress({
-    mutation: { meta: { silent: true }, onSuccess: (updated) => queryClient.setQueryData(getGetMyAccountQueryKey(), updated) },
-  });
+  const saved = { meta: { silent: true }, onSuccess: (updated: AccountResponse) => queryClient.setQueryData(getGetMyAccountQueryKey(), updated) };
+  const remove = useRemoveMyAddress({ mutation: saved });
+  const makeDefault = useUpdateMyAddress({ mutation: saved });
   return (
     <Card className={cn('flex h-full flex-col gap-3', address.isDefault && 'border-primary-border')}>
       <div className="flex items-start gap-4">
@@ -532,6 +434,7 @@ function AddressCard({ address, onEdit }: { address: AccountAddressResponse; onE
       </div>
       </div>
       {isApiError(remove.error) ? <Alert tone="error" title={remove.error.message} /> : null}
+      {isApiError(makeDefault.error) ? <Alert tone="error" title={makeDefault.error.message} /> : null}
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
         {confirming ? (
           <>
@@ -548,6 +451,30 @@ function AddressCard({ address, onEdit }: { address: AccountAddressResponse; onE
             <Button size="sm" variant="ghost" onClick={onEdit}>
               <Pencil aria-hidden /> Edit
             </Button>
+            {address.isDefault ? null : (
+              <Button
+                size="sm"
+                variant="ghost"
+                loading={makeDefault.isPending}
+                onClick={() =>
+                  makeDefault.mutate({
+                    addressId: address.id,
+                    data: {
+                      label: address.label,
+                      line1: address.line1,
+                      line2: address.line2,
+                      landmark: address.landmark,
+                      locality: address.locality,
+                      city: address.city,
+                      pincode: address.pincode,
+                      makeDefault: true,
+                    },
+                  })
+                }
+              >
+                <Star aria-hidden /> Make default
+              </Button>
+            )}
             <Button size="sm" variant="ghost" className="text-error" onClick={() => setConfirming(true)}>
               <Trash2 aria-hidden /> Remove
             </Button>
@@ -588,7 +515,7 @@ function AddressDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
   const add = editing ? updateAddress : addAddress;
   const update = (patch: Partial<typeof EMPTY_ADDRESS>) => setForm((f) => ({ ...f, ...patch }));
   const error = (field: string) => (isApiError(add.error) ? add.error.fieldError(field) : undefined);
-  const ready = form.line1.trim() && form.locality.trim() && form.city.trim() && /^[1-9][0-9]{5}$/.test(form.pincode);
+  const ready = form.locality.trim() && form.city.trim() && /^[1-9][0-9]{5}$/.test(form.pincode);
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -611,10 +538,11 @@ function AddressDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
       <DialogContent presentation="sheet">
         <DialogHeader
           title={editing ? 'Edit address' : 'Add new address'}
-          description={editing ? 'A new street address clears the saved map location.' : 'Saved addresses are offered when you book.'}
+          description={editing ? undefined : 'You can pick saved addresses when you book.'}
         />
-        <form onSubmit={submit} noValidate>
-          <DialogBody className="flex flex-col gap-4">
+        {/* A flex column, so the fields scroll inside the sheet and Save always stays on screen. */}
+        <form onSubmit={submit} noValidate className="flex min-h-0 flex-1 flex-col">
+          <DialogBody className="flex flex-col gap-3 md:gap-4">
             {isApiError(add.error) && !add.error.fieldErrors ? <Alert tone="error" title={add.error.message} /> : null}
             <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Save address as">
               {['Home', 'Work', 'Other'].map((label) => (
@@ -625,7 +553,7 @@ function AddressDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                   aria-checked={form.label === label}
                   onClick={() => update({ label })}
                   className={cn(
-                    'pressable transition-interactive inline-flex h-10 items-center rounded-pill border px-4 text-sm font-semibold',
+                    'pressable transition-interactive inline-flex h-8 items-center rounded-pill border px-3 text-sm font-semibold md:h-10 md:px-4',
                     form.label === label ? 'border-primary bg-primary-subtle text-primary-subtle-foreground' : 'border-border bg-surface text-foreground-secondary',
                   )}
                 >
@@ -633,11 +561,12 @@ function AddressDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Field label="House / flat / floor no." error={error('line1')}>
+            {/* Phones: compact labels, and the short fields in pairs. */}
+            <div className="grid grid-cols-2 gap-3 md:gap-4 max-md:[&_label]:text-caption">
+              <Field label="House / flat no." optional error={error('line1')} className="col-span-2 md:col-span-1">
                 <Input autoComplete="address-line1" value={form.line1} onChange={(e) => update({ line1: e.target.value })} />
               </Field>
-              <Field label="Building / apartment / street" optional>
+              <Field label="Building / street" optional className="col-span-2 md:col-span-1">
                 <Input autoComplete="address-line2" value={form.line2} onChange={(e) => update({ line2: e.target.value })} />
               </Field>
               <Field label="Area / locality" error={error('locality')}>
@@ -649,13 +578,18 @@ function AddressDialog({ open, onOpenChange, editing }: { open: boolean; onOpenC
               <Field label="City" error={error('city')}>
                 <Input autoComplete="address-level2" value={form.city} onChange={(e) => update({ city: e.target.value })} />
               </Field>
-              <Field label="Pincode" error={error('pincode')}>
+              <Field label="PIN code" error={error('pincode')}>
                 <Input inputMode="numeric" autoComplete="postal-code" maxLength={6} value={form.pincode} onChange={(e) => update({ pincode: e.target.value.replace(/\D/g, '') })} />
               </Field>
             </div>
             <Checkbox checked={form.makeDefault} onCheckedChange={(checked) => update({ makeDefault: checked === true })} label="Make this my default address" />
+            {editing ? (
+              <Text variant="caption" tone="muted">
+                Changing the house number clears the saved map location.
+              </Text>
+            ) : null}
           </DialogBody>
-          <DialogFooter>
+          <DialogFooter className="max-md:flex-row max-md:*:flex-1">
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>

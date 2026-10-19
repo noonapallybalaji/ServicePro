@@ -2,35 +2,26 @@ import {
   getListMyBookingsQueryKey,
   isApiError,
   useCancelMyBooking,
-  useGetMyBookingAvailability,
-  useRescheduleMyBooking,
   type MyBookingResponse,
 } from '@servicepro/api-client';
 import { Alert, Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Field, Textarea } from '@servicepro/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, LifeBuoy, X } from 'lucide-react';
+import { LifeBuoy, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 
-import { EMPTY_DRAFT, type Draft } from '../booking/draft';
-import { TimeStep } from '../booking/time-step';
-
 /**
- * Cancel or move a booking (allowed until the technician sets out; the API has the final word,
- * and its settings decide whether these buttons appear at all).
+ * Cancel a booking (allowed until the technician sets out; the API has the final word, and its
+ * settings decide whether the button appears). Visit times are agreed with the office: to change
+ * one, the customer asks for help.
  */
 export function BookingChanges({ booking }: { booking: MyBookingResponse }) {
-  const [open, setOpen] = useState<'cancel' | 'reschedule' | null>(null);
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="flex flex-wrap gap-2 border-t border-border px-4 py-3">
-      {booking.canReschedule ? (
-        <Button size="sm" variant="outline" onClick={() => setOpen('reschedule')}>
-          <CalendarClock aria-hidden /> Change time
-        </Button>
-      ) : null}
       {booking.canCancel ? (
-        <Button size="sm" variant="ghost" className="text-error" onClick={() => setOpen('cancel')}>
+        <Button size="sm" variant="ghost" className="text-error" onClick={() => setOpen(true)}>
           <X aria-hidden /> Cancel booking
         </Button>
       ) : null}
@@ -39,8 +30,7 @@ export function BookingChanges({ booking }: { booking: MyBookingResponse }) {
           <LifeBuoy aria-hidden /> Get help
         </Link>
       </Button>
-      {open === 'reschedule' ? <RescheduleDialog booking={booking} onClose={() => setOpen(null)} /> : null}
-      {open === 'cancel' ? <CancelDialog booking={booking} onClose={() => setOpen(null)} /> : null}
+      {open ? <CancelDialog booking={booking} onClose={() => setOpen(false)} /> : null}
     </div>
   );
 }
@@ -48,58 +38,6 @@ export function BookingChanges({ booking }: { booking: MyBookingResponse }) {
 function useRefreshBookings() {
   const queryClient = useQueryClient();
   return () => queryClient.invalidateQueries({ queryKey: getListMyBookingsQueryKey() });
-}
-
-function RescheduleDialog({ booking, onClose }: { booking: MyBookingResponse; onClose: () => void }) {
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const availability = useGetMyBookingAvailability(booking.id);
-  const refresh = useRefreshBookings();
-  const reschedule = useRescheduleMyBooking({
-    mutation: {
-      meta: { silent: true },
-      onSuccess: async () => {
-        await refresh();
-        onClose();
-      },
-    },
-  });
-
-  function submit() {
-    if (!draft.slotStart) return;
-    reschedule.mutate({ id: booking.id, data: { preferredSlotStart: draft.slotStart, preferredSlotEnd: draft.slotEnd } });
-  }
-
-  return (
-    <Dialog open onOpenChange={(next) => (next ? undefined : onClose())}>
-      <DialogContent presentation="sheet">
-        <DialogHeader
-          title={`Change the time for ${booking.srNumber}`}
-          description={booking.technicianName ? `We'll confirm the new time with you and ${booking.technicianName}.` : "We'll confirm the new time with you on WhatsApp."}
-        />
-        <DialogBody className="flex flex-col gap-4">
-          {isApiError(reschedule.error) ? <Alert role="alert" tone="error" title={reschedule.error.message} /> : null}
-          <TimeStep
-            draft={draft}
-            update={(patch) => setDraft((d) => ({ ...d, ...patch }))}
-            onNext={submit}
-            availability={availability.data}
-            loading={availability.isPending}
-            failed={availability.isError}
-            actions={(ready) => (
-              <DialogFooter className="px-0">
-                <Button type="button" variant="ghost" onClick={onClose}>
-                  Keep current time
-                </Button>
-                <Button type="submit" disabled={!ready} loading={reschedule.isPending}>
-                  Move my visit
-                </Button>
-              </DialogFooter>
-            )}
-          />
-        </DialogBody>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 function CancelDialog({ booking, onClose }: { booking: MyBookingResponse; onClose: () => void }) {

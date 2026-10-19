@@ -25,7 +25,7 @@ function ServiceContentPage({ service, meta }: { service: ServiceContent; meta: 
   const faqs = [...service.faqs, ...GENERAL_FAQS.slice(1, 5)];
 
   return (
-    <SiteLayout>
+    <SiteLayout pinnedSearch>
       <PageHero
         crumbs={meta.crumbs}
         eyebrow={`Doorstep repair in ${SITE.city}`}
@@ -106,7 +106,7 @@ function ServiceContentPage({ service, meta }: { service: ServiceContent; meta: 
 
       <BookCta
         title={`Book ${inSentence(service.title)} in ${SITE.city}`}
-        text="Choose a time that suits you. You'll see the visiting charge before you confirm, and pay only after the visit."
+        text="We'll call you to agree a time. You'll see the visiting charge before you confirm, and pay only after the visit."
         service={service.code}
       />
     </SiteLayout>

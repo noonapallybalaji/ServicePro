@@ -85,6 +85,31 @@ public sealed class NotificationsModule : IModule
             .Produces<TemplateResponse>()
             .WithStandardErrors()
             .WithName("UpdateNotificationTemplate");
+
+        // The customer site's notification bell.
+        endpoints.MapGet("/api/v1/account/notifications", async (int? take, ListMyNotifications useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(take ?? 30, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces<CustomerNotificationsResponse>()
+            .WithStandardErrors()
+            .WithName("ListMyNotifications");
+
+        endpoints.MapPost("/api/v1/account/notifications/{notificationId:guid}/read", async (Guid notificationId, MarkMyNotificationsRead useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(notificationId, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces<CustomerNotificationsResponse>()
+            .WithStandardErrors()
+            .WithName("MarkMyNotificationRead");
+
+        endpoints.MapPost("/api/v1/account/notifications/read-all", async (MarkMyNotificationsRead useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(null, ct)).ToHttp())
+            .WithTags("Customer account")
+            .RequireAuthorization(AuthPolicies.Customer)
+            .Produces<CustomerNotificationsResponse>()
+            .WithStandardErrors()
+            .WithName("MarkAllMyNotificationsRead");
     }
 }
 
@@ -209,5 +234,7 @@ internal sealed class NotificationConfiguration : IEntityTypeConfiguration<Notif
         builder.Property(n => n.ProviderMessageId).HasMaxLength(200);
         builder.Property(n => n.Error).HasMaxLength(1000);
         builder.HasIndex(n => new { n.ServiceRequestId, n.CreatedAt });
+        // The customer's notification list and unread count.
+        builder.HasIndex(n => new { n.RecipientId, n.CreatedAt });
     }
 }

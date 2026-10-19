@@ -15,7 +15,7 @@ import { SITE, whatsappLink } from '../site';
 export function ServicesPage() {
   usePageMeta(PAGES.services);
   return (
-    <SiteLayout>
+    <SiteLayout pinnedSearch>
       <PageHero
         crumbs={PAGES.services.crumbs}
         eyebrow={`Doorstep repair in ${SITE.city}`}
@@ -61,7 +61,7 @@ export function ServicesPage() {
       <PageSection id="how" tinted title="How a repair visit works">
         <StepList />
       </PageSection>
-      <BookCta title="Ready to book?" text="Pick your appliance and a time that suits you. You pay only after the visit." />
+      <BookCta title="Ready to book?" text="Pick your appliance and we'll call you to agree a time. You pay only after the visit." />
     </SiteLayout>
   );
 }
@@ -137,7 +137,7 @@ export function ContactPage() {
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <li>
             <ContactCard icon={<CalendarCheck aria-hidden />} title="Book online">
-              <p>Choose your appliance, describe the problem and pick a time. It takes about a minute.</p>
+              <p>Choose your appliance and confirm your location. We call you to agree a time. It takes about a minute.</p>
               <div className="mt-auto">
                 <Button asChild>
                   <Link to="/book">Book a repair</Link>

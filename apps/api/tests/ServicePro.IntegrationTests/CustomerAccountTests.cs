@@ -25,7 +25,7 @@ public sealed class CustomerAccountTests(ApiFactory factory)
         {
             Content = JsonContent.Create(
                 new IntegrationBookingRequest($"wamid.{Guid.NewGuid():N}", true, category.Id, null, "Fridge not cooling", "Asha Rao", phone,
-                    new BookingAddressRequest("Home", "Flat 9", null, null, "Kondapur", "Hyderabad", null, "500084", null, null), start, start.AddHours(3)),
+                    new BookingAddressRequest("Home", "Flat 9", null, null, "Kondapur", "Hyderabad", null, "500084", null, null)),
                 options: TestApi.Json),
         };
         booking.Headers.Add("X-ServicePro-Integration-Key", ApiFactory.IntegrationKey);

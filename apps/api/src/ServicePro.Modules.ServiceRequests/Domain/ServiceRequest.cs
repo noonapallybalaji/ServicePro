@@ -132,8 +132,6 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
     /// <summary>When we asked the customer to rate the visit (once per job).</summary>
     public DateTimeOffset? FeedbackRequestedAt { get; private set; }
 
-    /// <summary>How many times the customer moved the visit themselves (capped by a setting).</summary>
-    public int CustomerRescheduleCount { get; private set; }
 
     public DateTimeOffset? AcceptedAt { get; private set; }
 
@@ -352,41 +350,6 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
 
         return Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.Cancelled), ServiceRequestStatus.Cancelled, Actor.Customer,
             new TransitionInput(ReasonCode: "CUSTOMER_CANCELLED", Note: string.IsNullOrWhiteSpace(reason) ? null : reason.Trim()), now);
-    }
-
-    /// <summary>
-    /// Moves the visit window. Before a technician accepts, only the time changes. Once one has
-    /// accepted, the job goes to RESCHEDULED so the office confirms the new time with them.
-    /// </summary>
-    public Result RescheduleByCustomer(DateTimeOffset slotStart, DateTimeOffset slotEnd, int maxReschedules, DateTimeOffset now)
-    {
-        if (!CustomerCanChange)
-        {
-            return CustomerChangeErrors.TooLate;
-        }
-
-        if (CustomerRescheduleCount >= maxReschedules)
-        {
-            return Error.Conflict("booking.reschedule_limit", "This booking has been moved as many times as we can do online. Please call us to change it.");
-        }
-
-        if (Status == ServiceRequestStatus.Accepted)
-        {
-            var moved = Apply(ServiceRequestWorkflow.Find(Status, ServiceRequestStatus.Rescheduled), ServiceRequestStatus.Rescheduled, Actor.Customer,
-                new TransitionInput(ReasonCode: "CUSTOMER_RESCHEDULED"), now);
-            if (moved.IsFailure)
-            {
-                return moved;
-            }
-        }
-
-        PreferredSlotStart = Utc(slotStart);
-        PreferredSlotEnd = Utc(slotEnd);
-        ScheduledStart = null;
-        ScheduledEnd = null;
-        CustomerRescheduleCount++;
-        Raise(new BookingTimeChanged(Id, SrNumber, CustomerId, CurrentTechnicianId, PreferredSlotStart!.Value, PreferredSlotEnd!.Value));
-        return Result.Success();
     }
 
     public Result ApplyPayment(PaymentStatus paymentStatus, decimal finalAmount, Actor actor, DateTimeOffset now)

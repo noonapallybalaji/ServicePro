@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using ServicePro.BuildingBlocks.Messaging;
 using ServicePro.Modules.Billing.Application;
+using ServicePro.Modules.Catalog.Application;
 using ServicePro.Modules.Dispatch.Application;
 using ServicePro.SharedKernel.Abstractions;
 using Testcontainers.PostgreSql;
@@ -55,12 +56,6 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         await _database.StartAsync();
         _ = Services; // build the host: migrates and seeds
-
-        // Most tests book at arbitrary times; AvailabilityTests switch capacity checks on.
-        await using var scope = Services.CreateAsyncScope();
-        var settings = scope.ServiceProvider.GetRequiredService<ServicePro.BuildingBlocks.Settings.ISettingsStore>();
-        await settings.SetAsync("booking.capacity_check", System.Text.Json.JsonSerializer.SerializeToElement(false), CancellationToken.None);
-        await scope.ServiceProvider.GetRequiredService<Microsoft.EntityFrameworkCore.DbContext>().SaveChangesAsync();
     }
 
     public new async ValueTask DisposeAsync()
@@ -89,6 +84,7 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseSetting("RateLimits:IntegrationPerMinute", "10000");
         builder.UseSetting("Integrations:Keys:n8n", ServicePro.BuildingBlocks.Security.SecureTokens.Hash(IntegrationKey));
         builder.UseSetting("Notifications:PublicSiteUrl", "https://track.test");
+        builder.UseSetting("Geocoding:Provider", "None"); // the fake below answers instead of OpenStreetMap
         builder.UseSetting("Realtime:AllowedOrigins", "https://track.test, https://tech.test/");
         builder.UseSetting("Payments:Razorpay:WebhookSecret", WebhookSecret);
         builder.UseSetting("Storage:Local:RootPath", Path.Combine(Path.GetTempPath(), "servicepro-tests", Guid.NewGuid().ToString("N")));
@@ -99,12 +95,16 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IClock>(Clock);
             services.RemoveAll<IPaymentGateway>();
             services.AddSingleton<IPaymentGateway>(Payments);
+            services.RemoveAll<IReverseGeocoder>();
+            services.AddSingleton<IReverseGeocoder>(Geocoder);
         });
     }
 
     public const string WebhookSecret = "integration-test-webhook-secret";
 
     public FakePaymentGateway Payments { get; } = new();
+
+    public FakeGeocoder Geocoder { get; } = new();
 
     /// <summary>HTTPS so the Secure refresh cookie is sent back.</summary>
     public HttpClient CreateApiClient() =>

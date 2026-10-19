@@ -10,7 +10,7 @@ export const PROMISES: { icon: LucideIcon; hue: Hue; title: string; text: string
 
 /** How a visit works, in order. */
 export const STEPS: { title: string; text: string; hue: Hue }[] = [
-  { title: 'Book in a minute', text: 'Pick the appliance, the problem and a time that suits you — online, or by call or WhatsApp.', hue: 'violet' },
+  { title: 'Book in a minute', text: 'Pick the appliance and confirm your location; we call you to agree a time — online, or by call or WhatsApp.', hue: 'violet' },
   { title: 'A technician visits', text: 'A technician skilled in your appliance checks it and explains the cost first.', hue: 'sky' },
   { title: 'Pay after the repair', text: 'Share your completion code when you’re happy, then pay by UPI or cash.', hue: 'mint' },
 ];

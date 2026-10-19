@@ -115,7 +115,7 @@ public sealed class SaveInvoice(
     ICurrentUser currentUser,
     IClock clock) : IUseCase
 {
-    private static readonly HashSet<ServiceRequestStatus> BillableStatuses =
+    private static readonly HashSet<ServiceRequestStatus> _billableStatuses =
         [ServiceRequestStatus.Diagnosing, ServiceRequestStatus.InProgress, ServiceRequestStatus.Completed, ServiceRequestStatus.UnableToRepair];
 
     public async Task<Result<InvoiceResponse>> HandleAsync(Guid serviceRequestId, SaveInvoiceRequest request, CancellationToken ct)
@@ -131,7 +131,7 @@ public sealed class SaveInvoice(
             return denied;
         }
 
-        if (!BillableStatuses.Contains(job.Value.Status))
+        if (!_billableStatuses.Contains(job.Value.Status))
         {
             return Error.Conflict("invoice.not_billable", "A bill can be prepared once the technician is diagnosing the job.");
         }

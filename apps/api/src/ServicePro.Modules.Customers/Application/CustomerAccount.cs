@@ -1,9 +1,12 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Application;
+using ServicePro.Contracts;
+using ServicePro.Contracts.Ports;
 using ServicePro.Modules.Customers.Domain;
 using ServicePro.SharedKernel.Abstractions;
 using ServicePro.SharedKernel.Results;
+using ServicePro.SharedKernel.ValueObjects;
 
 namespace ServicePro.Modules.Customers.Application;
 
@@ -109,19 +112,29 @@ public sealed record AddAccountAddressRequest(
     string Locality,
     string City,
     string Pincode,
-    bool MakeDefault);
+    bool MakeDefault,
+    double? Latitude = null,
+    double? Longitude = null)
+{
+    /// <summary>The map pin from the customer's device, when both coordinates were sent and are valid.</summary>
+    public GeoLocation? ToPin() => Latitude is { } lat && Longitude is { } lng && GeoLocation.Create(lat, lng) is { IsSuccess: true } pin ? pin.Value : null;
+}
 
 internal sealed class AddAccountAddressRequestValidator : AbstractValidator<AddAccountAddressRequest>
 {
     public AddAccountAddressRequestValidator()
     {
         RuleFor(r => r.Label).MaximumLength(40);
-        RuleFor(r => r.Line1).NotEmpty().WithMessage("Enter your house or flat number and street.").MaximumLength(200);
+        // Optional, like at booking: addresses saved from a booking may have only the area and the map pin.
+        RuleFor(r => r.Line1).MaximumLength(200);
         RuleFor(r => r.Line2).MaximumLength(200);
         RuleFor(r => r.Landmark).MaximumLength(120);
         RuleFor(r => r.Locality).NotEmpty().WithMessage("Enter your area or locality.").MaximumLength(120);
         RuleFor(r => r.City).NotEmpty().WithMessage("Enter your city.").MaximumLength(80);
         RuleFor(r => r.Pincode).Matches("^[1-9][0-9]{5}$").WithMessage("Enter a 6-digit pincode.");
+        RuleFor(r => r.Latitude).InclusiveBetween(-90, 90).When(r => r.Latitude.HasValue);
+        RuleFor(r => r.Longitude).InclusiveBetween(-180, 180).When(r => r.Longitude.HasValue);
+        RuleFor(r => r).Must(r => r.Latitude.HasValue == r.Longitude.HasValue).WithMessage("Send both latitude and longitude, or neither.");
     }
 }
 
@@ -149,7 +162,7 @@ public sealed class AddMyAddress(DbContext db, ICurrentUser currentUser) : IUseC
         }
 
         customer.AddAddress(
-            new AddressDetails(request.Label, request.Line1, request.Line2, request.Landmark, request.Locality, request.City, string.Empty, request.Pincode, null),
+            new AddressDetails(request.Label, request.Line1, request.Line2, request.Landmark, request.Locality, request.City, string.Empty, request.Pincode, request.ToPin()),
             request.MakeDefault);
         await db.SaveChangesAsync(ct);
         return GetMyAccount.ToResponse(customer);
@@ -177,7 +190,7 @@ public sealed class UpdateMyAddress(DbContext db, ICurrentUser currentUser) : IU
         var samePlace = string.Equals(existing.Line1, request.Line1.Trim(), StringComparison.OrdinalIgnoreCase) && existing.Pincode == request.Pincode.Trim();
         var updated = customer.UpdateAddress(addressId, new AddressDetails(
             request.Label, request.Line1, request.Line2, request.Landmark, request.Locality, request.City, existing.State, request.Pincode,
-            samePlace ? existing.Location : null), request.MakeDefault);
+            request.ToPin() ?? (samePlace ? existing.Location : null)), request.MakeDefault);
         if (updated.IsFailure)
         {
             return updated.Error!;
@@ -212,5 +225,117 @@ public sealed class RemoveMyAddress(DbContext db, ICurrentUser currentUser) : IU
 
         await db.SaveChangesAsync(ct);
         return GetMyAccount.ToResponse(customer);
+    }
+}
+
+/* ── Changing the sign-in number ──────────────────────────────────────────
+ * The mobile number is how the customer signs in, so a new one must be proven with a code sent
+ * to it. A number another account already uses is refused (the office merges accounts). Sessions
+ * stay valid: they belong to the customer, and the next refresh carries the new number.
+ */
+
+public sealed record PhoneChangeCodeRequest(string Phone);
+
+public sealed record PhoneChangeCodeResponse(DateTimeOffset ExpiresAt, int CodeLength, string? DevelopmentCode);
+
+public sealed record ChangePhoneRequest(string Phone, string Code);
+
+internal sealed class ChangePhoneRequestValidator : AbstractValidator<ChangePhoneRequest>
+{
+    public ChangePhoneRequestValidator()
+    {
+        RuleFor(r => r.Phone).NotEmpty();
+        RuleFor(r => r.Code).Matches("^[0-9]{4,8}$").WithMessage("Enter the numeric code from the SMS.");
+    }
+}
+
+internal static class PhoneChangeRules
+{
+    /// <summary>The signed-in customer and the new number, or why the change isn't possible.</summary>
+    public static async Task<Result<(Customer Customer, PhoneNumber Phone)>> CheckAsync(DbContext db, ICurrentUser currentUser, string phone, CancellationToken ct)
+    {
+        if (currentUser.CustomerId is not { } customerId)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        var parsed = PhoneNumber.Create(phone);
+        if (parsed.IsFailure)
+        {
+            return parsed.Error!;
+        }
+
+        var customer = await db.Set<Customer>().Include(c => c.Addresses).Include(c => c.Consents).FirstOrDefaultAsync(c => c.Id == customerId && c.ErasedAt == null, ct);
+        if (customer is null)
+        {
+            return AccountErrors.NotSignedIn;
+        }
+
+        if (customer.PrimaryPhone == parsed.Value)
+        {
+            return Error.Validation("account.phone_unchanged", "That's already your mobile number.");
+        }
+
+        if (await db.Set<Customer>().AnyAsync(c => c.Id != customerId && c.PrimaryPhone == parsed.Value, ct))
+        {
+            return Error.Conflict("account.phone_in_use", "This number is already linked to another account. Call us and we'll help you move your bookings.");
+        }
+
+        return (customer, parsed.Value);
+    }
+}
+
+/// <summary>Sends a code to the new number.</summary>
+public sealed class RequestPhoneChangeCode(DbContext db, ICurrentUser currentUser, IPhoneVerification verification) : IUseCase
+{
+    public async Task<Result<PhoneChangeCodeResponse>> HandleAsync(PhoneChangeCodeRequest request, CancellationToken ct)
+    {
+        var check = await PhoneChangeRules.CheckAsync(db, currentUser, request.Phone, ct);
+        if (check.IsFailure)
+        {
+            return check.Error!;
+        }
+
+        var issued = await verification.IssueAsync(check.Value.Phone, OtpPurpose.ChangePhone, ct);
+        if (issued.IsFailure)
+        {
+            return issued.Error!;
+        }
+
+        await db.SaveChangesAsync(ct);
+        return new PhoneChangeCodeResponse(issued.Value.ExpiresAt, issued.Value.CodeLength, issued.Value.DevelopmentCode);
+    }
+}
+
+/// <summary>Checks the code and switches the sign-in number.</summary>
+public sealed class ChangeMyPhone(DbContext db, ICurrentUser currentUser, IPhoneVerification verification) : IUseCase
+{
+    public async Task<Result<AccountResponse>> HandleAsync(ChangePhoneRequest request, CancellationToken ct)
+    {
+        var check = await PhoneChangeRules.CheckAsync(db, currentUser, request.Phone, ct);
+        if (check.IsFailure)
+        {
+            return check.Error!;
+        }
+
+        var verified = await verification.VerifyAsync(check.Value.Phone, OtpPurpose.ChangePhone, request.Code, ct);
+        if (verified.IsFailure)
+        {
+            await db.SaveChangesAsync(ct); // persist the attempt count
+            return verified.Error!;
+        }
+
+        check.Value.Customer.ChangePrimaryPhone(check.Value.Phone);
+        try
+        {
+            await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException)
+        {
+            // Another account took the number in the meantime (unique per tenant).
+            return Error.Conflict("account.phone_in_use", "This number is already linked to another account. Call us and we'll help you move your bookings.");
+        }
+
+        return GetMyAccount.ToResponse(check.Value.Customer);
     }
 }

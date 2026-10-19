@@ -89,12 +89,10 @@ public sealed class AutoDispatchTests(ApiFactory factory)
         try
         {
             var category = await owner.CategoryAsync("AC");
-            var start = DateTimeOffset.UtcNow.AddDays(1);
             var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/integrations/bookings")
             {
                 Content = JsonContent.Create(new IntegrationBookingRequest($"wamid.{Guid.NewGuid():N}", true, category.Id, null, "AC not cooling", "Auto Confirm",
-                    TestApi.RandomPhone(), new BookingAddressRequest("Home", "Flat 3", null, null, "Madhapur", "Hyderabad", null, "500081", null, null),
-                    start, start.AddHours(3)), options: TestApi.Json),
+                    TestApi.RandomPhone(), new BookingAddressRequest("Home", "Flat 3", null, null, "Madhapur", "Hyderabad", null, "500081", null, null)), options: TestApi.Json),
             };
             request.Headers.Add("X-ServicePro-Integration-Key", ApiFactory.IntegrationKey);
             var booking = (await (await new TestApi(factory).Client.SendAsync(request)).Content.ReadFromJsonAsync<IntegrationBookingResponse>(TestApi.Json))!;

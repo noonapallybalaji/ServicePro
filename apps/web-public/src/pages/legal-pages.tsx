@@ -128,7 +128,7 @@ export function TermsPage() {
       </Section>
       <Section title="Your account">
         <p>
-          Your account is your mobile number. You can see your bookings, update your details, download your data or delete your account from{' '}
+          Your account is your mobile number. You can see your bookings, update your details and saved addresses, or delete your account from{' '}
           <Link className="link" to="/account">My bookings</Link>.
         </p>
       </Section>
@@ -157,7 +157,8 @@ export function PrivacyPage() {
           <li>Your name and mobile number, and your email address if you add one.</li>
           <li>The addresses you give us for visits.</li>
           <li>
-            Your device's location, only if you tap "Use my current location" when booking. It helps the technician find you; booking works without it.
+            Your device's location, only if you tap "Detect my location" or "Use my current location". We use it to find your PIN code and to help the technician find you;
+            you can type your PIN code and address instead.
           </li>
           <li>What needs repairing: the appliance, the problem you describe, and notes from the visit.</li>
           <li>Your bookings, bills and payments.</li>
@@ -178,6 +179,7 @@ export function PrivacyPage() {
           <li>The technician assigned to your job sees your name, phone number, address and the problem, so they can do the visit.</li>
           <li>Our staff, to manage bookings and answer your questions.</li>
           <li>Service providers who work for us: hosting, and the companies that deliver our SMS and WhatsApp messages.</li>
+          <li>When you tap "Detect my location", OpenStreetMap's address service receives that position (from our server, not your browser) so we can find your PIN code.</li>
           <li>If you message us on WhatsApp, an automated assistant run by an AI service provider reads your messages to help with your booking.</li>
           <li>Authorities, when the law requires it.</li>
         </ul>
@@ -185,7 +187,12 @@ export function PrivacyPage() {
       <Section title="Cookies and storage on your device">
         <ul>
           <li>One cookie keeps you signed in. It's needed for the site to work and isn't used for tracking.</li>
-          <li>Your browser remembers the address you last typed when booking, so you don't have to type it again. Deleting your account on this device clears it.</li>
+          <li>Addresses you book with are saved to your account so you can pick them next time. Manage or remove them under Saved addresses in My bookings.</li>
+          <li>
+            If you turn on notifications, your browser shows our booking updates on this device. We don't use them for advertising; turn them off any time in
+            your browser's site settings.
+          </li>
+          <li>Your browser remembers the PIN code (and, if you used "Detect my location", the position) you chose, so we don't ask again. Change it any time from the top of the page.</li>
           <li>We don't use advertising or analytics cookies.</li>
         </ul>
       </Section>
@@ -200,8 +207,8 @@ export function PrivacyPage() {
       <Section title="Your rights">
         <ul>
           <li>
-            <strong className="text-foreground">See and download your data:</strong> sign in to <Link className="link" to="/account">My bookings</Link>,
-            open Profile and choose "Download my data".
+            <strong className="text-foreground">See your data:</strong> your bookings, details and addresses are in{' '}
+            <Link className="link" to="/account">My bookings</Link>. For a full copy of what we hold, contact us (see below) and we'll send it.
           </li>
           <li>
             <strong className="text-foreground">Correct it:</strong> edit your name and email in Profile, or contact us to change anything else.

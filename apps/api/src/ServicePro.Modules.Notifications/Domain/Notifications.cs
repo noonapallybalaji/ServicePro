@@ -126,6 +126,11 @@ public sealed class Notification : TenantOwnedEntity
 
     public DateTimeOffset? SentAt { get; private set; }
 
+    /// <summary>When the customer read it in the site's notification list (null: unread). Synced across their devices.</summary>
+    public DateTimeOffset? ReadAt { get; private set; }
+
+    public void MarkRead(DateTimeOffset at) => ReadAt ??= at;
+
     public void MarkSent(string? providerMessageId, DateTimeOffset at)
     {
         Status = NotificationStatus.Sent;

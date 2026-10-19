@@ -17,18 +17,17 @@ public static class TemplateCodes
     public const string SrCancelled = "SR_CANCELLED";
     public const string JobOffer = "JOB_OFFER";
     public const string PaymentLink = "PAYMENT_LINK";
-    public const string BookingMoved = "BOOKING_MOVED";
     public const string FeedbackRequest = "FEEDBACK_REQUEST";
     public const string SupportReply = "SUPPORT_REPLY";
     public const string SupportReplyWhatsApp = "SUPPORT_REPLY_WHATSAPP";
     public const string TechJobCancelled = "TECH_JOB_CANCELLED";
-    public const string TechJobMoved = "TECH_JOB_MOVED";
     public const string PaymentReceived = "PAYMENT_RECEIVED";
     public const string RefundProcessed = "REFUND_PROCESSED";
     public const string OtpLogin = "OTP_LOGIN";
     public const string OtpBooking = "OTP_BOOKING";
     public const string OtpCustomerLogin = "OTP_CUSTOMER_LOGIN";
     public const string OtpEstimate = "OTP_ESTIMATE";
+    public const string OtpChangePhone = "OTP_CHANGE_PHONE";
     public const string EstimateSent = "ESTIMATE_SENT";
     public const string TechEstimateApproved = "TECH_ESTIMATE_APPROVED";
     public const string TechEstimateDeclined = "TECH_ESTIMATE_DECLINED";
@@ -67,12 +66,8 @@ public static class DefaultTemplates
             "Our team replied about your request {{ticket}}: \"{{message}}\" Reply to this chat if you need anything else."),
         new(TemplateCodes.FeedbackRequest, NotificationChannel.WhatsApp,
             "How was your visit for {{sr}}? Rate it in one tap, it helps us keep our technicians at their best: {{link}}"),
-        new(TemplateCodes.BookingMoved, NotificationChannel.WhatsApp,
-            "We've noted the new time for {{sr}}: {{window}}. We'll confirm your visit shortly. Track it here: {{link}}"),
         new(TemplateCodes.TechJobCancelled, NotificationChannel.WhatsApp,
             "Job {{sr}} was cancelled by the customer. You don't need to go."),
-        new(TemplateCodes.TechJobMoved, NotificationChannel.WhatsApp,
-            "The customer moved job {{sr}} to {{window}}. The office will confirm with you before the visit."),
         new(TemplateCodes.PaymentLink, NotificationChannel.WhatsApp,
             "Your bill for {{sr}} is {{amount}}. Pay securely online by UPI, card or net banking: {{pay_link}}"),
         new(TemplateCodes.PaymentReceived, NotificationChannel.WhatsApp,
@@ -89,6 +84,8 @@ public static class DefaultTemplates
             "{{code}} is your code to see your bookings. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.OtpEstimate, NotificationChannel.Sms,
             "{{code}} is your code to approve the repair estimate. It expires in 5 minutes. Only share it if you agree to the cost."),
+        new(TemplateCodes.OtpChangePhone, NotificationChannel.Sms,
+            "{{code}} is your code to change the mobile number on your account. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.EstimateSent, NotificationChannel.WhatsApp,
             "{{technician}} has sent an estimate of {{amount}} for {{sr}}. Nothing extra is done until you approve it. Review it here: {{link}}"),
         new(TemplateCodes.TechEstimateApproved, NotificationChannel.WhatsApp,
@@ -102,6 +99,7 @@ public static class DefaultTemplates
         new(TemplateCodes.OtpBooking, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
         new(TemplateCodes.OtpCustomerLogin, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
         new(TemplateCodes.OtpEstimate, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
+        new(TemplateCodes.OtpChangePhone, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
     ];
 
     /// <summary>

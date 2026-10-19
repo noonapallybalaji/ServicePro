@@ -33,7 +33,7 @@ public sealed class WarrantyTests(ApiFactory factory)
     private static RevisitRequest Revisit()
     {
         var start = DateTimeOffset.UtcNow.AddDays(2);
-        return new RevisitRequest("Not cooling again", start, start.AddHours(3));
+        return new RevisitRequest("Not cooling again");
     }
 
     [Fact]

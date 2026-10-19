@@ -27,8 +27,7 @@ public sealed record MyBookingResponse(
     decimal VisitCharge,
     decimal? FinalAmount,
     string TrackingPath,
-    bool CanCancel,
-    bool CanReschedule);
+    bool CanCancel);
 
 /// <summary>The signed-in customer's bookings, newest first. Scoped by the customer id in their token.</summary>
 public sealed class ListMyBookings(
@@ -58,10 +57,10 @@ public sealed class ListMyBookings(
         var addresses = await customers.GetAddressesAsync(requests.Select(r => r.AddressId), ct);
         var techs = await technicians.GetManyAsync(requests.Where(r => r.CurrentTechnicianId.HasValue).Select(r => r.CurrentTechnicianId!.Value), ct);
 
-        var allowed = new Dictionary<Guid, (bool CanCancel, bool CanReschedule)>();
+        var canCancel = new Dictionary<Guid, bool>();
         foreach (var r in requests)
         {
-            allowed[r.Id] = await policy.EvaluateAsync(r, ct);
+            canCancel[r.Id] = await policy.CanCancelAsync(r, ct);
         }
 
         return requests.Select(r =>
@@ -86,8 +85,7 @@ public sealed class ListMyBookings(
                 r.VisitCharge,
                 r.FinalAmount,
                 $"/t/{r.TrackingToken}",
-                allowed[r.Id].CanCancel,
-                allowed[r.Id].CanReschedule);
+                canCancel[r.Id]);
         }).ToList();
     }
 }

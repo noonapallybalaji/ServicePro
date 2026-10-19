@@ -9,15 +9,13 @@ import type { ServiceRequestStatus } from './serviceRequestStatus';
 
 /**
  * What the assistant may tell the customer. bool IntegrationBookingResponse.AppointmentConfirmed is always false at
-creation: the office confirms the visit time later (the customer is told on WhatsApp).
+creation: the office agrees the visit time with the customer later (on WhatsApp or a call).
  */
 export interface IntegrationBookingResponse {
   srNumber: string;
   status: ServiceRequestStatus;
   statusText: string;
   appointmentConfirmed: boolean;
-  preferredSlotStart: string;
-  preferredSlotEnd: string;
   trackingUrl: string;
   duplicate: boolean;
 }

@@ -6,10 +6,7 @@
  * OpenAPI spec version: v1
  */
 
-export interface AvailabilitySlot {
-  id: string;
-  label: string;
-  start: string;
-  end: string;
-  available: boolean;
+export interface ChangePhoneRequest {
+  phone: string;
+  code: string;
 }

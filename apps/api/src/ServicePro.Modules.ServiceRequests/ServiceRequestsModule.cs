@@ -32,19 +32,11 @@ public sealed class ServiceRequestsModule : IModule
         services.AddSetting(OpsSettings.AutoConfirmWebsiteBookings);
         services.AddSetting(OpsSettings.AutoConfirmWhatsAppBookings);
         services.AddSetting(CustomerChangeSettings.CanCancel);
-        services.AddSetting(CustomerChangeSettings.CanReschedule);
-        services.AddSetting(CustomerChangeSettings.MaxReschedules);
         services.AddSetting(CustomerChangeSettings.CutoffMinutes);
         services.AddScoped<CustomerChangePolicy>();
-        services.AddScoped<SlotAvailability>();
         services.AddScoped<WarrantyCards>();
         services.AddSetting(WarrantySettings.Days);
         services.AddSetting(WarrantySettings.Terms);
-        services.AddSetting(AvailabilitySettings.Windows);
-        services.AddSetting(AvailabilitySettings.DaysAhead);
-        services.AddSetting(AvailabilitySettings.LeadTimeMinutes);
-        services.AddSetting(AvailabilitySettings.JobsPerTechnicianPerWindow);
-        services.AddSetting(AvailabilitySettings.CapacityCheck);
         services.AddSetting(FeedbackSettings.RequestsEnabled);
         services.AddSetting(FeedbackSettings.RequestDelayMinutes);
         services.AddSingleton<FeedbackRequestWorker>();
@@ -250,15 +242,6 @@ public sealed class ServiceRequestsModule : IModule
             .Produces<IReadOnlyList<ReviewListItem>>()
             .WithName("ListReviews");
 
-        endpoints.MapGet("/api/v1/public/availability", async (Guid categoryId, string pincode, GetAvailability useCase, CancellationToken ct) =>
-                (await useCase.HandleAsync(categoryId, pincode, ct)).ToHttp())
-            .WithTags("Online booking")
-            .AllowAnonymous()
-            .RequireRateLimiting(RateLimitPolicies.Public)
-            .Produces<AvailabilityResponse>()
-            .WithStandardErrors()
-            .WithName("GetAvailability");
-
         endpoints.MapGet("/api/v1/account/bookings/{id:guid}", async (Guid id, GetMyBooking useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, ct)).ToHttp())
             .WithTags("Customer account")
@@ -289,14 +272,6 @@ public sealed class ServiceRequestsModule : IModule
             .WithStandardErrors()
             .WithName("RequestWarrantyRevisit");
 
-        endpoints.MapGet("/api/v1/account/bookings/{id:guid}/availability", async (Guid id, GetMyBookingAvailability useCase, CancellationToken ct) =>
-                (await useCase.HandleAsync(id, ct)).ToHttp())
-            .WithTags("Customer account")
-            .RequireAuthorization(AuthPolicies.Customer)
-            .Produces<AvailabilityResponse>()
-            .WithStandardErrors()
-            .WithName("GetMyBookingAvailability");
-
         endpoints.MapPost("/api/v1/account/bookings/{id:guid}/cancel", async (Guid id, CancelBookingRequest request, CancelMyBooking useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(id, request, ct)).ToHttp())
             .WithTags("Customer account")
@@ -305,14 +280,6 @@ public sealed class ServiceRequestsModule : IModule
             .Produces(StatusCodes.Status204NoContent)
             .WithStandardErrors()
             .WithName("CancelMyBooking");
-
-        endpoints.MapPost("/api/v1/account/bookings/{id:guid}/reschedule", async (Guid id, RescheduleBookingRequest request, RescheduleMyBooking useCase, CancellationToken ct) =>
-                (await useCase.HandleAsync(id, request, ct)).ToHttp())
-            .WithTags("Customer account")
-            .RequireAuthorization(AuthPolicies.Customer)
-            .Produces(StatusCodes.Status204NoContent)
-            .WithStandardErrors()
-            .WithName("RescheduleMyBooking");
 
         // Online booking: both steps send SMS or check codes, so they get the strict auth limit.
         var bookings = endpoints.MapGroup("/api/v1/public/bookings").WithTags("Online booking").AllowAnonymous().RequireRateLimiting(RateLimitPolicies.Auth);

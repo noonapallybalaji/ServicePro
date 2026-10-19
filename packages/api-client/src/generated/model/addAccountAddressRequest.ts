@@ -8,6 +8,8 @@
 import type { AddAccountAddressRequestLabel } from './addAccountAddressRequestLabel';
 import type { AddAccountAddressRequestLine2 } from './addAccountAddressRequestLine2';
 import type { AddAccountAddressRequestLandmark } from './addAccountAddressRequestLandmark';
+import type { AddAccountAddressRequestLatitude } from './addAccountAddressRequestLatitude';
+import type { AddAccountAddressRequestLongitude } from './addAccountAddressRequestLongitude';
 
 export interface AddAccountAddressRequest {
   label: AddAccountAddressRequestLabel;
@@ -18,4 +20,6 @@ export interface AddAccountAddressRequest {
   city: string;
   pincode: string;
   makeDefault: boolean;
+  latitude?: AddAccountAddressRequestLatitude;
+  longitude?: AddAccountAddressRequestLongitude;
 }

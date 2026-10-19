@@ -15,11 +15,9 @@ public sealed class BookingExtrasTests(ApiFactory factory)
         var phone = TestApi.RandomPhone();
         var category = await api.CategoryAsync("WASHER");
         var code = await api.PostAsync<BookingCodeResponse>("/api/v1/public/bookings/code", new BookingCodeRequest(phone));
-        var start = DateTimeOffset.UtcNow.AddDays(2);
         var booking = await api.PostAsync<OnlineBookingResponse>("/api/v1/public/bookings", new OnlineBookingRequest(
             category.Id, null, "Drum not spinning", "Kiran Rao", phone, code.DevelopmentCode,
-            new BookingAddressRequest("Home", "Flat 7", null, null, "Madhapur", "Hyderabad", null, "500081", null, null),
-            start, start.AddHours(3), AcceptedPolicies: true, Extras: extras));
+            new BookingAddressRequest("Home", "Flat 7", null, null, "Madhapur", "Hyderabad", null, "500081", null, null), AcceptedPolicies: true, Extras: extras));
         api.Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", booking.Session!.AccessToken);
         return (api, booking);
     }
@@ -46,10 +44,8 @@ public sealed class BookingExtrasTests(ApiFactory factory)
         var phone = TestApi.RandomPhone();
         var category = await api.CategoryAsync("WASHER");
         var code = await api.PostAsync<BookingCodeResponse>("/api/v1/public/bookings/code", new BookingCodeRequest(phone));
-        var start = DateTimeOffset.UtcNow.AddDays(2);
         var request = new OnlineBookingRequest(category.Id, null, "Drum not spinning", "Kiran Rao", phone, code.DevelopmentCode,
-            new BookingAddressRequest("Home", "Flat 7", null, null, "Madhapur", "Hyderabad", null, "500081", null, null),
-            start, start.AddHours(3), AcceptedPolicies: true, Extras: new BookingExtras(null, null, "9876501234", null, null, null, null));
+            new BookingAddressRequest("Home", "Flat 7", null, null, "Madhapur", "Hyderabad", null, "500081", null, null), AcceptedPolicies: true, Extras: new BookingExtras(null, null, "9876501234", null, null, null, null));
 
         (await api.PostRawAsync("/api/v1/public/bookings", request)).StatusCode.ShouldBe(HttpStatusCode.BadRequest);
         var badNumber = request with { Extras = new BookingExtras(null, "Lakshmi", "12345", null, null, null, null) };
