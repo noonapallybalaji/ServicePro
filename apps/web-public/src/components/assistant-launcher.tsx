@@ -36,7 +36,7 @@ export function AssistantLauncher() {
     };
   }, [open]);
 
-  if (!SITE.phone || isBarHidden(pathname)) return null;
+  if (!SITE.whatsapp || isBarHidden(pathname)) return null;
   const title = ASSISTANT_LIVE ? 'AI assistant' : 'Need help?';
 
   return (

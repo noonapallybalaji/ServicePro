@@ -76,6 +76,11 @@ services:
         value: https://servicepro-site-b4ig.onrender.com
       - key: VITE_BUSINESS_NAME
         value: ServicePro
+      # Call and WhatsApp buttons (E.164). WhatsApp defaults to the call number when not set.
+      - key: VITE_SUPPORT_PHONE
+        value: "+918712002048"
+      - key: VITE_WHATSAPP_NUMBER
+        value: "+918712002048"
       - key: VITE_REALTIME_URL
         value: https://servicepro-api-x3te.onrender.com
     routes:

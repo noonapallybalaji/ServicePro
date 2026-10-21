@@ -28,8 +28,10 @@ export interface SiteConfig {
   url: string;
   /** One-sentence description: default meta description and the business description in JSON-LD. */
   description: string;
-  /** E.164 phone number (+91…), if configured. */
+  /** E.164 phone number (+91…) for calls, if configured. */
   phone?: string;
+  /** E.164 number for WhatsApp chats; the call number when not set separately. */
+  whatsapp?: string;
   email?: string;
   /** Primary service location. */
   city: string;
@@ -90,6 +92,7 @@ export const SITE: SiteConfig = {
     optional(env.VITE_SITE_DESCRIPTION) ??
     'Doorstep repair for AC, refrigerator, washing machine, TV and microwave. See the visiting charge before you book and track your technician.',
   phone: optional(env.VITE_SUPPORT_PHONE),
+  whatsapp: optional(env.VITE_WHATSAPP_NUMBER) ?? optional(env.VITE_SUPPORT_PHONE),
   email: optional(env.VITE_SUPPORT_EMAIL),
   city: optional(env.VITE_SERVICE_CITY) ?? 'Hyderabad',
   region: optional(env.VITE_SERVICE_REGION) ?? 'Telangana',
@@ -112,7 +115,7 @@ export const SITE: SiteConfig = {
 
 export const absoluteUrl = (path: string): string => `${SITE.url}${path === '/' ? '/' : path}`;
 
-/** wa.me link with a pre-filled message; undefined when no phone is configured. */
+/** wa.me link with a pre-filled message; undefined when no WhatsApp number is configured. */
 export function whatsappLink(text: string): string | undefined {
-  return SITE.phone ? `https://wa.me/${SITE.phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}` : undefined;
+  return SITE.whatsapp ? `https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(text)}` : undefined;
 }

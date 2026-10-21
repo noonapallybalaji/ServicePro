@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_BUSINESS_NAME?: string;
   readonly VITE_SITE_DESCRIPTION?: string;
   readonly VITE_SUPPORT_PHONE?: string;
+  readonly VITE_WHATSAPP_NUMBER?: string;
   readonly VITE_SUPPORT_EMAIL?: string;
   readonly VITE_SERVICE_CITY?: string;
   readonly VITE_SERVICE_REGION?: string;
