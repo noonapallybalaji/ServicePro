@@ -79,10 +79,14 @@ public sealed class PushSupportTicketOpened(IHubContext<OpsHub> ops, ITenantCont
 }
 
 /// <summary>The technician moved: customers waiting for them refresh the map and arrival estimate.</summary>
-public sealed class PushTechnicianLocation(IHubContext<TrackingHub> tracking, IServiceRequestWorkflow requests) : IEventHandler<TechnicianLocationReported>
+public sealed class PushTechnicianLocation(IHubContext<TrackingHub> tracking, IHubContext<OpsHub> ops, ITenantContext tenant, IServiceRequestWorkflow requests)
+    : IEventHandler<TechnicianLocationReported>
 {
     public async Task HandleAsync(TechnicianLocationReported e, CancellationToken ct)
     {
+        // The office's live map moves too.
+        await ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId)).SendAsync(RealtimeMessages.TechnicianChanged, new { e.TechnicianId }, ct);
+
         foreach (var id in await requests.FindEnRouteJobIdsAsync(e.TechnicianId, ct))
         {
             await tracking.Clients.Group(RealtimeGroups.Tracking(id)).SendAsync(RealtimeMessages.TrackingChanged, ct);

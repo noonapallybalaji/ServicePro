@@ -66,6 +66,9 @@ public sealed class Technician : TenantOwnedAggregateRoot, IAudited
 
     public DateTimeOffset? LastLocationAt { get; private set; }
 
+    /// <summary>Last sign of life from the technician app (a position or a connection): "online" for the office.</summary>
+    public DateTimeOffset? LastSeenAt { get; private set; }
+
     public TechnicianDutyStatus DutyStatus { get; private set; }
 
     public int MaxJobsPerDay { get; private set; }
@@ -151,7 +154,16 @@ public sealed class Technician : TenantOwnedAggregateRoot, IAudited
         LastLatitude = location.Latitude;
         LastLongitude = location.Longitude;
         LastLocationAt = at;
+        MarkSeen(at);
         Raise(new TechnicianLocationReported(Id, at));
+    }
+
+    public void MarkSeen(DateTimeOffset at)
+    {
+        if (LastSeenAt is null || at > LastSeenAt)
+        {
+            LastSeenAt = at;
+        }
     }
 
     /// <summary>Applies the desired skill set as a diff, so unchanged rows are kept (no key churn).</summary>

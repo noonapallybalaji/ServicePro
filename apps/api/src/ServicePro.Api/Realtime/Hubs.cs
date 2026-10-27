@@ -42,16 +42,30 @@ public sealed class OpsHub(ITenantContext tenant) : Hub
 
 /// <summary>Offers and job updates for one technician.</summary>
 [Authorize(Policy = AuthPolicies.Technician)]
-public sealed class TechHub(ITenantContext tenant, ICurrentUser user) : Hub
+public sealed class TechHub(ITenantContext tenant, ICurrentUser user, ITechnicianPresence presence, IHubContext<OpsHub> ops) : Hub
 {
     public override async Task OnConnectedAsync()
     {
         if (user.TechnicianId is { } technicianId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, RealtimeGroups.Technician(tenant.TenantId, technicianId));
+            // Presence for the office: the app is open and reachable.
+            await presence.AppConnectedAsync(technicianId, Context.ConnectionAborted);
+            await ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId)).SendAsync(RealtimeMessages.TechnicianChanged, new { technicianId }, Context.ConnectionAborted);
         }
 
         await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        if (user.TechnicianId is { } technicianId)
+        {
+            await presence.AppDisconnectedAsync(technicianId, CancellationToken.None);
+            await ops.Clients.Group(RealtimeGroups.Ops(tenant.TenantId)).SendAsync(RealtimeMessages.TechnicianChanged, new { technicianId }, CancellationToken.None);
+        }
+
+        await base.OnDisconnectedAsync(exception);
     }
 }
 

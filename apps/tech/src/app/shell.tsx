@@ -1,9 +1,10 @@
-import { getListMyJobsQueryKey, getListMyOffersQueryKey, useListMyOffers, useRealtime, useSession } from '@servicepro/api-client';
+import { getListMyJobsQueryKey, getListMyOffersQueryKey, useGetMyTechnicianProfile, useListMyJobs, useListMyOffers, useRealtime, useSession } from '@servicepro/api-client';
 import { AppShell, Avatar, BottomNavItem, Badge, BrandLockup, BrandMark, SidebarNavItem, StatusDot, Text, toast } from '@servicepro/ui';
-import { CalendarCheck, Inbox, UserRound, Wallet } from 'lucide-react';
+import { CalendarCheck, Inbox, Navigation, UserRound, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
 
+import { LocationSharingContext, useShareLocation } from '../lib/location';
 import { paths } from './paths';
 
 interface NavEntry {
@@ -21,6 +22,13 @@ interface NavEntry {
 export function TechShell() {
   const { session } = useSession();
   const offers = useListMyOffers({ query: { refetchInterval: 60_000 } });
+  // Location is shared from here, on every screen: while on duty for the office, and more often on the
+  // way to a customer (who then sees it too). Never off duty.
+  const jobs = useListMyJobs({ query: { enabled: Boolean(session), refetchInterval: 60_000 } });
+  const profile = useGetMyTechnicianProfile({ query: { enabled: Boolean(session), refetchInterval: 60_000 } });
+  const enRoute = (jobs.data?.active ?? []).some((job) => job.status === 'EN_ROUTE');
+  const onDuty = profile.data?.dutyStatus === 'AVAILABLE' || profile.data?.dutyStatus === 'ON_JOB';
+  const sharing = useShareLocation(enRoute ? 'enroute' : onDuty ? 'duty' : 'off');
 
   const health = useRealtime({
     hub: '/hubs/tech',
@@ -56,6 +64,11 @@ export function TechShell() {
           </span>
           <span className="max-lg:hidden" />
           <div className="flex items-center gap-3">
+            {sharing === 'sharing' ? (
+              <Badge tone="info" size="sm" role="status">
+                <Navigation aria-hidden className="size-3" /> Sharing location
+              </Badge>
+            ) : null}
             {health !== 'live' ? (
               <Badge tone="warning" size="sm" role="status">
                 <StatusDot colorClass="bg-warning" />
@@ -105,7 +118,9 @@ export function TechShell() {
       ))}
     >
       <div className="mx-auto w-full max-w-wide px-4 py-6 md:px-6 lg:px-8 lg:py-8">
-        <Outlet />
+        <LocationSharingContext value={sharing}>
+          <Outlet />
+        </LocationSharingContext>
       </div>
     </AppShell>
   );

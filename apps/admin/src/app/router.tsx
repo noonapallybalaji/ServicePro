@@ -42,6 +42,7 @@ export const router = createBrowserRouter([
       { path: 'requests/new', lazy: page(() => import('../features/requests/new-request-page'), (m) => m.NewRequestPage) },
       { path: 'requests/:requestId', lazy: page(() => import('../features/requests/request-detail-page'), (m) => m.RequestDetailPage) },
       { path: 'dispatch', lazy: page(() => import('../features/dispatch/dispatch-page'), (m) => m.DispatchPage) },
+      { path: 'live-map', lazy: page(() => import('../features/technicians/live-map-page'), (m) => m.LiveMapPage) },
       { path: 'technicians', lazy: page(() => import('../features/technicians/technicians-page'), (m) => m.TechniciansPage) },
       { path: 'technicians/new', lazy: page(() => import('../features/technicians/new-technician-page'), (m) => m.NewTechnicianPage) },
       { path: 'technicians/:technicianId', lazy: page(() => import('../features/technicians/technician-detail-page'), (m) => m.TechnicianDetailPage) },

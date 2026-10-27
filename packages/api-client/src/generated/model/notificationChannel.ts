@@ -13,4 +13,5 @@ export type NotificationChannel = typeof NotificationChannel[keyof typeof Notifi
 export const NotificationChannel = {
   WHATS_APP: 'WHATS_APP',
   SMS: 'SMS',
+  IN_APP: 'IN_APP',
 } as const;

@@ -7,7 +7,8 @@ namespace ServicePro.Modules.Catalog.Infrastructure;
 
 /// <summary>
 /// Starter catalog (PLAN.md §7.5). Categories, issues and brands are sensible defaults the owner
-/// edits; service areas and prices are demo values seeded only with demo data.
+/// edits. Every Hyderabad pincode is served through <see cref="HyderabadPincodes"/>; the smaller demo
+/// areas and prices are seeded only with demo data.
 /// </summary>
 internal sealed class CatalogSeeder(DbContext db) : IDataSeeder
 {
@@ -86,5 +87,33 @@ internal sealed class CatalogSeeder(DbContext db) : IDataSeeder
                 new PriceListItem(fridge.Id, null, "Gas charging", 1800, 2600));
             await db.SaveChangesAsync(ct);
         }
+
+        await SeedHyderabadZonesAsync(ct);
+    }
+
+    /// <summary>
+    /// Serve all of Hyderabad, also on databases seeded before the zones existed. A zone is added once
+    /// (by name) with only the pincodes no other area already has, so the owner's own areas and edits
+    /// stand; a zone switched off stays off.
+    /// </summary>
+    private async Task SeedHyderabadZonesAsync(CancellationToken ct)
+    {
+        var areas = await db.Set<ServiceArea>().ToListAsync(ct);
+        var names = areas.Select(a => a.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var covered = areas.SelectMany(a => a.Pincodes).ToHashSet();
+
+        foreach (var (name, pincodes) in HyderabadPincodes.Zones)
+        {
+            var uncovered = pincodes.Where(p => !covered.Contains(p)).ToArray();
+            if (names.Contains(name) || uncovered.Length == 0)
+            {
+                continue;
+            }
+
+            db.Set<ServiceArea>().Add(new ServiceArea(name, uncovered));
+            covered.UnionWith(uncovered);
+        }
+
+        await db.SaveChangesAsync(ct);
     }
 }

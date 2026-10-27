@@ -2922,6 +2922,98 @@
         }
       }
     },
+    "/api/v1/admin/technicians/live": {
+      "get": {
+        "tags": [
+          "Technicians"
+        ],
+        "operationId": "ListLiveTechnicians",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TechnicianLiveResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/technicians/{technicianId}/activity": {
+      "get": {
+        "tags": [
+          "Technicians"
+        ],
+        "operationId": "GetTechnicianActivity",
+        "parameters": [
+          {
+            "name": "technicianId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TechnicianActivityDayResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/admin/technicians/{technicianId}": {
       "get": {
         "tags": [
@@ -11598,7 +11690,8 @@
       "NotificationChannel": {
         "enum": [
           "WHATS_APP",
-          "SMS"
+          "SMS",
+          "IN_APP"
         ]
       },
       "NotificationChannelsResponse": {
@@ -13708,6 +13801,91 @@
           }
         }
       },
+      "TechnicianActivityDayResponse": {
+        "required": [
+          "date",
+          "onDutyMinutes",
+          "firstSeenAt",
+          "lastSeenAt",
+          "statusAtStart",
+          "events",
+          "trail"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "onDutyMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "firstSeenAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastSeenAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "statusAtStart": {
+            "$ref": "#/components/schemas/TechnicianDutyStatus"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TechnicianActivityEntry"
+            }
+          },
+          "trail": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TechnicianTrailPoint"
+            }
+          }
+        }
+      },
+      "TechnicianActivityEntry": {
+        "required": [
+          "kind",
+          "dutyStatus",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/TechnicianActivityKind"
+          },
+          "dutyStatus": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TechnicianDutyStatus"
+              }
+            ]
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "TechnicianActivityKind": {
+        "enum": [
+          "DUTY_CHANGED",
+          "APP_CONNECTED",
+          "APP_DISCONNECTED"
+        ]
+      },
       "TechnicianDutyStatus": {
         "enum": [
           "OFF_DUTY",
@@ -13791,6 +13969,66 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "TechnicianLiveResponse": {
+        "required": [
+          "id",
+          "fullName",
+          "phone",
+          "dutyStatus",
+          "online",
+          "lastSeenAt",
+          "latitude",
+          "longitude",
+          "locationAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "dutyStatus": {
+            "$ref": "#/components/schemas/TechnicianDutyStatus"
+          },
+          "online": {
+            "type": "boolean"
+          },
+          "lastSeenAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "latitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "longitude": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "locationAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -13994,6 +14232,28 @@
             "items": {
               "$ref": "#/components/schemas/TimeOffResponse"
             }
+          }
+        }
+      },
+      "TechnicianTrailPoint": {
+        "required": [
+          "latitude",
+          "longitude",
+          "at"
+        ],
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

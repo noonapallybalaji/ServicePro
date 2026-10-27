@@ -61,9 +61,19 @@ public sealed class CustomerMessageContext(
             values[key] = value;
         }
 
-        await dispatcher.SendAsync(new NotificationRequest(
-            templateCode, NotificationChannel.WhatsApp, RecipientType.Customer, customer.Id, customer.Phone.Value,
-            customer.PreferredLanguage, values, serviceRequestId), ct);
+        // Standard fan-out: the in-app copy always; WhatsApp first for the phone; SMS only if WhatsApp
+        // failed and the message has SMS wording (the critical steps). See docs/NOTIFICATIONS.md.
+        var request = new NotificationRequest(
+            templateCode, NotificationChannel.InApp, RecipientType.Customer, customer.Id, customer.Phone.Value,
+            customer.PreferredLanguage, values, serviceRequestId);
+        await dispatcher.SendAsync(request, ct);
+
+        var whatsApp = await dispatcher.SendAsync(request with { Channel = NotificationChannel.WhatsApp }, ct);
+        if (whatsApp.Status == NotificationStatus.Failed
+            && await dispatcher.HasTemplateAsync(templateCode, NotificationChannel.Sms, customer.PreferredLanguage, ct))
+        {
+            await dispatcher.SendAsync(request with { Channel = NotificationChannel.Sms }, ct);
+        }
     }
 
     /// <summary>The tracking link is built from the token via the public tracking route.</summary>
@@ -98,6 +108,7 @@ public sealed class NotifyCustomerOnStatusChange(CustomerMessageContext messages
         [ServiceRequestStatus.Rescheduled] = TemplateCodes.Rescheduled,
         [ServiceRequestStatus.CustomerUnavailable] = TemplateCodes.CustomerMissed,
         [ServiceRequestStatus.Cancelled] = TemplateCodes.SrCancelled,
+        [ServiceRequestStatus.UnableToRepair] = TemplateCodes.UnableToRepair,
     };
 
     public Task HandleAsync(ServiceRequestStatusChanged e, CancellationToken ct)
@@ -112,6 +123,25 @@ public sealed class NotifyCustomerOnStatusChange(CustomerMessageContext messages
         return TemplateFor.TryGetValue(e.To, out var template)
             ? messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, template, e.TechnicianId, null, ct)
             : Task.CompletedTask;
+    }
+}
+
+/// <summary>The office agreed a visit time (or changed it): tell the customer the day and time.</summary>
+public sealed class NotifyCustomerOfVisitTime(CustomerMessageContext messages) : IEventHandler<VisitScheduled>
+{
+    private static readonly TimeZoneInfo India = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+
+    public Task HandleAsync(VisitScheduled e, CancellationToken ct) =>
+        messages.SendToCustomerAsync(e.CustomerId, e.ServiceRequestId, e.SrNumber, TemplateCodes.VisitScheduled, e.TechnicianId,
+            new Dictionary<string, string> { ["window"] = Window(e.Start, e.End) }, ct);
+
+    /// <summary>"Tue 27 Oct, 10:00 to 13:00" (or just the start) in Indian time.</summary>
+    public static string Window(DateTimeOffset start, DateTimeOffset? end)
+    {
+        var from = TimeZoneInfo.ConvertTime(start, India);
+        return end is { } finish
+            ? string.Create(CultureInfo.InvariantCulture, $"{from:ddd d MMM}, {from:HH:mm} to {TimeZoneInfo.ConvertTime(finish, India):HH:mm}")
+            : string.Create(CultureInfo.InvariantCulture, $"{from:ddd d MMM}, {from:HH:mm}");
     }
 }
 
@@ -153,7 +183,7 @@ public sealed class NotifySupportReply(ICustomerDirectory customers, Notificatio
         }
 
         var message = e.Message.Length > 500 ? e.Message[..500] + "…" : e.Message;
-        await dispatcher.SendAsync(new NotificationRequest(
+        var request = new NotificationRequest(
             customer is null ? TemplateCodes.SupportReplyWhatsApp : TemplateCodes.SupportReply,
             NotificationChannel.WhatsApp, RecipientType.Customer, customer?.Id, to, customer?.PreferredLanguage ?? NotificationDispatcher.DefaultLanguage,
             new Dictionary<string, string>
@@ -162,7 +192,15 @@ public sealed class NotifySupportReply(ICustomerDirectory customers, Notificatio
                 ["message"] = message,
                 ["link"] = $"{options.Value.PublicSiteUrl.TrimEnd('/')}/account?tab=help",
             },
-            null), ct);
+            null);
+
+        // Customers with an account also see the reply in the site's notification bell.
+        if (customer is not null)
+        {
+            await dispatcher.SendAsync(request with { Channel = NotificationChannel.InApp }, ct);
+        }
+
+        await dispatcher.SendAsync(request, ct);
     }
 }
 
@@ -219,7 +257,7 @@ public sealed class NotifyCustomerAboutMoney(CustomerMessageContext messages, IS
 
     /// <summary>Only online payments: cash and UPI are handed over in person, with the bill.</summary>
     public Task HandleAsync(PaymentRecorded e, CancellationToken ct) =>
-        e.Method == "Online" ? SendAsync(e.ServiceRequestId, TemplateCodes.PaymentReceived, e.Amount, [], ct) : Task.CompletedTask;
+        SendAsync(e.ServiceRequestId, TemplateCodes.PaymentReceived, e.Amount, [], ct);
 
     public Task HandleAsync(RefundProcessed e, CancellationToken ct) =>
         SendAsync(e.ServiceRequestId, TemplateCodes.RefundProcessed, e.Amount, [], ct);
@@ -343,7 +381,8 @@ public sealed class OtpSender(NotificationDispatcher dispatcher, IEnumerable<INo
     /// </summary>
     public static IReadOnlyList<NotificationChannel> DeliveryOrder(NotificationChannel preferred, IEnumerable<INotificationChannel> channels)
     {
-        var live = channels.Where(c => c.IsLive).Select(c => c.Channel).Distinct().ToList();
+        // Codes go to the phone only: never the in-app bell (which always "succeeds").
+        var live = channels.Where(c => c.IsLive && c.Channel != NotificationChannel.InApp).Select(c => c.Channel).Distinct().ToList();
         if (live.Count == 0)
         {
             return [preferred];

@@ -27,22 +27,35 @@ internal sealed class DemoDataSeeder(
 
     public async Task SeedAsync(SeedContext context, CancellationToken ct)
     {
-        if (!context.IncludeDemoData || (await technicians.HandleAsync(includeInactive: true, ct)).Count > 0)
+        if (!context.IncludeDemoData)
         {
             return;
         }
 
-        var categories = (await catalog.HandleAsync(activeOnly: true, ct)).ToDictionary(c => c.Code);
         var areas = (await serviceAreas.HandleAsync(ct)).ToDictionary(a => a.Name);
+        var existing = await technicians.HandleAsync(includeInactive: true, ct);
+        if (existing.Count > 0)
+        {
+            // Demo databases from before the city-wide zones: Anil (who covers everywhere) picks up new areas.
+            if (existing.FirstOrDefault(t => t.Phone.EndsWith("9876500003", StringComparison.Ordinal)) is { } anil
+                && areas.Values.Any(a => !anil.ServiceAreaIds.Contains(a.Id)))
+            {
+                await capabilities.SetServiceAreasAsync(anil.Id, new SetServiceAreasRequest([.. areas.Values.Select(a => a.Id)]), ct);
+            }
+
+            return;
+        }
+
+        var categories = (await catalog.HandleAsync(activeOnly: true, ct)).ToDictionary(c => c.Code);
         Guid Area(string name) => areas[name].Id;
         Guid Category(string code) => categories[code].Id;
 
         var team = new[]
         {
-            ("Ravi Kumar", "9876500001", "T-001", 17.4600, 78.3650, new[] { ("AC", 5), ("FRIDGE", 4) }, new[] { "Kondapur & Gachibowli", "Madhapur & Hitech City" }),
-            ("Suresh Reddy", "9876500002", "T-002", 17.4930, 78.3990, new[] { ("AC", 4), ("WASHER", 4) }, new[] { "Kukatpally & Miyapur", "Kondapur & Gachibowli" }),
+            ("Ravi Kumar", "9876500001", "T-001", 17.4600, 78.3650, new[] { ("AC", 5), ("FRIDGE", 4) }, new[] { "Kondapur & Gachibowli", "Madhapur & Hitech City", "Gachibowli, Kondapur & Madhapur" }),
+            ("Suresh Reddy", "9876500002", "T-002", 17.4930, 78.3990, new[] { ("AC", 4), ("WASHER", 4) }, new[] { "Kukatpally & Miyapur", "Kondapur & Gachibowli", "Kukatpally, Miyapur & Balanagar" }),
             ("Anil Varma", "9876500003", "T-003", 17.4486, 78.3908, new[] { ("TV", 5), ("MICROWAVE", 4) }, areas.Keys.ToArray()),
-            ("Priya Sharma", "9876500004", "T-004", 17.4320, 78.4070, new[] { ("FRIDGE", 4), ("WASHER", 5), ("AC", 3) }, new[] { "Banjara & Jubilee Hills", "Madhapur & Hitech City" }),
+            ("Priya Sharma", "9876500004", "T-004", 17.4320, 78.4070, new[] { ("FRIDGE", 4), ("WASHER", 5), ("AC", 3) }, new[] { "Banjara & Jubilee Hills", "Madhapur & Hitech City", "Banjara Hills, Jubilee Hills & Ameerpet" }),
         };
 
         var weekdays = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday };

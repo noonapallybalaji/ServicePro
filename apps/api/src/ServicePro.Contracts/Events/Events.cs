@@ -48,6 +48,15 @@ public sealed record JobOfferResolved(
     Guid TechnicianId,
     string Outcome) : IDomainEvent;
 
+/// <summary>The office set or changed the visit time (End is optional).</summary>
+public sealed record VisitScheduled(
+    Guid ServiceRequestId,
+    string SrNumber,
+    Guid CustomerId,
+    Guid? TechnicianId,
+    DateTimeOffset Start,
+    DateTimeOffset? End) : IDomainEvent;
+
 public sealed record PaymentRecorded(
     Guid PaymentId,
     Guid ServiceRequestId,

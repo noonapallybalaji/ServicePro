@@ -31,6 +31,7 @@ public sealed class NotificationsModule : IModule
         var options = section.Get<NotificationOptions>() ?? new NotificationOptions();
 
         services.AddScoped<NotificationDispatcher>();
+        services.AddScoped<INotificationChannel, InAppChannel>();
         services.AddScoped<CustomerMessageContext>();
         services.AddScoped<IOtpSender, OtpSender>();
         services.AddScoped<IMessageHistory, MessageHistory>();
@@ -69,7 +70,8 @@ public sealed class NotificationsModule : IModule
 
         admin.MapGet("/channels", (IEnumerable<INotificationChannel> channels, Microsoft.Extensions.Options.IOptions<NotificationOptions> options) =>
                 Results.Ok(new NotificationChannelsResponse(
-                    [.. channels.Select(c => new ChannelStatusResponse(c.Channel, c.IsLive, c.IsLive ? c.GetType().Name.Replace("Channel", string.Empty, StringComparison.Ordinal) : null))],
+                    // Phone delivery only: the in-app bell is always on and says nothing about WhatsApp/SMS.
+                    [.. channels.Where(c => c.Channel != NotificationChannel.InApp).Select(c => new ChannelStatusResponse(c.Channel, c.IsLive, c.IsLive ? c.GetType().Name.Replace("Channel", string.Empty, StringComparison.Ordinal) : null))],
                     options.Value.OtpChannel)))
             .Produces<NotificationChannelsResponse>()
             .WithName("ListNotificationChannels");
@@ -147,7 +149,7 @@ public sealed class ListNotifications(DbContext db) : IUseCase
 {
     public async Task<IReadOnlyList<NotificationResponse>> HandleAsync(Guid? serviceRequestId, int take, CancellationToken ct) =>
         await db.Set<Notification>().AsNoTracking()
-            .Where(n => serviceRequestId == null || n.ServiceRequestId == serviceRequestId)
+            .Where(n => n.Channel != NotificationChannel.InApp && (serviceRequestId == null || n.ServiceRequestId == serviceRequestId))
             .OrderByDescending(n => n.CreatedAt)
             .Take(Math.Clamp(take, 1, 200))
             .Select(n => new NotificationResponse(n.Id, n.TemplateCode, n.Channel, n.RecipientType, n.RecipientAddress, n.ServiceRequestId,

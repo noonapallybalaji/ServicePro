@@ -157,6 +157,9 @@ function DutyCard() {
       <div className="flex flex-col gap-2">
         <Text weight="semibold">Duty status</Text>
         {status ? <DutyStatusBadge status={status} size="sm" /> : <Text variant="sm" tone="muted">Loading…</Text>}
+        <Text variant="caption" tone="muted">
+          {onDuty ? 'While you’re on duty, the office can see your location. Go off duty to stop sharing it.' : 'Your location isn’t shared while you’re off duty.'}
+        </Text>
       </div>
       <Switch
         label={onDuty ? 'On duty' : 'Off duty'}

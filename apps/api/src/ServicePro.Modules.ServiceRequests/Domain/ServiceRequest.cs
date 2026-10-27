@@ -195,6 +195,11 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
             request.ApplyTransition(ServiceRequestStatus.ReadyForAssignment, actor, new TransitionInput(ReasonCode: "CREATED"), now);
         }
 
+        if (request.ScheduledStart is { } visit)
+        {
+            request.Raise(new VisitScheduled(request.Id, request.SrNumber, request.CustomerId, null, visit, request.ScheduledEnd));
+        }
+
         return request;
     }
 
@@ -217,8 +222,15 @@ public sealed class ServiceRequest : TenantOwnedAggregateRoot
         Priority = priority;
         PreferredSlotStart = Utc(preferredSlotStart);
         PreferredSlotEnd = Utc(preferredSlotEnd);
+        var changed = Utc(scheduledStart) != ScheduledStart || Utc(scheduledEnd) != ScheduledEnd;
         ScheduledStart = Utc(scheduledStart);
         ScheduledEnd = Utc(scheduledEnd);
+
+        // The office agreed (or moved) the visit time: the customer is told.
+        if (changed && ScheduledStart is { } start && !IsTerminal)
+        {
+            Raise(new VisitScheduled(Id, SrNumber, CustomerId, CurrentTechnicianId, start, ScheduledEnd));
+        }
     }
 
     /// <summary>A manual (non-dispatch) transition by staff or the assigned technician.</summary>

@@ -6,6 +6,7 @@ export const paths = {
   request: (id: string) => `/requests/${id}`,
   dispatch: '/dispatch',
   technicians: '/technicians',
+  liveMap: '/live-map',
   newTechnician: '/technicians/new',
   technician: (id: string) => `/technicians/${id}`,
   customers: '/customers',

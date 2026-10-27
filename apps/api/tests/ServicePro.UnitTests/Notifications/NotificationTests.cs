@@ -125,6 +125,20 @@ public sealed class OneTimeCodeDeliveryTests
         order.ShouldBe([NotificationChannel.Sms]);
     }
 
+    [Fact]
+    public void Codes_never_go_to_the_in_app_bell()
+    {
+        var everything = new INotificationChannel[]
+        {
+            new InAppChannel(), new StubChannel(NotificationChannel.WhatsApp, live: true), new StubChannel(NotificationChannel.Sms, live: true),
+        };
+        OtpSender.DeliveryOrder(NotificationChannel.WhatsApp, everything).ShouldBe([NotificationChannel.WhatsApp, NotificationChannel.Sms]);
+
+        // Nothing live but the bell (development): the code is still logged on the phone channel.
+        var devOnly = new INotificationChannel[] { new InAppChannel(), new StubChannel(NotificationChannel.Sms, live: false) };
+        OtpSender.DeliveryOrder(NotificationChannel.Sms, devOnly).ShouldBe([NotificationChannel.Sms]);
+    }
+
     private sealed class StubChannel(NotificationChannel channel, bool live) : INotificationChannel
     {
         public NotificationChannel Channel => channel;

@@ -86,6 +86,19 @@ public sealed class WhatsAppOptions
 /// Development / not-yet-onboarded fallback: writes the full message to the log so every flow
 /// can be exercised end to end without a provider account.
 /// </summary>
+/// <summary>
+/// The customer site's notification bell. Storing the notification is the delivery: the customer sees
+/// it in the bell (and on their device, if they allowed it) the next time the site checks.
+/// </summary>
+public sealed class InAppChannel : INotificationChannel
+{
+    public NotificationChannel Channel => NotificationChannel.InApp;
+
+    public bool IsLive => true;
+
+    public Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct) => Task.FromResult(SendResult.Ok(null));
+}
+
 public sealed partial class LoggingChannel(NotificationChannel channel, ILogger<LoggingChannel> logger) : INotificationChannel
 {
     public NotificationChannel Channel => channel;

@@ -8,6 +8,9 @@ public sealed class OutboxMessage
 {
     public Guid Id { get; init; } = Guid.CreateVersion7();
 
+    /// <summary>Position in the log, assigned by the database: messages are delivered strictly in this order.</summary>
+    public long Sequence { get; init; }
+
     public Guid TenantId { get; init; }
 
     public required string Type { get; init; }
@@ -47,6 +50,8 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.HasKey(m => m.Id);
         builder.Property(m => m.Type).HasMaxLength(300);
         builder.Property(m => m.Payload).HasColumnType("jsonb");
+        builder.Property(m => m.Sequence).ValueGeneratedOnAdd();
+        builder.HasIndex(m => m.Sequence).IsUnique();
         builder.HasIndex(m => m.OccurredAt)
             .HasFilter("processed_at IS NULL AND dead_at IS NULL")
             .HasDatabaseName("ix_outbox_messages_pending");

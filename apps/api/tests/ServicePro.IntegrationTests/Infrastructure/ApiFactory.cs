@@ -1,3 +1,4 @@
+using ServicePro.Modules.Notifications.Channels;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -97,6 +98,12 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             services.AddSingleton<IPaymentGateway>(Payments);
             services.RemoveAll<IReverseGeocoder>();
             services.AddSingleton<IReverseGeocoder>(Geocoder);
+
+            // Channels: the bell, a WhatsApp that can be told to fail per number, and a working SMS.
+            services.RemoveAll<INotificationChannel>();
+            services.AddScoped<INotificationChannel, InAppChannel>();
+            services.AddScoped<INotificationChannel, FakeWhatsApp>();
+            services.AddScoped<INotificationChannel, FakeSms>();
         });
     }
 

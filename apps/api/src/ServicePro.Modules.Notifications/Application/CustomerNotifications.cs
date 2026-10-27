@@ -49,6 +49,8 @@ internal static class CustomerFeed
         [TemplateCodes.SupportReply] = "Reply from our team",
         [TemplateCodes.SupportReplyWhatsApp] = "Reply from our team",
         [TemplateCodes.EstimateSent] = "Estimate to approve",
+        [TemplateCodes.VisitScheduled] = "Visit scheduled",
+        [TemplateCodes.UnableToRepair] = "Couldn't be repaired",
     };
 
     public static string TitleFor(string code) => Titles.GetValueOrDefault(code, "Update on your booking");
@@ -86,6 +88,7 @@ internal static class CustomerFeed
     {
         var rows = await Visible(db, customerId).AsNoTracking()
             .OrderByDescending(n => n.CreatedAt)
+            .ThenByDescending(n => n.Id) // ids are time-ordered: keeps events from the same instant in order
             .Take(MaxItems * 2) // room for WhatsApp+SMS pairs
             .ToListAsync(ct);
         var groups = Group(rows).Take(MaxItems).ToList();

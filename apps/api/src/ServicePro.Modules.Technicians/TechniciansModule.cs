@@ -22,8 +22,11 @@ public sealed class TechniciansModule : IModule
 
     public string Name => "Technicians";
 
-    public void Register(IServiceCollection services, IConfiguration configuration) =>
+    public void Register(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddScoped<ITechnicianDirectory, TechnicianDirectory>();
+        services.AddScoped<ITechnicianPresence, TechnicianPresence>();
+    }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
@@ -52,6 +55,18 @@ public sealed class TechniciansModule : IModule
                 Results.Ok(await useCase.HandleAsync(includeInactive ?? false, ct)))
             .Produces<IReadOnlyList<TechnicianListItem>>()
             .WithName("ListTechnicians");
+
+        // Live map: every active technician's status, presence and latest position.
+        staff.MapGet("/live", async (ListLiveTechnicians useCase, CancellationToken ct) => Results.Ok(await useCase.HandleAsync(ct)))
+            .Produces<IReadOnlyList<TechnicianLiveResponse>>()
+            .WithName("ListLiveTechnicians");
+
+        // One day of a technician's activity: duty timeline, hours on duty and the route (date in India time; today by default).
+        staff.MapGet("/{technicianId:guid}/activity", async (Guid technicianId, DateOnly? date, GetTechnicianActivityDay useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(technicianId, date, ct)).ToHttp())
+            .Produces<TechnicianActivityDayResponse>()
+            .WithStandardErrors()
+            .WithName("GetTechnicianActivity");
 
         staff.MapGet("/{technicianId:guid}", async (Guid technicianId, GetTechnician useCase, CancellationToken ct) =>
                 (await useCase.HandleAsync(technicianId, ct)).ToHttp())

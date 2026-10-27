@@ -25,7 +25,10 @@ public sealed class NotificationDispatcher(DbContext db, IEnumerable<INotificati
 
     public async Task<Notification> SendAsync(NotificationRequest request, CancellationToken ct)
     {
-        var template = await FindTemplateAsync(request.TemplateCode, request.Channel, request.Language, ct);
+        var template = await FindTemplateAsync(request.TemplateCode, request.Channel, request.Language, ct)
+            ?? (request.Channel == NotificationChannel.InApp
+                ? await FindTemplateAsync(request.TemplateCode, NotificationChannel.WhatsApp, request.Language, ct)
+                : null);
         var rendered = template?.Render(request.Values) ?? string.Empty;
         var notification = new Notification(
             request.TemplateCode, request.Channel, request.RecipientType, request.RecipientId, request.To, request.ServiceRequestId, rendered);
@@ -62,6 +65,10 @@ public sealed class NotificationDispatcher(DbContext db, IEnumerable<INotificati
 
         return notification;
     }
+
+    /// <summary>Whether a channel has wording for this message (an SMS fallback exists only where an SMS template does).</summary>
+    public async Task<bool> HasTemplateAsync(string code, NotificationChannel channel, string language, CancellationToken ct) =>
+        await FindTemplateAsync(code, channel, language, ct) is not null;
 
     /// <summary>Preferred language first, English as fallback.</summary>
     private async Task<NotificationTemplate?> FindTemplateAsync(string code, NotificationChannel channel, string language, CancellationToken ct)

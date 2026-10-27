@@ -27,6 +27,7 @@ import type {
 import type {
   AddTimeOffRequest,
   CreateTechnicianRequest,
+  GetTechnicianActivityParams,
   HttpValidationProblemDetails,
   ListTechniciansParams,
   ProblemDetails,
@@ -34,7 +35,9 @@ import type {
   SetServiceAreasRequest,
   SetShiftsRequest,
   SetSkillsRequest,
+  TechnicianActivityDayResponse,
   TechnicianListItem,
+  TechnicianLiveResponse,
   TechnicianResponse,
   UpdateTechnicianRequest,
   UploadTechnicianPhotoBody
@@ -208,7 +211,200 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
       return useMutation(mutationOptions , queryClient);
     }
-    export const getGetTechnicianUrl = (technicianId: string,) => {
+    export const getListLiveTechniciansUrl = () => {
+
+
+  
+
+  return `/api/v1/admin/technicians/live`
+}
+
+export const listLiveTechnicians = async ( options?: RequestInit): Promise<TechnicianLiveResponse[]> => {
+  
+  return apiFetch<TechnicianLiveResponse[]>(getListLiveTechniciansUrl(),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getListLiveTechniciansQueryKey = () => {
+    return [`/api/v1/admin/technicians/live`] as const;
+    }
+
+    
+export const getListLiveTechniciansQueryOptions = <TData = Awaited<ReturnType<typeof listLiveTechnicians>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLiveTechnicians>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListLiveTechniciansQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLiveTechnicians>>> = ({ signal }) => listLiveTechnicians({ signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listLiveTechnicians>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListLiveTechniciansQueryResult = NonNullable<Awaited<ReturnType<typeof listLiveTechnicians>>>
+export type ListLiveTechniciansQueryError = unknown
+
+
+export function useListLiveTechnicians<TData = Awaited<ReturnType<typeof listLiveTechnicians>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLiveTechnicians>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLiveTechnicians>>,
+          TError,
+          Awaited<ReturnType<typeof listLiveTechnicians>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListLiveTechnicians<TData = Awaited<ReturnType<typeof listLiveTechnicians>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLiveTechnicians>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listLiveTechnicians>>,
+          TError,
+          Awaited<ReturnType<typeof listLiveTechnicians>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListLiveTechnicians<TData = Awaited<ReturnType<typeof listLiveTechnicians>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLiveTechnicians>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useListLiveTechnicians<TData = Awaited<ReturnType<typeof listLiveTechnicians>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listLiveTechnicians>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListLiveTechniciansQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getGetTechnicianActivityUrl = (technicianId: string,
+    params?: GetTechnicianActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/admin/technicians/${technicianId}/activity?${stringifiedParams}` : `/api/v1/admin/technicians/${technicianId}/activity`
+}
+
+export const getTechnicianActivity = async (technicianId: string,
+    params?: GetTechnicianActivityParams, options?: RequestInit): Promise<TechnicianActivityDayResponse> => {
+  
+  return apiFetch<TechnicianActivityDayResponse>(getGetTechnicianActivityUrl(technicianId,params),
+  {      
+    ...options,
+    method: 'GET'
+    
+    
+  }
+);}
+
+
+
+export const getGetTechnicianActivityQueryKey = (technicianId?: string,
+    params?: GetTechnicianActivityParams,) => {
+    return [`/api/v1/admin/technicians/${technicianId}/activity`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getGetTechnicianActivityQueryOptions = <TData = Awaited<ReturnType<typeof getTechnicianActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(technicianId: string,
+    params?: GetTechnicianActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTechnicianActivity>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTechnicianActivityQueryKey(technicianId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTechnicianActivity>>> = ({ signal }) => getTechnicianActivity(technicianId,params, { signal, ...requestOptions });
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(technicianId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTechnicianActivity>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetTechnicianActivityQueryResult = NonNullable<Awaited<ReturnType<typeof getTechnicianActivity>>>
+export type GetTechnicianActivityQueryError = ProblemDetails | ProblemDetails | ProblemDetails
+
+
+export function useGetTechnicianActivity<TData = Awaited<ReturnType<typeof getTechnicianActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ technicianId: string,
+    params: undefined |  GetTechnicianActivityParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTechnicianActivity>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTechnicianActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getTechnicianActivity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTechnicianActivity<TData = Awaited<ReturnType<typeof getTechnicianActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ technicianId: string,
+    params?: GetTechnicianActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTechnicianActivity>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getTechnicianActivity>>,
+          TError,
+          Awaited<ReturnType<typeof getTechnicianActivity>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetTechnicianActivity<TData = Awaited<ReturnType<typeof getTechnicianActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ technicianId: string,
+    params?: GetTechnicianActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTechnicianActivity>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetTechnicianActivity<TData = Awaited<ReturnType<typeof getTechnicianActivity>>, TError = ProblemDetails | ProblemDetails | ProblemDetails>(
+ technicianId: string,
+    params?: GetTechnicianActivityParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getTechnicianActivity>>, TError, TData>>, request?: SecondParameter<typeof apiFetch>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetTechnicianActivityQueryOptions(technicianId,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+export const getGetTechnicianUrl = (technicianId: string,) => {
 
 
   

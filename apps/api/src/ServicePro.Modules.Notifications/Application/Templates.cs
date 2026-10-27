@@ -28,6 +28,8 @@ public static class TemplateCodes
     public const string OtpCustomerLogin = "OTP_CUSTOMER_LOGIN";
     public const string OtpEstimate = "OTP_ESTIMATE";
     public const string OtpChangePhone = "OTP_CHANGE_PHONE";
+    public const string VisitScheduled = "VISIT_SCHEDULED";
+    public const string UnableToRepair = "UNABLE_TO_REPAIR";
     public const string EstimateSent = "ESTIMATE_SENT";
     public const string TechEstimateApproved = "TECH_ESTIMATE_APPROVED";
     public const string TechEstimateDeclined = "TECH_ESTIMATE_DECLINED";
@@ -44,6 +46,19 @@ public static class DefaultTemplates
             "Hi {{customer}}, we've received your request {{sr}} for {{service}}. We'll confirm your visit time shortly. Visiting charge: {{visit_charge}}. Track it here: {{link}}"),
         new(TemplateCodes.SrConfirmed, NotificationChannel.WhatsApp,
             "Your request {{sr}} for {{service}} is confirmed. We're assigning a technician now. Track it here: {{link}}"),
+        new(TemplateCodes.VisitScheduled, NotificationChannel.WhatsApp,
+            "Your visit for {{sr}} ({{service}}) is on {{window}}. Track it here: {{link}}"),
+        new(TemplateCodes.UnableToRepair, NotificationChannel.WhatsApp,
+            "Our technician couldn't repair your {{service}} on this visit ({{sr}}). Only the visiting charge of {{visit_charge}} applies. Details: {{link}}"),
+        // SMS fallback for the critical steps, used only when WhatsApp fails (each needs a DLT-registered template).
+        new(TemplateCodes.SrConfirmed, NotificationChannel.Sms,
+            "Your repair request {{sr}} is confirmed. We will call you to agree a visit time. Track: {{link}}"),
+        new(TemplateCodes.VisitScheduled, NotificationChannel.Sms,
+            "Your repair visit for {{sr}} is on {{window}}. Track: {{link}}"),
+        new(TemplateCodes.TechEnRoute, NotificationChannel.Sms,
+            "Your technician is on the way for {{sr}}. Track: {{link}}"),
+        new(TemplateCodes.CompletionCode, NotificationChannel.Sms,
+            "Your completion code for {{sr}} is {{code}}. Share it with the technician only after the work is done."),
         new(TemplateCodes.TechAssigned, NotificationChannel.WhatsApp,
             "{{technician}} will handle your service {{sr}}. You can follow every step here: {{link}}"),
         new(TemplateCodes.TechEnRoute, NotificationChannel.WhatsApp,

@@ -422,13 +422,20 @@ function PaymentReturn({ token }: { token: string }) {
 const LiveMap = lazy(() => import('./live-map'));
 
 /** Where the technician is and roughly when they'll arrive (gap analysis 6.2, 4.5). */
+/** After this long without a new position the estimate isn't trustworthy: say so instead. */
+const STALE_AFTER_MINUTES = 3;
+
 function OnTheWay({ live, name = 'Your technician' }: { live: NonNullable<TrackingResponse['live']>; name?: string }) {
+  // The page refetches every 30 s (and on every live update), so this age stays current.
+  // eslint-disable-next-line react-hooks/purity -- the age is recomputed on each refetch, which is enough here
+  const ageMinutes = Math.floor((Date.now() - Date.parse(live.at)) / 60_000);
+  const stale = ageMinutes >= STALE_AFTER_MINUTES;
   return (
     <Card className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <Text weight="semibold" className="inline-flex items-center gap-2">
-          <Navigation aria-hidden className="size-4 text-primary" />
-          {live.etaMinutes != null ? `About ${live.etaMinutes} min away` : `${name} is on the way`}
+          <Navigation aria-hidden className={stale ? 'size-4 text-foreground-muted' : 'size-4 text-primary'} />
+          {stale ? `Location last updated ${ageMinutes} min ago` : live.etaMinutes != null ? `About ${live.etaMinutes} min away` : `${name} is on the way`}
         </Text>
         <Text variant="caption" tone="muted" className="tabular-nums">
           Updated {formatTime(live.at)}
@@ -438,7 +445,8 @@ function OnTheWay({ live, name = 'Your technician' }: { live: NonNullable<Tracki
         <LiveMap latitude={live.latitude} longitude={live.longitude} label={`${name}'s location at ${formatTime(live.at)}`} />
       </Suspense>
       <Text variant="caption" tone="muted">
-        {live.etaMinutes != null ? 'An estimate from the distance; traffic can change it. ' : ''}
+        {stale ? `${name === 'Your technician' ? 'Their' : `${name}'s`} phone may be out of signal. The map updates as soon as it reconnects. ` : ''}
+        {!stale && live.etaMinutes != null ? 'An estimate from the distance; traffic can change it. ' : ''}
         The map stops once {name === 'Your technician' ? 'they arrive' : `${name} arrives`}.
       </Text>
     </Card>

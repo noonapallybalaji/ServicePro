@@ -38,6 +38,24 @@ internal sealed class TechnicianConfiguration : IEntityTypeConfiguration<Technic
     }
 }
 
+internal sealed class TechnicianLocationPointConfiguration : IEntityTypeConfiguration<TechnicianLocationPoint>
+{
+    public void Configure(EntityTypeBuilder<TechnicianLocationPoint> builder)
+    {
+        builder.ToTable("technician_location_points", TechniciansSchema.Name);
+        builder.HasIndex(p => new { p.TechnicianId, p.RecordedAt });
+    }
+}
+
+internal sealed class TechnicianActivityConfiguration : IEntityTypeConfiguration<TechnicianActivity>
+{
+    public void Configure(EntityTypeBuilder<TechnicianActivity> builder)
+    {
+        builder.ToTable("technician_activity", TechniciansSchema.Name);
+        builder.HasIndex(a => new { a.TechnicianId, a.At });
+    }
+}
+
 internal sealed class TechnicianSkillConfiguration : IEntityTypeConfiguration<TechnicianSkill>
 {
     public void Configure(EntityTypeBuilder<TechnicianSkill> builder)

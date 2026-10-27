@@ -8,6 +8,9 @@ public enum NotificationChannel
 {
     WhatsApp,
     Sms,
+
+    /// <summary>The customer site's notification bell: always recorded, whatever WhatsApp or SMS do.</summary>
+    InApp,
 }
 
 public enum RecipientType

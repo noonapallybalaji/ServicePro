@@ -197,6 +197,14 @@ public sealed record TechnicianDispatchProfile(
 
 public sealed record CommissionTerms(string Type, decimal Value);
 
+/// <summary>The technician app connecting to and leaving the office's live channel (presence history).</summary>
+public interface ITechnicianPresence
+{
+    Task AppConnectedAsync(Guid technicianId, CancellationToken ct);
+
+    Task AppDisconnectedAsync(Guid technicianId, CancellationToken ct);
+}
+
 public interface ITechnicianDirectory
 {
     Task<TechnicianInfo?> GetAsync(Guid technicianId, CancellationToken ct);

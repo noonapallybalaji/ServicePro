@@ -43,15 +43,18 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { Inbox, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 
 import { paths } from '../../app/paths';
 import { BackLink } from '../../components/common';
 import { RequestList } from '../../components/request-list';
 import { fromLocalInput } from '../requests/request-dialogs';
+import { ActivityTab } from './activity-tab';
 import { AreasEditor, ProfileFields, SkillsEditor, type ProfileDraft, toProfileInput } from './technician-form';
 
 const WEEK = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'] as const;
+
+const TABS = ['profile', 'activity', 'skills', 'schedule', 'jobs'];
 
 export function TechnicianDetailPage() {
   const { technicianId = '' } = useParams();
@@ -78,6 +81,9 @@ function TechnicianDetail({ technician }: { technician: TechnicianResponse }) {
   const jobs = useListServiceRequests({ technicianId: technician.id, pageSize: 20 });
   const refresh = useRefresh(technician.id);
   const setDuty = useSetTechnicianDutyStatus({ mutation: { onSuccess: (t) => refresh(t) } });
+  // ?tab=activity opens the history straight from the live map.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = TABS.includes(searchParams.get('tab') ?? '') ? (searchParams.get('tab') as string) : 'profile';
 
   return (
     <>
@@ -106,13 +112,17 @@ function TechnicianDetail({ technician }: { technician: TechnicianResponse }) {
         }
       />
 
-      <Tabs defaultValue="profile">
+      <Tabs value={tab} onValueChange={(next) => setSearchParams(next === 'profile' ? {} : { tab: next }, { replace: true })}>
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           <TabsTrigger value="skills">Skills & areas</TabsTrigger>
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
         </TabsList>
+        <TabsContent value="activity">
+          <ActivityTab technicianId={technician.id} />
+        </TabsContent>
         <TabsContent value="profile">
           <ProfileTab technician={technician} />
         </TabsContent>

@@ -91,6 +91,13 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("processed_at");
 
+                    b.Property<long>("Sequence")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("sequence");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Sequence"));
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid")
                         .HasColumnName("tenant_id");
@@ -107,6 +114,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                     b.HasIndex("OccurredAt")
                         .HasDatabaseName("ix_outbox_messages_pending")
                         .HasFilter("processed_at IS NULL AND dead_at IS NULL");
+
+                    b.HasIndex("Sequence")
+                        .IsUnique()
+                        .HasDatabaseName("ix_outbox_messages_sequence");
 
                     b.ToTable("outbox_messages", "platform");
                 });
@@ -2739,6 +2750,10 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasColumnType("double precision")
                         .HasColumnName("last_longitude");
 
+                    b.Property<DateTimeOffset?>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
                     b.Property<int>("MaxJobsPerDay")
                         .HasColumnType("integer")
                         .HasColumnName("max_jobs_per_day");
@@ -2790,6 +2805,101 @@ namespace ServicePro.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_technicians_tenant_id_phone");
 
                     b.ToTable("technicians", "workforce");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.TechnicianActivity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DutyStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("duty_status");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("kind");
+
+                    b.Property<Guid>("TechnicianId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("technician_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_technician_activity");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_technician_activity_tenant_id");
+
+                    b.HasIndex("TechnicianId", "At")
+                        .HasDatabaseName("ix_technician_activity_technician_id_at");
+
+                    b.ToTable("technician_activity", "workforce");
+                });
+
+            modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.TechnicianLocationPoint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("latitude");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision")
+                        .HasColumnName("longitude");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("recorded_at");
+
+                    b.Property<Guid>("TechnicianId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("technician_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_technician_location_points");
+
+                    b.HasIndex("TenantId")
+                        .HasDatabaseName("ix_technician_location_points_tenant_id");
+
+                    b.HasIndex("TechnicianId", "RecordedAt")
+                        .HasDatabaseName("ix_technician_location_points_technician_id_recorded_at");
+
+                    b.ToTable("technician_location_points", "workforce");
                 });
 
             modelBuilder.Entity("ServicePro.Modules.Technicians.Domain.TechnicianServiceArea", b =>

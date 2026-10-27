@@ -347,8 +347,14 @@ public sealed class TechnicianSelfService(DbContext db, ICurrentUser currentUser
             return TechnicianErrors.NotATechnician;
         }
 
-        technician.ReportLocation(location.Value, clock.UtcNow);
+        var now = clock.UtcNow;
+        technician.ReportLocation(location.Value, now);
+        db.Set<TechnicianLocationPoint>().Add(new TechnicianLocationPoint(technician.Id, location.Value.Latitude, location.Value.Longitude, now));
         await db.SaveChangesAsync(ct);
+
+        // The route history is kept 30 days.
+        var cutoff = now - TechnicianLocationPoint.KeepFor;
+        await db.Set<TechnicianLocationPoint>().Where(p => p.TechnicianId == technician.Id && p.RecordedAt < cutoff).ExecuteDeleteAsync(ct);
         return Result.Success();
     }
 

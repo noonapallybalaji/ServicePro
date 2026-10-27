@@ -74,7 +74,7 @@ public sealed partial class OutboxProcessor(
         var db = scope.ServiceProvider.GetRequiredService<DbContext>();
         var now = clock.UtcNow;
 
-        return await db.Set<OutboxMessage>()
+        var leased = await db.Set<OutboxMessage>()
             .FromSqlInterpolated($"""
                 UPDATE platform.outbox_messages
                    SET lease_until = {now + _options.Lease}
@@ -84,13 +84,16 @@ public sealed partial class OutboxProcessor(
                           AND dead_at IS NULL
                           AND (next_attempt_at IS NULL OR next_attempt_at <= {now})
                           AND (lease_until IS NULL OR lease_until < {now})
-                        ORDER BY occurred_at
+                        ORDER BY sequence
                         LIMIT {_options.BatchSize}
                         FOR UPDATE SKIP LOCKED)
                 RETURNING *
                 """)
             .AsNoTracking()
             .ToListAsync(ct);
+
+        // RETURNING doesn't keep the inner ORDER BY: put the batch back in log order.
+        return [.. leased.OrderBy(m => m.Sequence)];
     }
 
     private async Task DeliverAsync(OutboxMessage message, CancellationToken ct)
