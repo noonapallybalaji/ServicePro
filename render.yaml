@@ -102,6 +102,17 @@ services:
       - type: rewrite
         source: /t/*
         destination: /app.html
+    # The technician app (Android test build): downloaded, never indexed.
+    headers:
+      - path: /downloads/*
+        name: Content-Type
+        value: application/vnd.android.package-archive
+      - path: /downloads/*
+        name: Content-Disposition
+        value: attachment
+      - path: /downloads/*
+        name: X-Robots-Tag
+        value: noindex
 
   # ── Admin (owner and dispatcher) ──────────────────────────────────────────
   - type: web
