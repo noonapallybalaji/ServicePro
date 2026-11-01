@@ -5,18 +5,20 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const API_TARGET = process.env.SERVICEPRO_API ?? 'http://localhost:5180';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
     // Installable technician app (PLAN.md §6.1). API responses are never cached by the
-    // service worker; offline tolerance lives in the app's query cache.
+    // service worker; offline tolerance lives in the app's query cache. Not in the phone app
+    // (`--mode native`): its files are already on the device.
+    mode !== 'native' &&
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'ServicePro Technician',
-        short_name: 'ServicePro',
+        name: 'Pakka Fix Partner',
+        short_name: 'Pakka Partner',
         description: 'Your jobs, offers and earnings.',
         theme_color: '#0b6276',
         background_color: '#f6f7f5',
@@ -41,4 +43,4 @@ export default defineConfig({
     },
   },
   preview: { port: 5191 },
-});
+}));

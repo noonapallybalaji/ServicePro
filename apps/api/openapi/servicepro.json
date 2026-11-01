@@ -9501,8 +9501,22 @@
           },
           "user": {
             "$ref": "#/components/schemas/MeResponse"
+          },
+          "refreshToken": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "refreshExpiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
-        }
+        },
+        "description": "A signed-in session. RefreshToken and RefreshExpiresAt are set only for the phone apps (browsers get a cookie)."
       },
       "AvailableTransition": {
         "required": [

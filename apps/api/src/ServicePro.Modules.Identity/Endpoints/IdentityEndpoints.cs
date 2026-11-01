@@ -44,7 +44,7 @@ internal static class IdentityEndpoints
         // Runs on every app load, so it gets the looser policy: a whole office shares one IP,
         // and a 256-bit refresh token can't be brute-forced anyway.
         auth.MapPost("/refresh", async (RefreshSession useCase, HttpContext http, CancellationToken ct) =>
-                IssueSession(await useCase.HandleAsync(http.Request.Cookies[RefreshCookie], ct), http))
+                IssueSession(await useCase.HandleAsync(await RefreshTokenOf(http, ct), ct), http))
             .RequireRateLimiting(RateLimitPolicies.Public)
             .Produces<AuthSessionResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -52,7 +52,7 @@ internal static class IdentityEndpoints
 
         auth.MapPost("/logout", async (Logout useCase, HttpContext http, CancellationToken ct) =>
             {
-                await useCase.HandleAsync(http.Request.Cookies[RefreshCookie], ct);
+                await useCase.HandleAsync(await RefreshTokenOf(http, ct), ct);
                 http.Response.Cookies.Delete(RefreshCookie, CookieOptions(DateTimeOffset.UnixEpoch));
                 return Results.NoContent();
             })
@@ -154,8 +154,32 @@ internal static class IdentityEndpoints
         }
 
         var session = result.Value;
+        if (NativeApps.IsNativeApp(http.Request))
+        {
+            // The phone app keeps it in secure storage; no cookie.
+            return Results.Ok(session.Response with { RefreshToken = session.RefreshToken, RefreshExpiresAt = session.RefreshExpiresAt });
+        }
+
         http.Response.Cookies.Append(RefreshCookie, session.RefreshToken, CookieOptions(session.RefreshExpiresAt));
         return Results.Ok(session.Response);
+    }
+
+    /// <summary>The refresh token: from the request body for the phone apps, else from the cookie.</summary>
+    private static async Task<string?> RefreshTokenOf(HttpContext http, CancellationToken ct)
+    {
+        if (!NativeApps.IsNativeApp(http.Request))
+        {
+            return http.Request.Cookies[RefreshCookie];
+        }
+
+        try
+        {
+            return http.Request.HasJsonContentType() ? (await http.Request.ReadFromJsonAsync<NativeRefreshRequest>(ct))?.RefreshToken : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
     }
 
     private static CookieOptions CookieOptions(DateTimeOffset expires) => new()

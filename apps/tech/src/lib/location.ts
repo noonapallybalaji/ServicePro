@@ -1,5 +1,12 @@
+import type { BackgroundGeolocationPlugin } from '@capacitor-community/background-geolocation';
+import { registerPlugin } from '@capacitor/core';
 import { reportMyLocation } from '@servicepro/api-client';
 import { createContext, useContext, useEffect, useState } from 'react';
+
+import { isNativeApp } from '../native/native-app';
+
+/** The phone app's location service: keeps reporting with the app in the background. */
+const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');
 
 export interface Position {
   latitude: number;
@@ -64,12 +71,15 @@ const EVERY_MS: Record<Exclude<SharingMode, 'off'>, number> = { enroute: 30_000,
  */
 export function useShareLocation(mode: SharingMode): SharingState {
   const active = mode !== 'off';
-  const supported = typeof navigator !== 'undefined' && 'geolocation' in navigator;
+  const supported = isNativeApp || (typeof navigator !== 'undefined' && 'geolocation' in navigator);
   const [state, setState] = useState<SharingState>('locating');
 
   useEffect(() => {
     if (!active || !supported) {
       return;
+    }
+    if (isNativeApp) {
+      return shareFromTheApp(mode, setState);
     }
 
     let latest: GeolocationCoordinates | null = null;
@@ -130,6 +140,60 @@ export function useShareLocation(mode: SharingMode): SharingState {
   if (!active) return 'off';
   return supported ? state : 'unsupported';
 }
+
+/**
+ * In the Android / iOS app: the native location service keeps reporting while the technician uses
+ * other apps (Google Maps). Android shows a notification while it runs, as the system requires.
+ * Positions are sent at the mode's pace; a moving phone reports at most that often.
+ */
+function shareFromTheApp(mode: Exclude<SharingMode, 'off'>, setState: (state: SharingState) => void): () => void {
+  let latest: { latitude: number; longitude: number } | null = null;
+  let lastSent = 0;
+  let stopped = false;
+  const send = () => {
+    if (!latest) return;
+    lastSent = Date.now();
+    void reportMyLocation(latest).catch(() => undefined); // the next report follows shortly
+  };
+
+  const watcher = BackgroundGeolocation.addWatcher(
+    {
+      backgroundTitle: 'Sharing your location',
+      backgroundMessage: mode === 'enroute' ? 'Your customer can see you on the way.' : 'The office can see where you are while you are on duty.',
+      requestPermissions: true,
+      stale: false,
+      distanceFilter: mode === 'enroute' ? 20 : 100,
+    },
+    (position, error) => {
+      if (stopped) return;
+      if (error) {
+        setState(error.code === 'NOT_AUTHORIZED' ? 'denied' : latest ? 'sharing' : 'unavailable');
+        return;
+      }
+      if (!position) return;
+      latest = { latitude: position.latitude, longitude: position.longitude };
+      setState('sharing');
+      if (Date.now() - lastSent >= EVERY_MS[mode]) send();
+    },
+  );
+  // Standing still produces no updates: repeat the last position so the maps stay fresh.
+  const timer = window.setInterval(() => Date.now() - lastSent >= EVERY_MS[mode] && send(), 15_000);
+
+  return () => {
+    stopped = true;
+    window.clearInterval(timer);
+    void watcher.then((id) => BackgroundGeolocation.removeWatcher({ id })).catch(() => undefined);
+    setState('locating');
+  };
+}
+
+/** The phone app's settings page, where the technician can allow location after refusing it. */
+export function openLocationSettings() {
+  void BackgroundGeolocation.openSettings();
+}
+
+/** In the phone app, sharing continues with other apps in front; in a browser it pauses. */
+export const sharesInBackground = isNativeApp;
 
 /** The shell's sharing state, for screens that explain it (the job screen). */
 export const LocationSharingContext = createContext<SharingState>('off');

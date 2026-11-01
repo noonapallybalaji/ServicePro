@@ -1,4 +1,5 @@
-import { session } from './session';
+import { apiUrl } from './base-url';
+import { nativeAppHeaders, session } from './session';
 
 /**
  * The single HTTP entry point for every generated endpoint (ADR 0007).
@@ -38,16 +39,7 @@ export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }
 
-let baseUrl = '';
-
-/** Override only when the API isn't served from the same origin. */
-export function configureApiBaseUrl(url: string) {
-  baseUrl = url.replace(/\/$/, '');
-}
-
-export function apiUrl(path: string): string {
-  return `${baseUrl}${path}`;
-}
+export { apiUrl, configureApiBaseUrl } from './base-url';
 
 let realtimeBaseUrl = '';
 
@@ -80,6 +72,7 @@ export async function apiFetch<T>(url: string, init: RequestInit = {}): Promise<
 
 function send(url: string, init: RequestInit): Promise<Response> {
   const headers = new Headers(init.headers);
+  for (const [name, value] of Object.entries(nativeAppHeaders())) headers.set(name, value);
   const token = session.getAccessToken();
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);

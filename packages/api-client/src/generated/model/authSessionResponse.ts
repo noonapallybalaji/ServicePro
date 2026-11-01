@@ -6,9 +6,16 @@
  * OpenAPI spec version: v1
  */
 import type { MeResponse } from './meResponse';
+import type { AuthSessionResponseRefreshToken } from './authSessionResponseRefreshToken';
+import type { AuthSessionResponseRefreshExpiresAt } from './authSessionResponseRefreshExpiresAt';
 
+/**
+ * A signed-in session. RefreshToken and RefreshExpiresAt are set only for the phone apps (browsers get a cookie).
+ */
 export interface AuthSessionResponse {
   accessToken: string;
   expiresAt: string;
   user: MeResponse;
+  refreshToken?: AuthSessionResponseRefreshToken;
+  refreshExpiresAt?: AuthSessionResponseRefreshExpiresAt;
 }

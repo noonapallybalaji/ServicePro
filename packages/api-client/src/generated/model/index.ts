@@ -77,6 +77,8 @@ export * from './assistantTicketResponse';
 export * from './attachmentKind';
 export * from './attachmentResponse';
 export * from './authSessionResponse';
+export * from './authSessionResponseRefreshExpiresAt';
+export * from './authSessionResponseRefreshToken';
 export * from './availableTransition';
 export * from './boardResponse';
 export * from './bookingAddressRequest';

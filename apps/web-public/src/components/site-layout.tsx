@@ -101,11 +101,22 @@ function LocationChip() {
       aria-label={location ? `Service location ${place ? `${place}, ` : ''}${location.pincode}. Change location` : 'Choose your location'}
     >
       <MapPin aria-hidden className="size-4 shrink-0 text-primary" />
+      {/* The place first (bold), its PIN code underneath; before a location is set, a prompt. */}
       <span className="flex min-w-0 flex-col leading-tight">
-        <span className="text-caption text-foreground-muted">{location ? 'Service at' : 'Your location'}</span>
-        <span className="truncate text-sm font-semibold text-foreground">{location ? (place ? `${location.pincode} · ${place}` : location.pincode) : 'Choose location'}</span>
+        {location && place ? (
+          <>
+            <span className="truncate text-sm font-semibold text-foreground">{place}</span>
+            <span className="text-caption text-foreground-muted tabular-nums">{location.pincode}</span>
+          </>
+        ) : (
+          <>
+            <span className="text-caption text-foreground-muted">{location ? 'Service at' : 'Your location'}</span>
+            <span className="truncate text-sm font-semibold text-foreground">{location ? location.pincode : 'Choose location'}</span>
+          </>
+        )}
       </span>
-      <ChevronDown aria-hidden className="size-4 shrink-0 text-foreground-muted" />
+      {/* Phones: the place name gets the room instead. */}
+      <ChevronDown aria-hidden className="size-4 shrink-0 text-foreground-muted max-sm:hidden" />
     </button>
   );
 }

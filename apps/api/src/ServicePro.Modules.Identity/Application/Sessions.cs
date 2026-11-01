@@ -52,7 +52,8 @@ public sealed record MeResponse(
     Guid? TechnicianId,
     string PreferredLanguage);
 
-public sealed record AuthSessionResponse(string AccessToken, DateTimeOffset ExpiresAt, MeResponse User);
+/// <summary>A signed-in session. RefreshToken and RefreshExpiresAt are set only for the phone apps (browsers get a cookie).</summary>
+public sealed record AuthSessionResponse(string AccessToken, DateTimeOffset ExpiresAt, MeResponse User, string? RefreshToken = null, DateTimeOffset? RefreshExpiresAt = null);
 
 /// <summary>Result of issuing a session: the response body plus the refresh token for the cookie.</summary>
 public sealed record IssuedSession(AuthSessionResponse Response, string RefreshToken, DateTimeOffset RefreshExpiresAt, Guid RefreshTokenId);

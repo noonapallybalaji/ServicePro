@@ -85,12 +85,22 @@ builder.Services.AddRateLimiter(o =>
 });
 
 // Live connections may come straight from the sites (Render static-site rewrites don't carry
-// WebSockets): allow only the configured site origins, and only on /hubs.
-builder.Services.AddCors(o => o.AddPolicy(RealtimeCors.Policy, policy => policy
-    .WithOrigins(RealtimeCors.Origins(builder.Configuration))
-    .WithMethods("GET", "POST")
-    .AllowAnyHeader()
-    .AllowCredentials()));
+// WebSockets) or from the phone apps: allow only those origins on /hubs.
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy(RealtimeCors.Policy, policy => policy
+        .WithOrigins([.. RealtimeCors.Origins(builder.Configuration), .. NativeApps.Origins(builder.Configuration)])
+        .WithMethods("GET", "POST")
+        .AllowAnyHeader()
+        .AllowCredentials());
+
+    // The phone apps call the API from their own WebView origin. They send a bearer token (no
+    // cookies), so no credentials are allowed here.
+    o.AddDefaultPolicy(policy => policy
+        .WithOrigins(NativeApps.Origins(builder.Configuration))
+        .AllowAnyMethod()
+        .AllowAnyHeader());
+});
 
 builder.Services.AddHealthChecks().AddDbContextCheck<ServiceProDbContext>("database", tags: ["ready"]);
 

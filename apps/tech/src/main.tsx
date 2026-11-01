@@ -7,9 +7,12 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 
 import { router } from './app/router';
+import { nativeAppReady, startNativeApp } from './native/native-app';
 
 // Live updates go straight to the API where the host can't proxy WebSockets (see render.yaml).
 configureRealtimeBaseUrl(import.meta.env.VITE_REALTIME_URL);
+// Inside the Android / iOS app: API address, secure sign-in storage, back button.
+startNativeApp();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Root element #root not found');
@@ -21,3 +24,4 @@ createRoot(rootElement).render(
     </AppProviders>
   </StrictMode>,
 );
+requestAnimationFrame(nativeAppReady);

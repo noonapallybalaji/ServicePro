@@ -1,8 +1,12 @@
 import { useSyncExternalStore } from 'react';
 
+import { apiUrl } from './base-url';
+
 /**
  * In-memory session (ADR 0005): the access token never touches localStorage. On reload the
  * app calls `restore()`, which uses the HttpOnly refresh cookie to get a new access token.
+ * The phone apps can't rely on cookies: they register a secure store (Keychain / Keystore) with
+ * `configureNativeApp`, and the refresh token travels in the request body instead.
  * Shapes mirror the API's AuthSessionResponse / MeResponse.
  */
 
@@ -22,9 +26,48 @@ export interface AuthSession {
   accessToken: string;
   expiresAt: string;
   user: SessionUser;
+  /** Phone apps only; kept in the secure store, never in memory. */
+  refreshToken?: string | null;
+  refreshExpiresAt?: string | null;
 }
 
-export type SessionStatus = 'unknown' | 'signed-in' | 'signed-out';
+/** Where a phone app keeps its refresh token (the device's Keychain / Keystore). */
+export interface RefreshTokenStore {
+  get(): Promise<string | null>;
+  set(token: string): Promise<void>;
+  clear(): Promise<void>;
+}
+
+let nativeStore: RefreshTokenStore | null = null;
+
+/** Phone apps call this once at start-up, before `restore()`. */
+export function configureNativeApp(store: RefreshTokenStore) {
+  nativeStore = store;
+}
+
+/** Tells the API this is the phone app, so the refresh token comes in the body (the API checks the origin too). */
+export function nativeAppHeaders(): Record<string, string> {
+  return nativeStore ? { 'X-ServicePro-Client': 'native' } : {};
+}
+
+/** Refresh / logout request for the current platform: the cookie in a browser, the stored token in the app. */
+async function tokenRequest(path: string): Promise<Response> {
+  if (!nativeStore) {
+    return fetch(apiUrl(path), { method: 'POST', credentials: 'same-origin' });
+  }
+  const refreshToken = await nativeStore.get();
+  if (!refreshToken) {
+    return new Response(null, { status: 401 });
+  }
+  return fetch(apiUrl(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...nativeAppHeaders() },
+    body: JSON.stringify({ refreshToken }),
+  });
+}
+
+/** offline: the phone app couldn't reach the API to resume; its stored sign-in is kept for a retry. */
+export type SessionStatus = 'unknown' | 'signed-in' | 'signed-out' | 'offline';
 
 interface SessionState {
   status: SessionStatus;
@@ -59,10 +102,13 @@ export const session = {
 
   /** Call with the body of a login / OTP-verify / refresh response. */
   set(next: AuthSession) {
-    emit({ status: 'signed-in', session: next });
+    // The app's refresh token rotates on every refresh: keep the newest in the secure store, not in memory.
+    if (nativeStore && next.refreshToken) void nativeStore.set(next.refreshToken);
+    emit({ status: 'signed-in', session: { accessToken: next.accessToken, expiresAt: next.expiresAt, user: next.user } });
   },
 
   clear() {
+    void nativeStore?.clear();
     if (state.status !== 'signed-out') {
       emit({ status: 'signed-out', session: null });
     }
@@ -73,10 +119,12 @@ export const session = {
    * so a burst of 401s triggers a single refresh.
    */
   refresh(): Promise<boolean> {
-    refreshInFlight ??= fetch(endpoints.refresh, { method: 'POST', credentials: 'same-origin' })
+    refreshInFlight ??= tokenRequest(endpoints.refresh)
       .then(async (response) => {
         if (!response.ok) {
-          session.clear();
+          // The app keeps its sign-in through a server outage; only a rejected token signs it out.
+          if (nativeStore && response.status >= 500) emit({ status: 'offline', session: null });
+          else session.clear();
           return false;
         }
 
@@ -84,7 +132,9 @@ export const session = {
         return true;
       })
       .catch(() => {
-        session.clear();
+        // No connection in the app: keep the stored sign-in and let the technician retry.
+        if (nativeStore) emit({ status: 'offline', session: null });
+        else session.clear();
         return false;
       })
       .finally(() => {
@@ -93,14 +143,14 @@ export const session = {
     return refreshInFlight;
   },
 
-  /** On app start: resume the session if the refresh cookie is still valid. */
+  /** On app start: resume the session if the refresh cookie (or the app's stored token) is still valid. */
   restore(): Promise<boolean> {
     return state.status === 'signed-in' ? Promise.resolve(true) : session.refresh();
   },
 
   async signOut() {
     try {
-      await fetch(endpoints.logout, { method: 'POST', credentials: 'same-origin' });
+      await tokenRequest(endpoints.logout);
     } finally {
       session.clear();
     }

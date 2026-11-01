@@ -24,7 +24,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 
 import { paths } from '../../app/paths';
-import { directionsUrl, useSharingState } from '../../lib/location';
+import { directionsUrl, openLocationSettings, sharesInBackground, useSharingState } from '../../lib/location';
 import { FORWARD_ACTIONS, primaryAction, problemActions } from './job-actions';
 import { BillSheet } from './sheets/bill-sheet';
 import { CompletionSheet } from './sheets/completion-sheet';
@@ -117,14 +117,29 @@ function JobDetail({ job }: { job: ServiceRequestDetail }) {
             <Alert
               tone="info"
               title="Sharing your location"
-              description="The customer can see you on a map until you mark that you've arrived. Your location pauses while another app (like Google Maps) is in front; come back here now and then to update it."
+              description={
+                sharesInBackground
+                  ? "The customer can see you on a map until you mark that you've arrived. It keeps updating while you use Google Maps."
+                  : "The customer can see you on a map until you mark that you've arrived. Your location pauses while another app (like Google Maps) is in front; come back here now and then to update it."
+              }
             />
           ) : sharing === 'locating' ? (
             <Alert tone="info" title="Finding your location…" description="The customer will see you on a map as soon as your phone finds you." />
           ) : sharing === 'unavailable' ? (
             <Alert tone="warning" title="Can't find your location" description="Turn on location (GPS) on your phone. We'll keep trying." />
           ) : sharing === 'denied' || sharing === 'unsupported' ? (
-            <Alert tone="warning" title="Location is off" description="Allow location for this app so the customer can see you're on the way." />
+            <Alert
+              tone="warning"
+              title="Location is off"
+              description="Allow location for this app so the customer can see you're on the way."
+              action={
+                sharesInBackground ? (
+                  <Button size="sm" variant="outline" onClick={openLocationSettings}>
+                    Open settings
+                  </Button>
+                ) : undefined
+              }
+            />
           ) : null}
           {status === 'AWAITING_ESTIMATE_APPROVAL' ? (
             <Alert tone="info" title="Waiting for the customer" description="They're reviewing the estimate. You'll be notified when they respond." />

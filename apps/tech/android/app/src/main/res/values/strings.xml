@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pakka Fix Partner</string>
+    <string name="title_activity_main">Pakka Fix Partner</string>
+    <string name="package_name">com.pakkafix.partner</string>
+    <string name="custom_url_scheme">com.pakkafix.partner</string>
+    <!-- The notification Android requires while the app shares location in the background. -->
+    <string name="capacitor_background_geolocation_notification_channel_name">Location sharing</string>
+    <string name="capacitor_background_geolocation_notification_icon">drawable/ic_stat_pakka</string>
+    <string name="capacitor_background_geolocation_notification_color">#FF7A00</string>
+</resources>

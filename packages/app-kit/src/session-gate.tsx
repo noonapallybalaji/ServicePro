@@ -1,6 +1,6 @@
 import { session, useSession, type SessionRole } from '@servicepro/api-client';
 import { Button, EmptyState, LoadingState } from '@servicepro/ui';
-import { ShieldAlert } from 'lucide-react';
+import { ShieldAlert, WifiOff } from 'lucide-react';
 import { useEffect, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router';
 
@@ -27,6 +27,23 @@ export function RequireSession({ roles, loginPath, children }: RequireSessionPro
 
   if (status === 'unknown') {
     return <LoadingState label="Signing you in…" className="min-h-dvh" />;
+  }
+
+  // Phone app without a connection: still signed in on this device, so offer a retry, not the login page.
+  if (status === 'offline') {
+    return (
+      <EmptyState
+        className="min-h-dvh"
+        icon={WifiOff}
+        title="No connection"
+        description="Check your mobile data or Wi-Fi, then try again."
+        action={
+          <Button variant="primary" onClick={() => void session.restore()}>
+            Try again
+          </Button>
+        }
+      />
+    );
   }
 
   if (status === 'signed-out' || !current) {
