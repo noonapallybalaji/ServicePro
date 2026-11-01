@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 
 import { router } from './app/router';
+import { AppUpdatePrompt } from './native/app-update';
 import { nativeAppReady, startNativeApp } from './native/native-app';
 
 // Live updates go straight to the API where the host can't proxy WebSockets (see render.yaml).
@@ -21,6 +22,7 @@ createRoot(rootElement).render(
   <StrictMode>
     <AppProviders>
       <RouterProvider router={router} />
+      <AppUpdatePrompt />
     </AppProviders>
   </StrictMode>,
 );

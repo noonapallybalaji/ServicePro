@@ -37,3 +37,19 @@ pnpm ios                 # open in Xcode (on a Mac)
 - Google Play: the app uses background location through a foreground service; the Play Console asks for a short video and the reason ("show the technician's position to the office and the customer while on duty"). Fill the Data safety form (location, phone number).
 - App Store: the location texts are in `ios/App/App/Info.plist`; explain the background use in review notes. Fill the privacy labels.
 - Push notifications (new job offers): next step, with Firebase Cloud Messaging (also delivers to iOS through APNs).
+
+## Publishing a new partner test APK
+
+Test APKs are installed from the customer site (`/downloads/pakka-fix-partner.apk`), so the app checks
+for updates itself: on start and when brought back to the front it reads `/partner-app.json` on the
+site and offers "Download update" when that names a higher `versionCode` than the installed build.
+
+1. Raise `versionCode` and `versionName` in `apps/tech/android/app/build.gradle`.
+2. `pnpm build:native` in `apps/tech`, then `./gradlew assembleDebug` in `apps/tech/android`.
+3. Copy `app/build/outputs/apk/debug/app-debug.apk` to `apps/web-public/public/downloads/pakka-fix-partner.apk`.
+4. Set the same `versionCode` / `versionName` (and a one-line note) in `apps/web-public/public/partner-app.json`.
+
+Test APKs are signed with `apps/tech/android/app/test-signing.keystore`, so every build installs over
+the previous one. The file is not in git: keep a copy safe and put it in place on any machine that
+builds APKs (without it the build uses that machine's debug key, and phones refuse it as an update).
+Play Store builds need a separate, private upload key.
