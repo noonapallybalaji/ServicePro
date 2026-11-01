@@ -21,7 +21,7 @@ export function DesignSystemPage() {
       {/* Mobile/tablet: section chips scroll horizontally under a sticky header. */}
       <header className="sticky top-0 z-(--z-header) border-b border-border bg-surface lg:hidden">
         <Container className="flex h-header items-center gap-2">
-          <span className="text-h3 text-foreground">ServicePro</span>
+          <span className="text-h3 text-foreground">Pakka Fix</span>
           <Badge size="sm">Design system</Badge>
         </Container>
         <nav aria-label="Sections" className="scrollbar-none overflow-x-auto">
@@ -44,7 +44,7 @@ export function DesignSystemPage() {
         {/* Desktop: persistent sticky section index. */}
         <aside className="sticky top-0 hidden h-dvh w-sidebar shrink-0 flex-col gap-6 overflow-y-auto border-r border-border px-6 py-8 lg:flex">
           <div className="flex flex-col gap-2">
-            <span className="text-h3 text-foreground">ServicePro</span>
+            <span className="text-h3 text-foreground">Pakka Fix</span>
             <Badge size="sm" className="self-start">
               Design system v0.1
             </Badge>
@@ -71,7 +71,7 @@ export function DesignSystemPage() {
               Calm, precise, on your side.
             </Heading>
             <Text variant="body-lg" tone="secondary" className="max-w-prose">
-              The ServicePro design system: the tokens, components and patterns shared by the customer app, technician
+              The Pakka Fix design system: the tokens, components and patterns shared by the customer app, technician
               app and owner dashboard. Product screens are built only from what's shown here.
             </Text>
           </div>

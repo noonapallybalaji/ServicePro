@@ -1,10 +1,13 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ServicePro.BuildingBlocks.Modules;
+using ServicePro.BuildingBlocks.Persistence;
 using ServicePro.BuildingBlocks.Security;
 using ServicePro.BuildingBlocks.Storage;
 using ServicePro.BuildingBlocks.Web;
@@ -12,6 +15,7 @@ using ServicePro.Contracts.Ports;
 using ServicePro.Modules.Technicians.Application;
 using ServicePro.Modules.Technicians.Domain;
 using ServicePro.Modules.Technicians.Infrastructure;
+using ServicePro.SharedKernel.Results;
 
 namespace ServicePro.Modules.Technicians;
 
@@ -26,12 +30,17 @@ public sealed class TechniciansModule : IModule
     {
         services.AddScoped<ITechnicianDirectory, TechnicianDirectory>();
         services.AddScoped<ITechnicianPresence, TechnicianPresence>();
+        services.AddDataProtection();
+        services.AddScoped<PartnerPhoneProof>();
+        services.AddScoped<ApplicantDocumentPass>();
+        services.AddScoped<IPartnerApplicants, PartnerApplicants>();
     }
 
     public void MapEndpoints(IEndpointRouteBuilder endpoints)
     {
         MapStaffEndpoints(endpoints);
         MapSelfServiceEndpoints(endpoints);
+        MapApplicationEndpoints(endpoints);
 
         // Shown to customers on the tracking page, so it is public.
         endpoints.MapGet("/api/v1/technicians/{technicianId:guid}/photo", async (Guid technicianId, DbContext db, IFileStorage storage, CancellationToken ct) =>
@@ -45,6 +54,115 @@ public sealed class TechniciansModule : IModule
             .WithTags("Technicians")
             .Produces(StatusCodes.Status200OK, contentType: "image/jpeg")
             .WithName("GetTechnicianPhoto");
+    }
+
+    /// <summary>"Join as a partner": anyone may apply; the office reviews.</summary>
+    private static void MapApplicationEndpoints(IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost("/api/v1/public/technician-applications/code", async (PartnerCodeRequest request, RequestPartnerCode useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .WithTags("Partner applications")
+            .Produces<PartnerCodeResponse>()
+            .WithStandardErrors()
+            .WithName("RequestPartnerCode");
+
+        endpoints.MapPost("/api/v1/public/technician-applications/verify", async (PartnerVerifyRequest request, VerifyPartnerPhone useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .WithTags("Partner applications")
+            .Produces<PartnerVerifiedResponse>()
+            .WithStandardErrors()
+            .WithName("VerifyPartnerPhone");
+
+        endpoints.MapPost("/api/v1/public/technician-applications/documents", async Task<IResult> (
+                [FromForm] string phone, [FromForm] string verificationToken, [FromForm] string kind, IFormFile file,
+                UploadApplicantDocument useCase, CancellationToken ct) =>
+            {
+                if (!EnumText.TryParse<ApplicantDocumentKind>(kind, out var parsed))
+                {
+                    return Error.Validation("application.document_kind", $"Unknown document '{kind}'.").ToProblem();
+                }
+
+                await using var stream = file.OpenReadStream();
+                return (await useCase.HandleAsync(phone, verificationToken, parsed, stream, file.ContentType, file.Length, ct)).ToHttp();
+            })
+            .AllowAnonymous()
+            .DisableAntiforgery()
+            .RequireRateLimiting(RateLimitPolicies.Public)
+            .WithTags("Partner applications")
+            .Produces<ApplicantDocumentUploaded>()
+            .WithStandardErrors()
+            .WithName("UploadApplicantDocument");
+
+        // The applicant's own status page (after signing in with a code, or verifying on the form).
+        endpoints.MapPost("/api/v1/public/technician-applications/status", async (PartnerApplicationStatusRequest request, GetPartnerApplicationStatus useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .AllowAnonymous()
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .WithTags("Partner applications")
+            .Produces<PartnerApplicationStatusResponse>()
+            .WithStandardErrors()
+            .WithName("GetPartnerApplicationStatus");
+
+        endpoints.MapPost("/api/v1/public/technician-applications", async (SubmitTechnicianApplicationRequest request, SubmitTechnicianApplication useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(request, ct)).ToHttp())
+            .AllowAnonymous()
+            .Validate<SubmitTechnicianApplicationRequest>()
+            .RequireRateLimiting(RateLimitPolicies.Auth)
+            .WithTags("Partner applications")
+            .Produces<TechnicianApplicationReceived>()
+            .WithStandardErrors()
+            .WithName("SubmitTechnicianApplication");
+
+        var review = endpoints.MapGroup("/api/v1/admin/technician-applications").WithTags("Partner applications").RequireAuthorization(AuthPolicies.Admin);
+
+        // Status arrives as API text (PENDING); default enum binding only accepts "Pending".
+        review.MapGet("/", async Task<IResult> (string? status, ListTechnicianApplications useCase, CancellationToken ct) =>
+            {
+                TechnicianApplicationStatus? wanted = null;
+                if (!string.IsNullOrEmpty(status))
+                {
+                    if (!EnumText.TryParse<TechnicianApplicationStatus>(status, out var parsed))
+                    {
+                        return Results.Problem(statusCode: StatusCodes.Status400BadRequest, title: $"Unknown status '{status}'.");
+                    }
+
+                    wanted = parsed;
+                }
+
+                return Results.Ok(await useCase.HandleAsync(wanted, ct));
+            })
+            .Produces<IReadOnlyList<TechnicianApplicationResponse>>()
+            .WithName("ListTechnicianApplications");
+
+        review.MapGet("/{applicationId:guid}/documents/{kind}", async Task<IResult> (Guid applicationId, string kind, OpenApplicantDocument useCase, CancellationToken ct) =>
+            {
+                if (!EnumText.TryParse<ApplicantDocumentKind>(kind, out var parsed))
+                {
+                    return Results.NotFound();
+                }
+
+                var result = await useCase.HandleAsync(applicationId, parsed, ct);
+                return result.IsSuccess ? Results.Stream(result.Value.Content, result.Value.ContentType) : result.Error!.ToProblem();
+            })
+            .WithStandardErrors()
+            .WithName("OpenApplicantDocument");
+
+        review.MapPost("/{applicationId:guid}/approve", async (Guid applicationId, ApproveTechnicianApplication useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(applicationId, ct)).ToHttp())
+            .Produces<TechnicianApplicationResponse>()
+            .WithStandardErrors()
+            .WithName("ApproveTechnicianApplication");
+
+        review.MapPost("/{applicationId:guid}/reject", async (Guid applicationId, RejectTechnicianApplicationRequest request, RejectTechnicianApplication useCase, CancellationToken ct) =>
+                (await useCase.HandleAsync(applicationId, request, ct)).ToHttp())
+            .Validate<RejectTechnicianApplicationRequest>()
+            .Produces<TechnicianApplicationResponse>()
+            .WithStandardErrors()
+            .WithName("RejectTechnicianApplication");
     }
 
     private static void MapStaffEndpoints(IEndpointRouteBuilder endpoints)

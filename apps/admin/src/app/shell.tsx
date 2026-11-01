@@ -1,4 +1,4 @@
-import { session, useRealtime, useSession } from '@servicepro/api-client';
+import { session, useListTechnicianApplications, useRealtime, useSession } from '@servicepro/api-client';
 import {
   AppShell,
   Avatar,
@@ -16,7 +16,7 @@ import {
   StatusDot,
   Text,
 } from '@servicepro/ui';
-import { Gauge, LayoutList, LifeBuoy, LogOut, MapPinned, MoreHorizontal, ReceiptIndianRupee, Search, Send, Settings, UserRound, Users, Wrench } from 'lucide-react';
+import { Gauge, LayoutList, LifeBuoy, LogOut, MapPinned, MoreHorizontal, ReceiptIndianRupee, Search, Send, Settings, UserPlus, UserRound, Users, Wrench } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router';
 
@@ -28,6 +28,8 @@ interface NavEntry {
   label: string;
   icon: ReactNode;
   end?: boolean;
+  /** A count shown next to the label (e.g. applications waiting). */
+  badge?: number;
 }
 
 const OPERATE: NavEntry[] = [
@@ -40,6 +42,7 @@ const OPERATE: NavEntry[] = [
 
 const MANAGE: NavEntry[] = [
   { to: paths.technicians, label: 'Technicians', icon: <Wrench aria-hidden /> },
+  { to: paths.partnerApplications, label: 'Applications', icon: <UserPlus aria-hidden /> },
   { to: paths.customers, label: 'Customers', icon: <Users aria-hidden /> },
   { to: paths.billing, label: 'Billing', icon: <ReceiptIndianRupee aria-hidden /> },
 ];
@@ -54,6 +57,12 @@ export function AdminShell() {
   const { session: current } = useSession();
   const [moreOpen, setMoreOpen] = useState(false);
   const health = useRealtime({ hub: '/hubs/ops', enabled: Boolean(current), invalidate: LIVE_INVALIDATION });
+  // Applications waiting for review (owners and admins only; dispatchers don't review them).
+  const reviewer = current?.user.role === 'OWNER' || current?.user.role === 'ADMIN';
+  const pending = useListTechnicianApplications({ status: 'PENDING' }, { query: { enabled: reviewer, refetchInterval: 120_000 } });
+  const manage = MANAGE.filter((item) => reviewer || item.to !== paths.partnerApplications).map((item) =>
+    item.to === paths.partnerApplications ? { ...item, badge: pending.data?.length ?? 0 } : item,
+  );
 
   return (
     <AppShell
@@ -63,7 +72,7 @@ export function AdminShell() {
           <BrandLockup tagline="Operations" className="px-2" />
           <nav aria-label="Main" className="flex flex-1 flex-col gap-6">
             <NavGroup title="Operate" items={OPERATE} />
-            <NavGroup title="Manage" items={MANAGE} />
+            <NavGroup title="Manage" items={manage} />
             <ul className="mt-auto flex flex-col gap-1">
               <SidebarNavItem asChild icon={SETTINGS.icon} label={SETTINGS.label}>
                 <NavLink to={SETTINGS.to} />
@@ -92,8 +101,8 @@ export function AdminShell() {
           <DialogHeader title="More" />
           <DialogBody className="pb-4">
             <ul className="flex flex-col gap-1" onClickCapture={() => setMoreOpen(false)}>
-              {[...MANAGE, SETTINGS].map((item) => (
-                <SidebarNavItem key={item.to} asChild icon={item.icon} label={item.label} className="h-12">
+              {[...manage, SETTINGS].map((item) => (
+                <SidebarNavItem key={item.to} asChild icon={item.icon} label={item.label} badge={item.badge} className="h-12">
                   <NavLink to={item.to} />
                 </SidebarNavItem>
               ))}
@@ -113,7 +122,7 @@ function NavGroup({ title, items }: { title: string; items: NavEntry[] }) {
       </Text>
       <ul className="flex flex-col gap-1">
         {items.map((item) => (
-          <SidebarNavItem key={item.to} asChild icon={item.icon} label={item.label}>
+          <SidebarNavItem key={item.to} asChild icon={item.icon} label={item.label} badge={item.badge}>
             <NavLink to={item.to} end={item.end} />
           </SidebarNavItem>
         ))}
@@ -139,8 +148,8 @@ function Header({ live }: { live: ReturnType<typeof useRealtime> }) {
   return (
     <div className="flex h-header items-center gap-3 px-4 md:px-6 lg:px-8">
       <span className="flex items-center gap-2 lg:hidden">
-        <BrandMark className="size-8" />
-        <span className="text-h3 text-foreground max-sm:hidden">ServicePro</span>
+        <BrandMark className="size-8 sm:hidden" />
+        <BrandLockup className="max-sm:hidden" nameClassName="h-6" />
       </span>
       <form role="search" onSubmit={search} className="hidden max-w-md flex-1 md:block">
         <Input

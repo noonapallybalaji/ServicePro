@@ -188,7 +188,7 @@ function TimelineRow({ entry }: { entry: TechnicianActivityEntry }) {
   return (
     <li className="flex items-center gap-3 text-sm">
       <span className="w-16 shrink-0 tabular-nums text-foreground-secondary">{formatTime(entry.at)}</span>
-      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-foreground-secondary [&_svg]:size-4">{icon}</span>
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-surface-sunken text-foreground-secondary [&_svg]:size-4">{icon}</span>
       <span className="text-foreground">{text}</span>
     </li>
   );

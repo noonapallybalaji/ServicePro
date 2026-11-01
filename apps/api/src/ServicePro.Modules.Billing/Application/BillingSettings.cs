@@ -11,7 +11,7 @@ public static class BillingSettings
 
     public static readonly SettingDefinition<string> BusinessName = new(
         "business.name",
-        "ServicePro Appliance Care",
+        "Pakka Fix",
         "Business name printed on bills.");
 
     public static readonly SettingDefinition<string> BusinessContact = new(

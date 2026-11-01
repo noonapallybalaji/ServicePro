@@ -51,14 +51,13 @@ public sealed class AuthTests(ApiFactory factory)
     }
 
     [Fact]
-    public async Task Otp_request_does_not_reveal_whether_a_number_is_registered()
+    public async Task An_unregistered_number_is_told_so_and_no_code_is_sent()
     {
         var api = new TestApi(factory);
 
-        var unknown = await api.PostAsync<OtpRequestedResponse>("/api/v1/auth/otp/request", new OtpRequest(TestApi.RandomPhone()));
+        var unknown = await api.PostRawAsync("/api/v1/auth/otp/request", new OtpRequest(TestApi.RandomPhone()));
 
-        unknown.CodeLength.ShouldBe(6);
-        unknown.DevelopmentCode.ShouldBeNull();
+        (await TestApi.ProblemAsync(unknown)).ShouldBe((HttpStatusCode.NotFound, "auth.not_registered"));
     }
 
     [Fact]

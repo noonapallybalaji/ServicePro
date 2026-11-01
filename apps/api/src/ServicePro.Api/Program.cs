@@ -125,7 +125,7 @@ app.UseAuthorization();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference("/docs", o => o.WithTitle("ServicePro API"));
+    app.MapScalarApiReference("/docs", o => o.WithTitle("Pakka Fix API"));
 }
 
 foreach (var module in ModuleCatalog.All)

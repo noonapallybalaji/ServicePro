@@ -45,6 +45,7 @@ export const router = createBrowserRouter([
       { path: 'live-map', lazy: page(() => import('../features/technicians/live-map-page'), (m) => m.LiveMapPage) },
       { path: 'technicians', lazy: page(() => import('../features/technicians/technicians-page'), (m) => m.TechniciansPage) },
       { path: 'technicians/new', lazy: page(() => import('../features/technicians/new-technician-page'), (m) => m.NewTechnicianPage) },
+      { path: 'partner-applications', lazy: page(() => import('../features/technicians/partner-applications-page'), (m) => m.PartnerApplicationsPage) },
       { path: 'technicians/:technicianId', lazy: page(() => import('../features/technicians/technician-detail-page'), (m) => m.TechnicianDetailPage) },
       { path: 'customers', lazy: page(() => import('../features/customers/customers-page'), (m) => m.CustomersPage) },
       { path: 'customers/new', lazy: page(() => import('../features/customers/new-customer-page'), (m) => m.NewCustomerPage) },

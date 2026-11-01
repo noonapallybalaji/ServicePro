@@ -14,12 +14,15 @@ export interface ApiProblem {
   title?: string;
   code?: string;
   errors?: Record<string, string[]>;
+  /** Extra values some errors carry for the next step (e.g. a status pass). */
+  [extension: string]: unknown;
 }
 
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   readonly fieldErrors: Record<string, string[]>;
+  private readonly problem: ApiProblem;
 
   constructor(problem: ApiProblem) {
     super(problem.title ?? `Request failed (${problem.status})`);
@@ -27,6 +30,13 @@ export class ApiError extends Error {
     this.status = problem.status;
     this.code = problem.code;
     this.fieldErrors = problem.errors ?? {};
+    this.problem = problem;
+  }
+
+  /** A text value the error carries besides its message (see the API's error "details"). */
+  detail(name: string): string | undefined {
+    const value = this.problem[name];
+    return typeof value === 'string' ? value : undefined;
   }
 
   /** First message for a field, using the API's camelCase property path (e.g. "address.pincode"). */

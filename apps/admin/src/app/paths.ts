@@ -8,6 +8,7 @@ export const paths = {
   technicians: '/technicians',
   liveMap: '/live-map',
   newTechnician: '/technicians/new',
+  partnerApplications: '/partner-applications',
   technician: (id: string) => `/technicians/${id}`,
   customers: '/customers',
   newCustomer: '/customers/new',

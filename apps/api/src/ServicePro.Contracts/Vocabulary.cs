@@ -74,4 +74,7 @@ public enum OtpPurpose
 
     /// <summary>A signed-in customer proving they own the new mobile number they're switching to.</summary>
     ChangePhone,
+
+    /// <summary>A technician applying to join ("Join as a partner") proving they hold the number.</summary>
+    PartnerApplication,
 }

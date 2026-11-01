@@ -13,6 +13,9 @@ public enum ErrorType
 /// <summary>An expected business failure. Exceptions are reserved for the unexpected.</summary>
 public sealed record Error(string Code, string Message, ErrorType Type = ErrorType.Failure)
 {
+    /// <summary>Extra values for the caller, sent alongside the code (e.g. a pass for the next step).</summary>
+    public IReadOnlyDictionary<string, string>? Details { get; init; }
+
     public static Error Validation(string code, string message) => new(code, message, ErrorType.Validation);
 
     public static Error NotFound(string code, string message) => new(code, message, ErrorType.NotFound);

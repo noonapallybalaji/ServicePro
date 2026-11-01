@@ -2,7 +2,7 @@
  * ServicePro design tokens.
  *
  * Two layers:
- *   1. Primitive palette (--graphite-*, --petrol-*, ...) — raw values. Components never use these.
+ *   1. Primitive palette (--graphite-*, --navy-*, ...) — raw values. Components never use these.
  *   2. Semantic tokens (--primary, --surface, --success-subtle, ...) — what components use.
  *
  * Re-theming (a future brand refresh or dark mode) only changes layer 2.
@@ -10,32 +10,33 @@
  */
 
 :root {
-  /* ── Primitive: Graphite (cool, faintly green-tinted neutrals) ───────────── */
+  /* ── Primitive: Graphite (cool, faintly navy-tinted neutrals) ────────────── */
   --graphite-0: #ffffff;
-  --graphite-25: #f6f7f5;
-  --graphite-50: #eff1ee;
-  --graphite-100: #e4e8e5;
-  --graphite-200: #d6dbd7;
-  --graphite-300: #b9c0bb;
-  --graphite-400: #8a938e;
-  --graphite-500: #6a736f;
-  --graphite-600: #4a5450;
-  --graphite-700: #343c39;
-  --graphite-800: #222927;
-  --graphite-900: #141b19;
-  --graphite-950: #0b100f;
+  --graphite-25: #f6f7f9;
+  --graphite-50: #eef0f4;
+  --graphite-100: #e3e7ed;
+  --graphite-200: #d3d9e1;
+  --graphite-300: #b5bfcb;
+  --graphite-400: #8793a3;
+  --graphite-500: #5f6b7e;
+  --graphite-600: #46526a;
+  --graphite-700: #323c4f;
+  --graphite-800: #212938;
+  --graphite-900: #121a29;
+  --graphite-950: #0a101b;
 
-  /* ── Primitive: Petrol (brand — a deep blue-teal, "cool air + clean signal") ── */
-  --petrol-50: #ecf5f7;
-  --petrol-100: #d2e8ed;
-  --petrol-200: #a6d1db;
-  --petrol-300: #6fb3c4;
-  --petrol-400: #3a93a8;
-  --petrol-500: #13778d;
-  --petrol-600: #0b6276;
-  --petrol-700: #0a5061;
-  --petrol-800: #0a404e;
-  --petrol-900: #08333e;
+  /* ── Primitive: Navy (brand — the Pakka Fix wordmark navy, #001d3f at 950) ─── */
+  --navy-50: #eef4fb;
+  --navy-100: #d9e5f4;
+  --navy-200: #b3cbe8;
+  --navy-300: #7fa6d6;
+  --navy-400: #4a7fc0;
+  --navy-500: #2563a8;
+  --navy-600: #154d8c;
+  --navy-700: #0f3d72;
+  --navy-800: #0a2f5a;
+  --navy-900: #062447;
+  --navy-950: #001d3f;
 
   /* ── Semantic: canvas & surfaces ─────────────────────────────────────────── */
   --background: var(--graphite-25);
@@ -56,16 +57,16 @@
   --border-strong: var(--graphite-300);
   --input: var(--graphite-400); /* 3:1 — WCAG 1.4.11 control boundary */
   --input-hover: var(--graphite-500);
-  --ring: var(--petrol-500); /* focus indicator, 5.2:1 */
+  --ring: var(--navy-500); /* focus indicator, 6.0:1 */
 
   /* ── Semantic: brand / primary action ────────────────────────────────────── */
-  --primary: var(--petrol-600); /* white text 6.9:1 */
-  --primary-hover: var(--petrol-700);
-  --primary-active: var(--petrol-800);
+  --primary: var(--navy-600); /* white text 8.3:1 */
+  --primary-hover: var(--navy-700);
+  --primary-active: var(--navy-800);
   --primary-foreground: var(--graphite-0);
-  --primary-subtle: var(--petrol-50);
-  --primary-subtle-foreground: var(--petrol-700);
-  --primary-border: var(--petrol-200);
+  --primary-subtle: var(--navy-50);
+  --primary-subtle-foreground: var(--navy-700);
+  --primary-border: var(--navy-200);
 
   /* ── Semantic: secondary action ──────────────────────────────────────────── */
   --secondary: var(--graphite-100);
@@ -113,13 +114,13 @@
 
   --rating: #e09c0b;
 
-  /* ── Semantic: accent — warm coral for highlights, promos, illustration pops ── */
-  --accent: #ff7a45; /* carries dark text, never white */
-  --accent-hover: #ff6a2e;
-  --accent-foreground: #2a0f00;
-  --accent-subtle: #fff1ea;
-  --accent-subtle-foreground: #a8370f;
-  --accent-border: #ffc9b0;
+  /* ── Semantic: accent — the wordmark orange, for highlights, promos, illustration pops ── */
+  --accent: #ff8000; /* carries dark text, never white (8.6:1 with --accent-foreground) */
+  --accent-hover: #f07400;
+  --accent-foreground: #1f0f00;
+  --accent-subtle: #fff3e6;
+  --accent-subtle-foreground: #a34300;
+  --accent-border: #ffd2a3;
 
   /*
    * ── Semantic: hues — the colourful layer ─────────────────────────────────────
@@ -154,9 +155,9 @@
   --art-ink: var(--graphite-900);
 
   /* ── Semantic: brand surfaces (sidebar, hero bands, sign-in panels) ────────── */
-  --brand-from: var(--petrol-600);
-  --brand-via: var(--petrol-800);
-  --brand-to: #062831;
+  --brand-from: var(--navy-800);
+  --brand-via: var(--navy-900);
+  --brand-to: var(--navy-950);
 
   /* Navigation item colours; brand surfaces override them (see [data-surface='brand']). */
   --nav-foreground: var(--foreground-secondary);
@@ -193,8 +194,8 @@
 /*
  * A dark brand surface (sidebar, hero band). Text tokens flip to white inside it, so
  * ordinary components (Text, nav items, outline badges) read correctly without variants.
- * Measured on the lightest brand colour (--petrol-600, where hero gradients start):
- * secondary 5.96:1, muted 5.10:1 — both AA for body text.
+ * Measured on the lightest brand colour (--navy-800, where hero gradients start):
+ * secondary 10.6:1, muted 8.6:1 — both AA for body text.
  */
 [data-surface='brand'] {
   --foreground: #ffffff;
@@ -218,7 +219,7 @@
   --foreground-secondary: var(--graphite-600);
   --foreground-muted: var(--graphite-500);
   --border: var(--graphite-200);
-  --ring: var(--petrol-500);
+  --ring: var(--navy-500);
 
   --nav-foreground: var(--foreground-secondary);
   --nav-foreground-hover: var(--foreground);

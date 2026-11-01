@@ -17,7 +17,7 @@ const C = {
   hair: 'var(--art-hair)',
   metal: 'var(--art-metal)',
   uniform: 'var(--primary)',
-  uniformDark: 'var(--petrol-800)',
+  uniformDark: 'var(--navy-800)',
   accent: 'var(--accent)',
   rating: 'var(--rating)',
   sky: 'var(--hue-sky)',
@@ -220,38 +220,30 @@ const SPOTS: Record<SpotKind, ReactNode> = {
   ),
 };
 
-/** Brand mark: wrench in a rounded tile with a coral spark. */
+/**
+ * The Pakka Fix app icon (PF monogram). Each app serves it at /icon-192.png, alongside its favicons.
+ */
 export function BrandMark({ className }: ArtProps) {
-  return (
-    <svg viewBox="0 0 48 48" aria-hidden focusable="false" className={cn('size-10 shrink-0', className)}>
-      <rect width="48" height="48" rx="13" fill="var(--primary)" />
-      <rect width="48" height="48" rx="13" fill="url(#brandmark-shine)" />
-      <defs>
-        <linearGradient id="brandmark-shine" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#ffffff" stopOpacity="0.22" />
-          <stop offset="1" stopColor="#ffffff" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d="M30 13a8 8 0 0 0-9.8 9.8L13 30a2.8 2.8 0 0 0 4 4l7.2-7.2A8 8 0 0 0 34 17l-4.7 4.7-3.2-.8-.8-3.2z" fill="#ffffff" />
-      <circle cx="35" cy="35" r="4" fill="var(--accent)" />
-    </svg>
-  );
+  return <img src="/icon-192.png" alt="" width={192} height={192} className={cn('size-10 shrink-0 rounded-xl', className)} />;
 }
 
-/** Brand mark + product name, for sidebars, sign-in panels and the public header. */
+/**
+ * The Pakka Fix wordmark, for sidebars, sign-in panels and headers. Each app serves it at
+ * /brand/logo.png (navy, for light surfaces) and /brand/logo-light.png (white, for dark ones);
+ * the right one shows by itself inside a dark brand surface ([data-surface='brand']).
+ */
 export function BrandLockup({
-  name = 'ServicePro',
+  name = 'Pakka Fix',
   tagline,
   className,
   nameClassName,
 }: ArtProps & { name?: string; tagline?: string; nameClassName?: string }) {
+  const logo = cn('h-8 w-auto self-start', nameClassName);
   return (
-    <span className={cn('inline-flex min-w-0 items-center gap-3', className)}>
-      <BrandMark />
-      <span className="flex min-w-0 flex-col">
-        <span className={cn('text-h3 font-bold text-foreground', nameClassName)}>{name}</span>
-        {tagline ? <span className="text-caption text-foreground-muted">{tagline}</span> : null}
-      </span>
+    <span className={cn('inline-flex min-w-0 flex-col gap-1', className)}>
+      <img src="/brand/logo.png" alt={name} width={669} height={120} className={cn(logo, 'in-data-[surface=brand]:hidden')} />
+      <img src="/brand/logo-light.png" alt={name} width={669} height={120} className={cn(logo, 'hidden in-data-[surface=brand]:block')} />
+      {tagline ? <span className="text-caption font-semibold tracking-wide text-foreground-muted uppercase">{tagline}</span> : null}
     </span>
   );
 }

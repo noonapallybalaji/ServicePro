@@ -10,7 +10,7 @@ internal sealed class BearerSecurityTransformer : IOpenApiDocumentTransformer
     {
         document.Info = new OpenApiInfo
         {
-            Title = "ServicePro API",
+            Title = "Pakka Fix API",
             Version = "v1",
             Description = "Service management & technician dispatch (PLAN.md).",
         };

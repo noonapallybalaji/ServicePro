@@ -262,7 +262,7 @@ function useSlides(appliances: Appliance[]): Slide[] {
       key: 'track',
       label: 'Track your technician live, pay after the repair',
       content: (
-        <div className="flex size-full items-center bg-[linear-gradient(110deg,#0b3a4a_0%,#0b6276_100%)] text-[#fff]">
+        <div className="flex size-full items-center bg-[linear-gradient(110deg,#0a2f5a_0%,#154d8c_100%)] text-[#fff]">
           <div className="flex w-[58%] flex-col gap-[2.2cqw] pl-[5cqw]">
             <Pill>Live tracking</Pill>
             <SlideTitle>

@@ -357,6 +357,7 @@ public sealed class OtpSender(NotificationDispatcher dispatcher, IEnumerable<INo
             OtpPurpose.CustomerLogin => (TemplateCodes.OtpCustomerLogin, RecipientType.Customer),
             OtpPurpose.EstimateApproval => (TemplateCodes.OtpEstimate, RecipientType.Customer),
             OtpPurpose.ChangePhone => (TemplateCodes.OtpChangePhone, RecipientType.Customer),
+            OtpPurpose.PartnerApplication => (TemplateCodes.OtpPartnerApplication, RecipientType.Technician),
             _ => (TemplateCodes.OtpLogin, RecipientType.Technician),
         };
 

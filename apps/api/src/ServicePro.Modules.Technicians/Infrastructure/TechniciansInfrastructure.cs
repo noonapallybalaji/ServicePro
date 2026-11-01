@@ -163,3 +163,26 @@ internal static class Specialty
         return names.Count == 0 ? "Technician" : $"{string.Join(" & ", names)} specialist";
     }
 }
+
+internal sealed class TechnicianApplicationConfiguration : IEntityTypeConfiguration<TechnicianApplication>
+{
+    public void Configure(EntityTypeBuilder<TechnicianApplication> builder)
+    {
+        builder.ToTable("technician_applications", TechniciansSchema.Name);
+        builder.Property(a => a.FullName).HasMaxLength(200);
+        builder.Property(a => a.Phone).HasPhoneConversion();
+        builder.Property(a => a.Pincode).HasMaxLength(6);
+        builder.Property(a => a.Locality).HasMaxLength(200);
+        builder.Property(a => a.About).HasMaxLength(1000);
+        builder.Property(a => a.RejectionReason).HasMaxLength(500);
+        builder.Property(a => a.AddressLine).HasMaxLength(300);
+        builder.Property(a => a.AadhaarLast4).HasMaxLength(4);
+        builder.Property(a => a.Pan).HasMaxLength(10);
+        builder.Property(a => a.ProfilePhotoKey).HasMaxLength(300);
+        builder.Property(a => a.AadhaarFrontKey).HasMaxLength(300);
+        builder.Property(a => a.AadhaarBackKey).HasMaxLength(300);
+        builder.Property(a => a.PanCardKey).HasMaxLength(300);
+        builder.HasIndex(a => new { a.TenantId, a.Status, a.CreatedAt });
+        builder.HasIndex(a => new { a.TenantId, a.Phone });
+    }
+}

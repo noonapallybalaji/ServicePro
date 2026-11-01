@@ -106,7 +106,7 @@ export const SITE: SiteConfig = {
   legal: legalConfig(),
   locale: 'en_IN',
   language: 'en-IN',
-  themeColor: '#0b6276',
+  themeColor: '#001d3f',
   logoPath: '/brand/logo.png',
   ogImagePath: '/og-image.jpg',
   ogImageWidth: 1200,

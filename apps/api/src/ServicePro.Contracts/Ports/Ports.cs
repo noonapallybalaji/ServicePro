@@ -162,6 +162,19 @@ public interface ICustomerDirectory
 
 // ── Technicians ─────────────────────────────────────────────────────────────
 
+/// <summary>
+/// People who applied to be partners and aren't yet (Technicians owns the applications). Signing in
+/// with their number shows where the application stands instead of a session.
+/// </summary>
+public interface IPartnerApplicants
+{
+    /// <summary>An application that is waiting for review or was turned down.</summary>
+    Task<bool> HasAppliedAsync(PhoneNumber phone, CancellationToken ct);
+
+    /// <summary>Once the number is verified: the short-lived pass their status page uses.</summary>
+    string IssueStatusPass(PhoneNumber phone);
+}
+
 public sealed record TechnicianInfo(
     Guid Id,
     Guid UserId,

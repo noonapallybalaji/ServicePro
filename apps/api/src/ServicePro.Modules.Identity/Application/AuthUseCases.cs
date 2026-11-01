@@ -17,6 +17,13 @@ internal static class AuthErrors
     public static readonly Error InvalidCredentials =
         Error.Unauthorized("auth.invalid_credentials", "Email or password is incorrect.");
 
+    public static readonly Error NotRegistered =
+        Error.NotFound("auth.not_registered", "This number isn't registered with Pakka Fix. Check the number, or join as a partner.");
+
+    /// <summary>The number applied to be a partner and isn't one yet: Details carry the status-page pass.</summary>
+    public static readonly Error PartnerApplicant =
+        Error.Forbidden("auth.partner_applicant", "Your partner application is still with our team.");
+
     public static readonly Error SessionExpired =
         Error.Unauthorized("auth.session_expired", "Your session has ended. Please sign in again.");
 }
@@ -60,7 +67,7 @@ public sealed record OtpRequest(string Phone);
 
 public sealed record OtpRequestedResponse(DateTimeOffset ExpiresAt, int CodeLength, string? DevelopmentCode);
 
-public sealed class RequestLoginOtp(DbContext db, PhoneVerification verification, IClock clock) : IUseCase
+public sealed class RequestLoginOtp(DbContext db, PhoneVerification verification, IPartnerApplicants applicants) : IUseCase
 {
     public async Task<Result<OtpRequestedResponse>> HandleAsync(OtpRequest request, CancellationToken ct)
     {
@@ -71,16 +78,14 @@ public sealed class RequestLoginOtp(DbContext db, PhoneVerification verification
         }
 
         var phone = phoneResult.Value;
-        if (await verification.IsCoolingDownAsync(phone, OtpPurpose.Login, clock.UtcNow, ct))
-        {
-            return Error.Conflict("otp.cooldown", "A code was just sent. Wait a few seconds before asking again.");
-        }
 
-        // Respond identically whether or not the number belongs to a technician (no account enumeration).
+        // A number that is neither a partner nor an applicant is told so, with the way to join: being
+        // clear beats a code that never arrives (the request is rate-limited). Someone who applied gets
+        // a real code: signing in shows their application.
         var isTechnician = await db.Set<User>().AnyAsync(u => u.Phone == phone && u.IsActive && u.Role == UserRole.Technician, ct);
-        if (!isTechnician)
+        if (!isTechnician && !await applicants.HasAppliedAsync(phone, ct))
         {
-            return ToResponse(verification.Pretend());
+            return AuthErrors.NotRegistered;
         }
 
         var issued = await verification.IssueAsync(phone, OtpPurpose.Login, ct);
@@ -107,7 +112,7 @@ internal sealed class OtpVerifyRequestValidator : AbstractValidator<OtpVerifyReq
     }
 }
 
-public sealed class VerifyLoginOtp(DbContext db, PhoneVerification verification, SessionIssuer sessions, IClock clock) : IUseCase
+public sealed class VerifyLoginOtp(DbContext db, PhoneVerification verification, SessionIssuer sessions, IPartnerApplicants applicants, IClock clock) : IUseCase
 {
     public async Task<Result<IssuedSession>> HandleAsync(OtpVerifyRequest request, CancellationToken ct)
     {
@@ -128,7 +133,10 @@ public sealed class VerifyLoginOtp(DbContext db, PhoneVerification verification,
         var user = await db.Set<User>().FirstOrDefaultAsync(u => u.Phone == phone && u.IsActive && u.Role == UserRole.Technician, ct);
         if (user is null)
         {
-            return AuthErrors.InvalidCredentials;
+            await db.SaveChangesAsync(ct); // the code is used up
+            return await applicants.HasAppliedAsync(phone, ct)
+                ? AuthErrors.PartnerApplicant with { Details = new Dictionary<string, string> { ["statusPass"] = applicants.IssueStatusPass(phone) } }
+                : AuthErrors.InvalidCredentials;
         }
 
         user.RecordLogin(clock.UtcNow);

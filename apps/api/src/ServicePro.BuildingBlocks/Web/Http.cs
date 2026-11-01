@@ -21,10 +21,13 @@ public static class ResultHttpExtensions
             _ => StatusCodes.Status422UnprocessableEntity,
         };
 
-        return Results.Problem(
-            statusCode: status,
-            title: error.Message,
-            extensions: new Dictionary<string, object?> { ["code"] = error.Code });
+        var extensions = new Dictionary<string, object?> { ["code"] = error.Code };
+        foreach (var (name, value) in error.Details ?? new Dictionary<string, string>())
+        {
+            extensions[name] = value;
+        }
+
+        return Results.Problem(statusCode: status, title: error.Message, extensions: extensions);
     }
 
     public static IResult ToHttp(this Result result) =>

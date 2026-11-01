@@ -100,3 +100,6 @@ public sealed record SupportReplySent(Guid TicketId, string Number, Guid? Custom
 
 /// <summary>A technician's phone reported where they are (shared while on the way to a job).</summary>
 public sealed record TechnicianLocationReported(Guid TechnicianId, DateTimeOffset At) : IDomainEvent;
+
+/// <summary>The office approved a "Join as a partner" application: the technician can now sign in.</summary>
+public sealed record TechnicianApplicationApproved(Guid ApplicationId, Guid TechnicianId, string FullName, string Phone) : IDomainEvent;

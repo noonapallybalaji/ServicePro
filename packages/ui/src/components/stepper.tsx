@@ -16,6 +16,8 @@ interface StepperProps {
   onStepClick?: (index: number) => void;
   /** Accessible name for the list, e.g. "Booking progress". */
   label?: string;
+  /** Always the narrow layout (numbers only, the current step named underneath): for steppers in a small card. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -24,7 +26,7 @@ interface StepperProps {
  * brand-coloured, connectors turn green as you advance. Labels sit under the circles from `sm`;
  * on narrow phones only the current step's name is shown, under the row.
  */
-export function Stepper({ steps, current, onStepClick, label = 'Progress', className }: StepperProps) {
+export function Stepper({ steps, current, onStepClick, label = 'Progress', compact = false, className }: StepperProps) {
   const currentStep = steps[current];
   return (
     <div className={cn('flex flex-col gap-3', className)}>
@@ -48,7 +50,7 @@ export function Stepper({ steps, current, onStepClick, label = 'Progress', class
           const text = (
             <span
               className={cn(
-                'text-caption font-semibold max-sm:sr-only sm:text-sm',
+                compact ? 'sr-only' : 'text-caption font-semibold max-sm:sr-only sm:text-sm',
                 done && 'text-foreground-muted',
                 active && 'text-primary',
                 !done && !active && 'text-foreground-muted',
@@ -67,7 +69,7 @@ export function Stepper({ steps, current, onStepClick, label = 'Progress', class
                   className={cn('transition-interactive mx-1 mt-5 min-w-3 flex-1 border-t-2', index <= current ? 'border-success' : 'border-border')}
                 />
               ) : null}
-              <li aria-current={active ? 'step' : undefined} className="flex shrink-0 flex-col items-center gap-2 text-center sm:w-24">
+              <li aria-current={active ? 'step' : undefined} className={cn('flex shrink-0 flex-col items-center gap-2 text-center', !compact && 'sm:w-24')}>
                 {clickable ? (
                   <button
                     type="button"
@@ -90,7 +92,7 @@ export function Stepper({ steps, current, onStepClick, label = 'Progress', class
         })}
       </ol>
       {currentStep ? (
-        <p aria-hidden className="text-center text-sm font-semibold text-primary sm:hidden">
+        <p aria-hidden className={cn('text-center text-sm font-semibold text-primary', !compact && 'sm:hidden')}>
           Step {current + 1} of {steps.length} · {currentStep.label}
         </p>
       ) : null}

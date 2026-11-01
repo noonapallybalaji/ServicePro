@@ -28,11 +28,13 @@ public static class TemplateCodes
     public const string OtpCustomerLogin = "OTP_CUSTOMER_LOGIN";
     public const string OtpEstimate = "OTP_ESTIMATE";
     public const string OtpChangePhone = "OTP_CHANGE_PHONE";
+    public const string OtpPartnerApplication = "OTP_PARTNER_APPLICATION";
     public const string VisitScheduled = "VISIT_SCHEDULED";
     public const string UnableToRepair = "UNABLE_TO_REPAIR";
     public const string EstimateSent = "ESTIMATE_SENT";
     public const string TechEstimateApproved = "TECH_ESTIMATE_APPROVED";
     public const string TechEstimateDeclined = "TECH_ESTIMATE_DECLINED";
+    public const string PartnerApproved = "PARTNER_APPROVED";
 }
 
 public sealed record TemplateSeed(string Code, NotificationChannel Channel, string Body);
@@ -91,8 +93,10 @@ public static class DefaultTemplates
             "We've refunded {{amount}} for {{sr}} to the way you paid. Your bank may take a few days to show it."),
         new(TemplateCodes.JobOffer, NotificationChannel.WhatsApp,
             "New job {{sr}}: {{service}} in {{area}}. Open the app to accept within {{minutes}} minutes."),
+        new(TemplateCodes.PartnerApproved, NotificationChannel.WhatsApp,
+            "Welcome to Pakka Fix, {{name}}! Your partner application is approved. Install the Pakka Fix Partner app: {{link}} and sign in with this mobile number."),
         new(TemplateCodes.OtpLogin, NotificationChannel.Sms,
-            "{{code}} is your ServicePro login code. It expires in 5 minutes. Don't share it."),
+            "{{code}} is your Pakka Fix login code. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.OtpBooking, NotificationChannel.Sms,
             "{{code}} is your code to confirm your repair booking. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.OtpCustomerLogin, NotificationChannel.Sms,
@@ -101,6 +105,8 @@ public static class DefaultTemplates
             "{{code}} is your code to approve the repair estimate. It expires in 5 minutes. Only share it if you agree to the cost."),
         new(TemplateCodes.OtpChangePhone, NotificationChannel.Sms,
             "{{code}} is your code to change the mobile number on your account. It expires in 5 minutes. Don't share it."),
+        new(TemplateCodes.OtpPartnerApplication, NotificationChannel.Sms,
+            "{{code}} is your code to apply as a Pakka Fix partner. It expires in 5 minutes. Don't share it."),
         new(TemplateCodes.EstimateSent, NotificationChannel.WhatsApp,
             "{{technician}} has sent an estimate of {{amount}} for {{sr}}. Nothing extra is done until you approve it. Review it here: {{link}}"),
         new(TemplateCodes.TechEstimateApproved, NotificationChannel.WhatsApp,
@@ -115,6 +121,7 @@ public static class DefaultTemplates
         new(TemplateCodes.OtpCustomerLogin, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
         new(TemplateCodes.OtpEstimate, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
         new(TemplateCodes.OtpChangePhone, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
+        new(TemplateCodes.OtpPartnerApplication, NotificationChannel.WhatsApp, "{{code}} is your verification code. For your security, do not share this code."),
     ];
 
     /// <summary>

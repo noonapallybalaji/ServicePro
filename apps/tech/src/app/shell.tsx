@@ -1,5 +1,5 @@
 import { getListMyJobsQueryKey, getListMyOffersQueryKey, useGetMyTechnicianProfile, useListMyJobs, useListMyOffers, useRealtime, useSession } from '@servicepro/api-client';
-import { AppShell, Avatar, BottomNavItem, Badge, SidebarNavItem, StatusDot, Text, toast } from '@servicepro/ui';
+import { AppShell, Avatar, BottomNavItem, Badge, BrandLockup, SidebarNavItem, StatusDot, Text, toast } from '@servicepro/ui';
 import { CalendarCheck, Inbox, Navigation, UserRound, Wallet } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
@@ -88,10 +88,7 @@ export function TechShell() {
       }
       sidebar={
         <div className="flex flex-1 flex-col gap-8 px-4 py-6">
-          <span className="flex flex-col gap-1 px-2">
-            <img src="/brand/logo.png" alt="Pakka Fix" width={669} height={120} className="h-7 w-auto self-start" />
-            <span className="text-caption text-foreground-muted">Partner app</span>
-          </span>
+          <BrandLockup tagline="Partner app" className="px-2" />
           <nav aria-label="Main">
             <ul className="flex flex-col gap-1">
               {nav.map((item) => (
