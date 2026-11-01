@@ -25,6 +25,7 @@ import { ArrowLeft, BadgeIndianRupee, KeyRound, ListChecks, MapPin, MapPinned } 
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 
+import { AppliancePhoto } from '../../components/appliance-photo';
 import { SiteLayout } from '../../components/site-layout';
 import { customerFrom } from '../../customer-session';
 import { getServiceLocation, openLocationPicker, useServiceLocation, type ServiceLocation } from '../../location/service-location';
@@ -205,12 +206,12 @@ function CategoryStep({ categories, value, onPick }: { categories: CategoryRespo
             aria-pressed={c.id === value}
             onClick={() => onPick(c.id)}
             className={cn(
-              'pressable transition-interactive flex h-full w-full flex-col items-start gap-3 rounded-card border bg-surface p-3 text-left hover:shadow-md',
+              'pressable transition-interactive flex h-full w-full flex-col items-start gap-3 overflow-hidden rounded-card border bg-surface pb-3 text-left hover:shadow-md',
               c.id === value ? 'border-primary ring-2 ring-primary-subtle' : 'border-border hover:border-border-strong',
             )}
           >
-            <CategoryTile code={c.code} size="lg" className="w-full" />
-            <span className="flex flex-col gap-1">
+            <AppliancePhoto code={c.code} />
+            <span className="flex flex-col gap-1 px-3">
               <span className="text-body font-semibold text-foreground">{c.name}</span>
               <span className="text-sm text-foreground-secondary">
                 Visit from <span className="font-semibold text-foreground tabular-nums">{formatINR(c.baseVisitCharge)}</span>

@@ -1,14 +1,16 @@
-import { Button, CategoryTile, formatINR, Container, HUE_CLASSES, Heading, Skeleton, TechnicianScene, Text, cn } from '@servicepro/ui';
-import { ArrowRight, ChevronRight, ListChecks, Wrench } from 'lucide-react';
+import { Badge, formatINR, Container, Heading, Skeleton, Text } from '@servicepro/ui';
+import { ArrowRight, Cable, ChevronRight, Droplets, FlaskConical, Package, ShieldCheck, Umbrella, Wallet, Zap } from 'lucide-react';
 import { useEffect, type MouseEvent } from 'react';
 import { Link } from 'react-router';
 
-import { ApplianceSearch, FALLBACK_APPLIANCES, useActiveCategories, useBookAppliance, type Appliance } from '../components/appliance-search';
+import { FALLBACK_APPLIANCES, useActiveCategories, useBookAppliance, type Appliance } from '../components/appliance-search';
+import { AppliancePhoto } from '../components/appliance-photo';
+import { HeroCarousel } from '../components/hero-carousel';
 import { StepList } from '../components/page-parts';
 import { SiteLayout } from '../components/site-layout';
+import { SiteLogo } from '../components/site-logo';
 import { useStartRequest } from '../components/mobile-action-bar';
 import { SERVICES, servicePath } from '../content/services';
-import { PROMISES } from '../content/site-content';
 import { promptForLocationOnce } from '../location/service-location';
 import { usePageMeta } from '../seo/head';
 import { PAGES } from '../seo/pages';
@@ -24,60 +26,24 @@ export function HomePage() {
   usePageMeta(PAGES.home);
   const { categories, catalog } = useActiveCategories();
   const appliances: Appliance[] = categories.length > 0 ? categories.map((c) => ({ code: c.code, name: c.name, categoryId: c.id, visitCharge: c.baseVisitCharge })) : FALLBACK_APPLIANCES;
-  const startRequest = useStartRequest();
 
   // Location first: ask new visitors once, as a dismissible sheet.
   useEffect(() => promptForLocationOnce(), []);
 
   return (
     <SiteLayout pinnedSearch>
-      {/* Not overflow-hidden: the search results drop below the band. Only the decoration is clipped. */}
-      <section data-surface="brand" className="surface-hero relative isolate z-10">
-        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="bg-dots absolute inset-y-0 right-0 w-1/2" />
-        </div>
-        {/* Phones and tablets: the promises scroll along the top of the hero. */}
+      {/* The promises scroll along the top; the search is pinned under the header (every screen size). */}
+      <div data-surface="brand" className="surface-hero">
         <PromiseTicker />
-        <Container className="grid items-center gap-6 py-5 md:py-10 lg:grid-cols-2 lg:gap-10 lg:py-16">
-          <div className="flex min-w-0 flex-col gap-3 md:gap-5">
-            <Text variant="overline" className="text-accent-border">
-              Home appliance repair in {SITE.city}
-            </Text>
-            <Heading level={1} className="text-h1 lg:text-display">
-              Your appliance, fixed at home — without the guesswork.
-            </Heading>
-            {/* Phones: headline and search only, so the appliances show sooner (the text stays for search engines). */}
-            <Text tone="secondary" className="max-md:hidden md:text-body-lg">
-              Doorstep repair for AC, fridge, washing machine, TV and microwave. See the price before work starts and track the visit live.
-            </Text>
-            {/* Phones and tablets have it pinned under the header instead. */}
-            <div className="max-lg:hidden">
-              <ApplianceSearch />
-            </div>
-            {/* Below desktop the bottom bar has Request and Track, and the promises run in the strip below. */}
-            <div className="flex flex-wrap gap-3 max-lg:hidden">
-              <Button variant="accent" size="lg" onClick={startRequest}>
-                <Wrench aria-hidden /> Request a repair
-              </Button>
-              <Button asChild variant="inverse" size="lg">
-                <Link to="/account">
-                  <ListChecks aria-hidden /> Track my request
-                </Link>
-              </Button>
-            </div>
-            <ul className="flex flex-wrap gap-2 max-lg:hidden" aria-label="Why customers choose us">
-              {PROMISES.map(({ icon: Icon, hue, title }) => (
-                <li key={title} className={cn('flex items-center gap-2 rounded-pill px-3 py-2 text-sm font-semibold', HUE_CLASSES[hue].subtle)}>
-                  <Icon aria-hidden className="size-4" /> {title}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="mx-auto w-full max-w-sheet max-lg:hidden [&>svg]:h-auto [&>svg]:w-full">
-            <TechnicianScene />
-          </div>
-        </Container>
-      </section>
+      </div>
+      {/* Not overflow-hidden: the search results drop below. */}
+      <Container className="flex flex-col gap-3 pt-3 md:pt-6">
+        <div className="sr-only">
+          <p>Home appliance repair in {SITE.city}</p>
+          <Heading level={1}>Your appliance, fixed at home — without the guesswork.</Heading>
+        </div>
+        <HeroCarousel appliances={appliances} />
+      </Container>
 
       <Container asChild>
         <section id="services" aria-labelledby="services-title" className="flex scroll-mt-20 flex-col gap-3 py-6 md:gap-6 md:py-12">
@@ -94,14 +60,14 @@ export function HomePage() {
               Couldn't load the latest list. You can still tap an appliance below.
             </Text>
           ) : null}
-          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 sm:gap-3 lg:grid-cols-6">
+          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
             {appliances.map((appliance) => (
               <li key={appliance.code}>
                 <ApplianceTile appliance={appliance} />
               </li>
             ))}
             {catalog.isPending
-              ? Array.from({ length: Math.max(0, 6 - appliances.length) }, (_, i) => (
+              ? Array.from({ length: Math.max(0, 5 - appliances.length) }, (_, i) => (
                   <li key={`more-${i}`} aria-hidden>
                     <Skeleton className="aspect-square w-full rounded-card" />
                   </li>
@@ -116,6 +82,10 @@ export function HomePage() {
         </section>
       </Container>
 
+      <Container className="pb-6 md:pb-12">
+        <PromoBanner />
+      </Container>
+
       <section aria-labelledby="how-title" className="bg-surface py-6 md:py-16">
         <Container className="flex flex-col gap-4 md:gap-8">
           <Heading level={2} id="how-title">
@@ -124,6 +94,8 @@ export function HomePage() {
           <StepList />
         </Container>
       </section>
+
+      <SparesComingSoon />
 
       <Container asChild>
         <nav aria-labelledby="learn-title" className="flex flex-col gap-2 py-6 md:py-14">
@@ -149,7 +121,7 @@ export function HomePage() {
 const TICKER = ['Pay after the repair', 'Price explained before work', 'Track your technician live', 'Job closes only with your code'];
 
 /**
- * Phones and tablets: the promises as one thin, slowly scrolling strip along the top of the hero (static and swipeable when the
+ * The promises as one thin, slowly scrolling strip along the top of the page (static and swipeable when the
  * customer prefers reduced motion). Screen readers get the list once.
  */
 function PromiseTicker() {
@@ -164,7 +136,7 @@ function PromiseTicker() {
     </ul>
   );
   return (
-    <div className="scrollbar-none overflow-x-auto border-b border-white/15 bg-black/20 py-2 text-white lg:hidden motion-safe:overflow-hidden">
+    <div className="scrollbar-none overflow-x-auto border-b border-[#fff]/15 bg-[#000]/20 py-2 text-[#fff] motion-safe:overflow-hidden">
       <div className="ticker-track flex w-max">
         {row(false)}
         {row(true)}
@@ -182,15 +154,102 @@ function ApplianceTile({ appliance }: { appliance: Appliance }) {
         event.preventDefault();
         book(appliance.code);
       }}
-      className="pressable transition-interactive flex h-full flex-col items-center gap-2 rounded-card border border-border bg-surface p-2 text-center hover:border-border-strong hover:shadow-md sm:p-3"
+      className="pressable transition-interactive flex h-full flex-col overflow-hidden rounded-card border border-border bg-surface text-center hover:border-border-strong hover:shadow-md"
     >
-      <CategoryTile code={appliance.code} size="lg" className="w-full" />
-      <span className="line-clamp-2 text-sm font-semibold text-foreground">{appliance.name}</span>
-      {appliance.visitCharge !== undefined ? (
-        <span className="text-caption text-foreground-secondary">
-          Visit <span className="font-semibold text-foreground tabular-nums">{formatINR(appliance.visitCharge)}</span>
-        </span>
-      ) : null}
+      <AppliancePhoto code={appliance.code} />
+      <span className="flex flex-1 flex-col items-center justify-center gap-1 p-2 sm:p-3">
+        <span className="line-clamp-2 text-sm font-semibold text-foreground">{appliance.name}</span>
+        {appliance.visitCharge !== undefined ? (
+          <span className="flex flex-col items-center">
+            <span className="text-caption tracking-wide text-foreground-muted uppercase max-sm:hidden">Visit charge</span>
+            <span className="text-sm font-bold text-accent-subtle-foreground tabular-nums">{formatINR(appliance.visitCharge)}</span>
+          </span>
+        ) : null}
+      </span>
     </Link>
+  );
+}
+
+/** A banner between the sections: the brand promise, with the one action that matters. */
+function PromoBanner() {
+  const startRequest = useStartRequest();
+  return (
+    <aside
+      aria-label={`The ${SITE.name} promise`}
+      className="relative isolate overflow-hidden rounded-card bg-[linear-gradient(110deg,#0a1f3c_0%,#0d3558_60%,#0f4f6e_100%)] p-4 text-[#fff] shadow-lg sm:p-6 md:p-8"
+    >
+      <div className="flex flex-col gap-3 md:max-w-[60%] md:gap-4">
+        <span className="flex items-center gap-2">
+          <SiteLogo variant="light" className="h-5 sm:h-6" />
+          <span className="rounded-pill border border-[#fff]/25 px-2 text-caption font-semibold text-[#fff]/80">Pakka promise</span>
+        </span>
+        <p className="text-h3 leading-tight font-extrabold md:text-h1">
+          Fixed right, the first time. <span className="text-[#ff8a1f]">That's pakka.</span>
+        </p>
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#fff]/85">
+          <li className="flex items-center gap-1">
+            <ShieldCheck aria-hidden className="size-4 text-[#ff8a1f]" /> Verified technicians
+          </li>
+          <li className="flex items-center gap-1">
+            <ShieldCheck aria-hidden className="size-4 text-[#ff8a1f]" /> Price explained before work
+          </li>
+          <li className="flex items-center gap-1">
+            <Wallet aria-hidden className="size-4 text-[#ff8a1f]" /> Pay after the repair
+          </li>
+        </ul>
+        <Link
+          to="/book"
+          onClick={(event: MouseEvent) => {
+            event.preventDefault();
+            startRequest();
+          }}
+          className="inline-flex w-fit items-center gap-2 rounded-pill bg-[#ff7a00] px-4 py-2 text-sm font-bold text-[#0a1f3c] shadow-lg hover:bg-[#ff8a1f]"
+        >
+          Book a repair <ArrowRight aria-hidden className="size-4" />
+        </Link>
+      </div>
+      <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 -z-10 flex w-[42%] items-end justify-end gap-2 pr-4 max-md:hidden">
+        <img src="/appliances/washer-cut.webp" alt="" loading="lazy" className="h-[70%] w-auto drop-shadow-2xl" />
+        <img src="/appliances/fridge-cut.webp" alt="" loading="lazy" className="h-[92%] w-auto drop-shadow-2xl" />
+      </div>
+    </aside>
+  );
+}
+
+/** Placeholder until spares and accessories are on sale: shows what's coming, nothing to tap. */
+const SPARES = [
+  { icon: Droplets, name: 'Water softeners' },
+  { icon: FlaskConical, name: 'Descalers' },
+  { icon: Package, name: 'Stands & trolleys' },
+  { icon: Cable, name: 'Drain & inlet pipes' },
+  { icon: Umbrella, name: 'Appliance covers' },
+  { icon: Zap, name: 'Voltage stabilisers' },
+];
+
+function SparesComingSoon() {
+  return (
+    <Container asChild>
+      <section aria-labelledby="spares-title" className="flex flex-col gap-3 py-6 md:gap-6 md:py-12">
+        <div className="flex flex-wrap items-center gap-2">
+          <Heading level={2} id="spares-title">
+            Spares &amp; accessories
+          </Heading>
+          <Badge tone="warning">Coming soon</Badge>
+        </div>
+        <Text variant="sm" tone="secondary">
+          Genuine spares and useful accessories for your appliances, delivered with your repair. We're adding them shortly.
+        </Text>
+        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-6 sm:gap-3">
+          {SPARES.map(({ icon: Icon, name }) => (
+            <li key={name} className="flex flex-col items-center gap-2 rounded-card border border-dashed border-border bg-surface p-3 text-center">
+              <span className="flex size-12 items-center justify-center rounded-full bg-surface-sunken text-foreground-muted [&_svg]:size-6">
+                <Icon aria-hidden />
+              </span>
+              <span className="text-caption font-semibold text-foreground-secondary">{name}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </Container>
   );
 }

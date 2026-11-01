@@ -1,6 +1,10 @@
 // Generates the social preview image, favicons and logo from the site's own artwork, so they always
 // match the brand. Re-run after changing the brand name or colours, then commit public/*.png.
 //
+// OUT OF DATE since the Pakka Fix brand: the wordmark (public/brand/logo*.png), the hero banner
+// (public/brand/hero-*) and the preview image (public/og-image.jpg) now come from the brand artwork,
+// and the header no longer has the SVG mark this script reads. Update it before re-running.
+//
 // Needs the dev server running (pnpm --filter @servicepro/web-public dev) and puppeteer-core:
 //   PUPPETEER=<path to puppeteer-core ESM entry> CHROME=<chrome.exe> node scripts/make-images.mjs
 import fs from 'node:fs';

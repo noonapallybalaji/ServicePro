@@ -18,6 +18,8 @@ export function usePincodeCheck(pincode: string) {
     notCovered: complete && serviceability.data?.isServiceable === false,
     failed: complete && serviceability.isError,
     areas: serviceability.data?.areas ?? [],
+    /** The places the PIN code covers (India Post), best known first. */
+    localities: serviceability.data?.localities ?? [],
   };
 }
 
@@ -37,7 +39,7 @@ export function AddressForm({ value, onChange }: { value: BookingAddress; onChan
     : check.pending
       ? 'Checking…'
       : check.covered
-        ? `Great — we cover ${check.areas.join(', ') || 'your area'}.`
+        ? `Great — we cover ${check.localities.slice(0, 3).join(', ') || check.areas.join(', ') || 'your area'}.`
         : check.failed
           ? "We couldn't check it right now. You can still save it; we'll confirm when you book."
           : undefined;
@@ -75,6 +77,22 @@ export function AddressForm({ value, onChange }: { value: BookingAddress; onChan
         <Field label="Area / locality">
           <Input autoComplete="address-level3" value={value.locality} onChange={(e) => onChange({ locality: e.target.value })} />
         </Field>
+        {check.localities.length > 0 ? (
+          // The PIN code's localities, one tap to fill the area.
+          <div className="flex flex-wrap gap-2 md:col-span-2" role="group" aria-label="Areas in this PIN code">
+            {check.localities.map((name) => (
+              <button
+                key={name}
+                type="button"
+                aria-pressed={value.locality === name}
+                onClick={() => onChange({ locality: name })}
+                className="transition-interactive rounded-pill border border-border bg-surface px-3 py-1 text-sm text-foreground-secondary hover:border-border-strong aria-pressed:border-primary aria-pressed:bg-primary-subtle aria-pressed:text-primary"
+              >
+                {name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <Field label="House / flat no." optional>
           <Input autoComplete="address-line1" placeholder="e.g. Flat 402, Sunrise Apartments" value={value.line1} onChange={(e) => onChange({ line1: e.target.value })} />
         </Field>

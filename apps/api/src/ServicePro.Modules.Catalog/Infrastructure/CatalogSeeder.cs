@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ServicePro.BuildingBlocks.Persistence;
 using ServicePro.Contracts;
+using ServicePro.Modules.Catalog.Application;
 using ServicePro.Modules.Catalog.Domain;
 
 namespace ServicePro.Modules.Catalog.Infrastructure;

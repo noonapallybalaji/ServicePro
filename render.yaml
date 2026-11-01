@@ -75,7 +75,7 @@ services:
       - key: VITE_SITE_URL
         value: https://servicepro-site-b4ig.onrender.com
       - key: VITE_BUSINESS_NAME
-        value: ServicePro
+        value: Pakka Fix
       # Call and WhatsApp buttons (E.164). WhatsApp defaults to the call number when not set.
       - key: VITE_SUPPORT_PHONE
         value: "+918712002048"

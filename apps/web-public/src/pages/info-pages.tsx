@@ -3,6 +3,7 @@ import { CalendarCheck, Mail, MapPin, MessageCircle, Phone, Search } from 'lucid
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
 
+import { AppliancePhoto } from '../components/appliance-photo';
 import { BookActions, BookCta, FaqList, PageHero, PageSection, PromiseList, StepList } from '../components/page-parts';
 import { SiteLayout } from '../components/site-layout';
 import { GENERAL_FAQS, SERVICES, inSentence, servicePath } from '../content/services';
@@ -28,8 +29,8 @@ export function ServicesPage() {
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((service) => (
             <li key={service.slug}>
-              <article className="flex h-full flex-col gap-4 rounded-card border border-border bg-surface p-5">
-                <CategoryTile code={service.code} size="lg" className="w-full" />
+              <article className="flex h-full flex-col gap-4 overflow-hidden rounded-card border border-border bg-surface p-5">
+                <AppliancePhoto code={service.code} className="-mx-5 -mt-5 w-[calc(100%+2.5rem)]" />
                 <div className="flex flex-1 flex-col gap-2">
                   <h3 className="text-h3 text-foreground">
                     <Link to={servicePath(service)} className="hover:underline">

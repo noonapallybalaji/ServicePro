@@ -339,7 +339,7 @@ public sealed class SaveServiceArea(DbContext db) : IUseCase
     }
 }
 
-/// <summary>Is a pincode served? Used by booking forms before asking for more details.</summary>
+/// <summary>Is a pincode served, and which localities it covers? Used by booking forms before asking for more details.</summary>
 public sealed class CheckServiceability(DbContext db) : IUseCase
 {
     public async Task<ServiceabilityResponse> HandleAsync(string pincode, CancellationToken ct)
@@ -348,8 +348,9 @@ public sealed class CheckServiceability(DbContext db) : IUseCase
             .Where(a => a.IsActive && a.Pincodes.Contains(pincode))
             .Select(a => a.Name)
             .ToListAsync(ct);
-        return new ServiceabilityResponse(pincode, areas.Count > 0, areas);
+        return new ServiceabilityResponse(pincode, areas.Count > 0, areas, HyderabadPincodes.LocalitiesOf(pincode));
     }
 }
 
-public sealed record ServiceabilityResponse(string Pincode, bool IsServiceable, IReadOnlyList<string> Areas);
+/// <summary>Areas: the service areas (zones) covering the pincode. Localities: the places it covers (India Post), best known first; empty outside Hyderabad.</summary>
+public sealed record ServiceabilityResponse(string Pincode, bool IsServiceable, IReadOnlyList<string> Areas, IReadOnlyList<string> Localities);

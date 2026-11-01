@@ -12980,7 +12980,8 @@
         "required": [
           "pincode",
           "isServiceable",
-          "areas"
+          "areas",
+          "localities"
         ],
         "type": "object",
         "properties": {
@@ -12995,8 +12996,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "localities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
-        }
+        },
+        "description": "Areas: the service areas (zones) covering the pincode. Localities: the places it covers (India Post), best known first; empty outside Hyderabad."
       },
       "ServiceAreaResponse": {
         "required": [

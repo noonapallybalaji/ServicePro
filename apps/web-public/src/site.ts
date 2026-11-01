@@ -86,7 +86,7 @@ function legalConfig(): LegalConfig {
 }
 
 export const SITE: SiteConfig = {
-  name: optional(env.VITE_BUSINESS_NAME) ?? 'ServicePro',
+  name: optional(env.VITE_BUSINESS_NAME) ?? 'Pakka Fix',
   url: (optional(env.VITE_SITE_URL) ?? 'http://localhost:5192').replace(/\/+$/, ''),
   description:
     optional(env.VITE_SITE_DESCRIPTION) ??
@@ -107,8 +107,8 @@ export const SITE: SiteConfig = {
   locale: 'en_IN',
   language: 'en-IN',
   themeColor: '#0b6276',
-  logoPath: '/logo.png',
-  ogImagePath: '/og-image.png',
+  logoPath: '/brand/logo.png',
+  ogImagePath: '/og-image.jpg',
   ogImageWidth: 1200,
   ogImageHeight: 630,
 };

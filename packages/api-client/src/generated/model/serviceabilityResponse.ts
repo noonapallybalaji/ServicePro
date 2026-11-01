@@ -6,8 +6,12 @@
  * OpenAPI spec version: v1
  */
 
+/**
+ * Areas: the service areas (zones) covering the pincode. Localities: the places it covers (India Post), best known first; empty outside Hyderabad.
+ */
 export interface ServiceabilityResponse {
   pincode: string;
   isServiceable: boolean;
   areas: string[];
+  localities: string[];
 }

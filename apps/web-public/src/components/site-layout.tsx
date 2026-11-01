@@ -1,5 +1,5 @@
 import { useSession } from '@servicepro/api-client';
-import { BrandLockup, Button, Container, Text, getInitials } from '@servicepro/ui';
+import { Button, Container, Text, getInitials } from '@servicepro/ui';
 import { ChevronDown, Mail, MapPin, MessageCircle, Phone, UserRound } from 'lucide-react';
 import { Suspense, lazy, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router';
@@ -10,6 +10,7 @@ import { PinnedSearchBar } from './appliance-search';
 import { AssistantLauncher } from './assistant-launcher';
 import { NotificationBell } from './notification-bell';
 import { MobileActionBar } from './mobile-action-bar';
+import { SiteLogo } from './site-logo';
 
 import { SERVICES, servicePath } from '../content/services';
 import { SITE, whatsappLink } from '../site';
@@ -50,7 +51,7 @@ function SiteHeader() {
       <Container className="flex h-header items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <Link to="/" className="flex shrink-0 rounded-control" aria-label={`${SITE.name} home`}>
-            <BrandLockup name={SITE.name} className="flex" nameClassName="truncate max-sm:sr-only" />
+            <SiteLogo className="h-6 sm:h-8" />
           </Link>
           <LocationChip />
         </div>
@@ -170,7 +171,7 @@ function SiteFooterFull() {
     <footer data-surface="brand" className="surface-brand max-lg:hidden">
       <Container className="grid grid-cols-1 gap-10 py-12 md:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col gap-3 lg:col-span-2">
-          <BrandLockup name={SITE.name} />
+          <SiteLogo variant="light" className="h-9 self-start sm:h-9" />
           <Text variant="sm" tone="secondary" className="max-w-prose">
             Home appliance repair at your doorstep in {SITE.city}, {SITE.region}.
           </Text>

@@ -99,6 +99,12 @@ async function parse<T>(response: Response): Promise<T> {
       return (await response.json()) as T;
     }
 
+    // A web page isn't an API answer: something else is on the API's address (a wrong proxy target, a
+    // captive portal). Fail like a network error rather than hand the page on as if it were data.
+    if (type.includes('text/html')) {
+      throw new ApiError({ status: 502, code: 'api.unreachable', title: "Couldn't reach the service. Please try again." });
+    }
+
     return (await response.blob()) as T;
   }
 

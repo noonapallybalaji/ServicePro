@@ -81,7 +81,8 @@ public sealed partial class LocateServiceability(IReverseGeocoder geocoder, Chec
         }
 
         var check = await serviceability.HandleAsync(pincode, ct);
-        return new LocatedServiceabilityResponse(true, pincode, found.Locality, check.IsServiceable, check.Areas);
+        // The map's own place name when it has one, else the PIN code's best-known locality.
+        return new LocatedServiceabilityResponse(true, pincode, found.Locality ?? check.Localities.FirstOrDefault(), check.IsServiceable, check.Areas);
     }
 
     /// <summary>A well-formed Indian PIN code whose postal zone matches the state, else null.</summary>

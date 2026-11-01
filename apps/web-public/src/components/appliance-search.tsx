@@ -202,8 +202,8 @@ export function ApplianceSearch({ compact = false }: { compact?: boolean }) {
 /** Phones and tablets: the search pinned just under the header while the page scrolls. */
 export function PinnedSearchBar() {
   return (
-    <div className="sticky top-[calc(var(--header-height)+env(safe-area-inset-top))] z-(--z-sticky) border-b border-border bg-surface py-2 shadow-sm lg:hidden">
-      <Container>
+    <div className="sticky top-[calc(var(--header-height)+env(safe-area-inset-top))] z-(--z-sticky) border-b border-border bg-surface py-2 shadow-sm">
+      <Container className="lg:max-w-3xl">
         <ApplianceSearch compact />
       </Container>
     </div>

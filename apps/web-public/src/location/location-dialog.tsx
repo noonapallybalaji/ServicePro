@@ -59,7 +59,7 @@ function LocationDialog({ then, automatic }: { then?: string; automatic: boolean
     setStatus({ kind: 'checking' });
     try {
       const result = await checkServiceability(code);
-      if (result.isServiceable) served({ pincode: code, areas: [...result.areas] });
+      if (result.isServiceable) served({ pincode: code, areas: [...result.areas], locality: result.localities[0] });
       else setStatus({ kind: 'unsupported', pincode: code });
     } catch {
       failed(() => void check(code));
