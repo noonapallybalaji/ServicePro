@@ -66,6 +66,62 @@ public sealed class MetaWhatsAppChannelTests
     }
 }
 
+public sealed class TwilioChannelTests
+{
+    private static Microsoft.Extensions.Options.IOptions<NotificationOptions> Options(TwilioOptions twilio) =>
+        Microsoft.Extensions.Options.Options.Create(new NotificationOptions { Twilio = twilio });
+
+    private static readonly TwilioOptions Account = new() { AccountSid = "AC123", AuthToken = "token", SmsFrom = "+15005550006", WhatsAppFrom = "+14155238886" };
+
+    [Fact]
+    public void Sms_sends_the_rendered_text_from_the_twilio_number()
+    {
+        var form = new TwilioSmsChannel(new HttpClient(), Options(Account))
+            .BuildForm(new OutgoingMessage("+919876543210", "OTP_LOGIN", null, "en", ["482913"], "Your code is 482913"))
+            .ToDictionary();
+
+        form["To"].ShouldBe("+919876543210");
+        form["From"].ShouldBe("+15005550006");
+        form["Body"].ShouldBe("Your code is 482913");
+    }
+
+    [Fact]
+    public void Sms_prefers_a_messaging_service_over_a_single_number()
+    {
+        var form = new TwilioSmsChannel(new HttpClient(), Options(new TwilioOptions { AccountSid = "AC123", AuthToken = "t", SmsFrom = "+15005550006", MessagingServiceSid = "MG1" }))
+            .BuildForm(new OutgoingMessage("+919876543210", "SR_CONFIRMED", null, "en", [], "Booked"))
+            .ToDictionary();
+
+        form["MessagingServiceSid"].ShouldBe("MG1");
+        form.ShouldNotContainKey("From");
+    }
+
+    [Fact]
+    public void Whatsapp_sends_an_approved_content_template_with_numbered_variables()
+    {
+        var form = new TwilioWhatsAppChannel(new HttpClient(), Options(Account))
+            .BuildForm(new OutgoingMessage("+919876543210", "SR_CREATED", "HXabc", "en", ["Rahul", "SR-10001"], "ignored"))
+            .ToDictionary();
+
+        form["To"].ShouldBe("whatsapp:+919876543210");
+        form["From"].ShouldBe("whatsapp:+14155238886");
+        form["ContentSid"].ShouldBe("HXabc");
+        JsonSerializer.Deserialize<Dictionary<string, string>>(form["ContentVariables"]).ShouldBe(new Dictionary<string, string> { ["1"] = "Rahul", ["2"] = "SR-10001" });
+        form.ShouldNotContainKey("Body");
+    }
+
+    [Fact]
+    public void Whatsapp_without_a_content_template_sends_the_text()
+    {
+        var form = new TwilioWhatsAppChannel(new HttpClient(), Options(Account))
+            .BuildForm(new OutgoingMessage("+919876543210", "SR_CREATED", null, "en", ["Rahul"], "Hi Rahul, booked."))
+            .ToDictionary();
+
+        form["Body"].ShouldBe("Hi Rahul, booked.");
+        form.ShouldNotContainKey("ContentSid");
+    }
+}
+
 public sealed class OneTimeCodeDeliveryTests
 {
     [Fact]

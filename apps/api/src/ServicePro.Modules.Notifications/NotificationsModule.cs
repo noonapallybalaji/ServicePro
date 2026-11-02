@@ -37,7 +37,12 @@ public sealed class NotificationsModule : IModule
         services.AddScoped<IMessageHistory, MessageHistory>();
 
         // Provider selection is configuration only (ADR 0009).
-        if (options.WhatsApp.IsConfigured)
+        if (options.WhatsApp.UsesTwilio && options.Twilio.CanSendWhatsApp)
+        {
+            services.AddHttpClient<TwilioWhatsAppChannel>(c => c.Timeout = TimeSpan.FromSeconds(15));
+            services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<TwilioWhatsAppChannel>());
+        }
+        else if (!options.WhatsApp.UsesTwilio && options.WhatsApp.IsConfigured)
         {
             services.AddHttpClient<MetaWhatsAppChannel>(c => c.Timeout = TimeSpan.FromSeconds(15));
             services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<MetaWhatsAppChannel>());
@@ -47,8 +52,13 @@ public sealed class NotificationsModule : IModule
             services.AddScoped<INotificationChannel>(sp => new LoggingChannel(NotificationChannel.WhatsApp, sp.GetRequiredService<ILogger<LoggingChannel>>()));
         }
 
-        // SMS: MSG91 flows (DLT-registered templates) once configured; otherwise logged (ADR 0009).
-        if (options.Sms.IsConfigured)
+        // SMS: Twilio, or MSG91 flows (DLT-registered templates), once configured; otherwise logged (ADR 0009).
+        if (options.Sms.UsesTwilio && options.Twilio.CanSendSms)
+        {
+            services.AddHttpClient<TwilioSmsChannel>(c => c.Timeout = TimeSpan.FromSeconds(15));
+            services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<TwilioSmsChannel>());
+        }
+        else if (options.Sms.IsConfigured)
         {
             services.AddHttpClient<Msg91SmsChannel>(c => c.Timeout = TimeSpan.FromSeconds(15));
             services.AddScoped<INotificationChannel>(sp => sp.GetRequiredService<Msg91SmsChannel>());

@@ -50,6 +50,8 @@ public sealed class NotificationOptions
 
     public SmsOptions Sms { get; set; } = new();
 
+    public TwilioOptions Twilio { get; set; } = new();
+
     /// <summary>
     /// Where one-time codes go first: "WhatsApp" (authentication templates; no DLT needed) or "Sms".
     /// If the first channel fails, the code is sent by the other one when it is configured.
@@ -60,7 +62,7 @@ public sealed class NotificationOptions
 /// <summary>SMS provider. India requires DLT-registered templates; MSG91 "flows" carry the DLT template.</summary>
 public sealed class SmsOptions
 {
-    /// <summary>"Msg91" to send for real; empty to only log.</summary>
+    /// <summary>"Msg91" or "Twilio" to send for real; empty to only log.</summary>
     public string? Provider { get; set; }
 
     public string? AuthKey { get; set; }
@@ -69,10 +71,15 @@ public sealed class SmsOptions
 
     public bool IsConfigured =>
         string.Equals(Provider, "Msg91", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(AuthKey);
+
+    public bool UsesTwilio => string.Equals(Provider, "Twilio", StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed class WhatsAppOptions
 {
+    /// <summary>"Twilio" to send through Twilio; otherwise Meta's Cloud API when its id and token are set.</summary>
+    public string? Provider { get; set; }
+
     public string? PhoneNumberId { get; set; }
 
     public string? AccessToken { get; set; }
@@ -80,6 +87,35 @@ public sealed class WhatsAppOptions
     public string ApiVersion { get; set; } = "v21.0";
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(PhoneNumberId) && !string.IsNullOrWhiteSpace(AccessToken);
+
+    public bool UsesTwilio => string.Equals(Provider, "Twilio", StringComparison.OrdinalIgnoreCase);
+}
+
+/// <summary>
+/// Twilio account, used for SMS and/or WhatsApp when their Provider is "Twilio". Keep the token in
+/// user secrets or the host's environment, never in appsettings.
+/// </summary>
+public sealed class TwilioOptions
+{
+    public string? AccountSid { get; set; }
+
+    public string? AuthToken { get; set; }
+
+    /// <summary>SMS sender: a Messaging Service (MG…), preferred, or a Twilio number in E.164.</summary>
+    public string? MessagingServiceSid { get; set; }
+
+    public string? SmsFrom { get; set; }
+
+    /// <summary>WhatsApp sender in E.164, e.g. +14155238886 for the Twilio sandbox.</summary>
+    public string? WhatsAppFrom { get; set; }
+
+    public string BaseUrl { get; set; } = "https://api.twilio.com";
+
+    public bool HasAccount => !string.IsNullOrWhiteSpace(AccountSid) && !string.IsNullOrWhiteSpace(AuthToken);
+
+    public bool CanSendSms => HasAccount && (!string.IsNullOrWhiteSpace(MessagingServiceSid) || !string.IsNullOrWhiteSpace(SmsFrom));
+
+    public bool CanSendWhatsApp => HasAccount && !string.IsNullOrWhiteSpace(WhatsAppFrom);
 }
 
 /// <summary>
@@ -249,5 +285,91 @@ public sealed class Msg91SmsChannel(HttpClient http, IOptions<NotificationOption
             ["short_url"] = "0",
             ["recipients"] = new[] { recipient },
         };
+    }
+}
+
+/// <summary>Twilio Messages API, shared by the SMS and WhatsApp channels.</summary>
+public abstract class TwilioChannel(HttpClient http, IOptions<NotificationOptions> options) : INotificationChannel
+{
+    public abstract NotificationChannel Channel { get; }
+
+    public bool IsLive => true;
+
+    protected TwilioOptions Twilio => options.Value.Twilio;
+
+    public async Task<SendResult> SendAsync(OutgoingMessage message, CancellationToken ct)
+    {
+        var twilio = Twilio;
+        using var request = new HttpRequestMessage(HttpMethod.Post,
+            $"{twilio.BaseUrl.TrimEnd('/')}/2010-04-01/Accounts/{Uri.EscapeDataString(twilio.AccountSid!)}/Messages.json")
+        {
+            Content = new FormUrlEncodedContent(BuildForm(message)),
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Basic",
+            Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{twilio.AccountSid}:{twilio.AuthToken}")));
+
+        using var response = await http.SendAsync(request, ct);
+        var body = await response.Content.ReadAsStringAsync(ct);
+        using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+        var root = document.RootElement;
+        if (!response.IsSuccessStatusCode)
+        {
+            // Twilio errors carry a code (e.g. 21608: trial accounts send only to verified numbers).
+            var code = root.TryGetProperty("code", out var c) ? c.ToString() : null;
+            var text = root.TryGetProperty("message", out var m) ? m.GetString() : body;
+            return SendResult.Fail($"Twilio {(int)response.StatusCode}{(code is null ? string.Empty : $" ({code})")}: {text}");
+        }
+
+        return SendResult.Ok(root.TryGetProperty("sid", out var sid) ? sid.GetString() : null);
+    }
+
+    /// <summary>The form Twilio expects. Public for unit tests of the request shape.</summary>
+    public abstract IReadOnlyList<KeyValuePair<string, string>> BuildForm(OutgoingMessage message);
+}
+
+/// <summary>SMS through Twilio: the rendered text from a Messaging Service or a Twilio number.</summary>
+public sealed class TwilioSmsChannel(HttpClient http, IOptions<NotificationOptions> options) : TwilioChannel(http, options)
+{
+    public override NotificationChannel Channel => NotificationChannel.Sms;
+
+    public override IReadOnlyList<KeyValuePair<string, string>> BuildForm(OutgoingMessage message)
+    {
+        var form = new List<KeyValuePair<string, string>> { new("To", message.To), new("Body", message.RenderedBody) };
+        form.Add(string.IsNullOrWhiteSpace(Twilio.MessagingServiceSid)
+            ? new("From", Twilio.SmsFrom!)
+            : new("MessagingServiceSid", Twilio.MessagingServiceSid));
+        return form;
+    }
+}
+
+/// <summary>
+/// WhatsApp through Twilio. A template whose provider name is a Twilio Content SID (HX…) is sent as
+/// that approved template, with our parameters as its numbered variables; otherwise the rendered text
+/// is sent, which WhatsApp delivers only in the sandbox or within 24 hours of the customer's last message.
+/// </summary>
+public sealed class TwilioWhatsAppChannel(HttpClient http, IOptions<NotificationOptions> options) : TwilioChannel(http, options)
+{
+    public override NotificationChannel Channel => NotificationChannel.WhatsApp;
+
+    public override IReadOnlyList<KeyValuePair<string, string>> BuildForm(OutgoingMessage message)
+    {
+        var form = new List<KeyValuePair<string, string>>
+        {
+            new("To", $"whatsapp:{message.To}"),
+            new("From", $"whatsapp:{Twilio.WhatsAppFrom}"),
+        };
+        if (message.ProviderTemplateName is { } contentSid && contentSid.StartsWith("HX", StringComparison.Ordinal))
+        {
+            form.Add(new("ContentSid", contentSid));
+            form.Add(new("ContentVariables", JsonSerializer.Serialize(
+                message.Parameters.Select((p, i) => (Key: (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), Value: p))
+                    .ToDictionary(x => x.Key, x => x.Value))));
+        }
+        else
+        {
+            form.Add(new("Body", message.RenderedBody));
+        }
+
+        return form;
     }
 }

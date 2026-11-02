@@ -53,6 +53,19 @@ services:
         value: CF-Connecting-IP
       - key: Notifications__PublicSiteUrl
         value: https://servicepro-site-b4ig.onrender.com
+      # Twilio for WhatsApp (sandbox sender below until a WhatsApp sender is approved) and SMS. Enter the
+      # account SID and auth token in the dashboard; SMS stays off until a sender is set
+      # (Notifications__Twilio__SmsFrom or Notifications__Twilio__MessagingServiceSid).
+      - key: Notifications__WhatsApp__Provider
+        value: Twilio
+      - key: Notifications__Sms__Provider
+        value: Twilio
+      - key: Notifications__Twilio__WhatsAppFrom
+        value: "+14155238886"
+      - key: Notifications__Twilio__AccountSid
+        sync: false
+      - key: Notifications__Twilio__AuthToken
+        sync: false
       # Live updates connect straight to the API (static-site rewrites don't carry WebSockets):
       # the sites allowed to do so. Keep in step with VITE_REALTIME_URL on the three sites below.
       - key: Realtime__AllowedOrigins

@@ -52,6 +52,17 @@ Create each template in Meta Business Manager, get it approved, and enter its na
 SMS template on DLT and enter its MSG91 flow id as `ProviderTemplateName`. SMS templates in use: the codes (`OTP_*`) and
 the four fallbacks above. `Notifications__OtpChannel` (`Sms` or `WhatsApp`) picks where codes go first.
 
+**Twilio (WhatsApp and/or SMS)**: set `Notifications__Twilio__AccountSid` and `Notifications__Twilio__AuthToken`
+(locally with `dotnet user-secrets`, on Render in the dashboard; never in a committed file), then:
+
+- WhatsApp: `Notifications__WhatsApp__Provider` = `Twilio` and `Notifications__Twilio__WhatsAppFrom` (the sandbox is
+  `+14155238886`; each test phone must first send the sandbox's `join <word>` message to it). The sandbox and a 24-hour
+  customer session take plain text; for anything else create Content templates in Twilio, get them approved, and enter each
+  Content SID (`HX…`) as the template's `ProviderTemplateName`: our placeholders become its variables `{{1}}`, `{{2}}`, … in order.
+- SMS: `Notifications__Sms__Provider` = `Twilio` and either `Notifications__Twilio__MessagingServiceSid` (`MG…`) or
+  `Notifications__Twilio__SmsFrom` (a Twilio number). The rendered text is sent. A trial account delivers only to numbers
+  verified in the Twilio console, and SMS to Indian numbers needs Twilio's India (DLT) registration for real customers.
+
 Then remove `Auth__TestMode` and `Auth__ExposeOtpInResponse` from the API (see `render.yaml`), so codes stop showing on screen.
 
 ## Tests
