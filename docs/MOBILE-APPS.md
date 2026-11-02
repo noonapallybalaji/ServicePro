@@ -10,11 +10,18 @@
 
 A React Native app with the website's booking flow, built for phones:
 
-- **Screens:** Home (service area by PIN code, appliance photos, visiting charges, call / WhatsApp),
-  Book a repair (appliance, problem, saved or new address checked against the PIN codes we serve,
-  code to confirm the number), My bookings (ongoing first, pull to refresh), a booking (progress,
-  technician with call button, visit time, charges, cancel, live map on the tracking page), Account
-  (sign in / out, help, policies).
+- **First launch:** three welcome slides, then the service area (current location or PIN code).
+- **Home:** greeting, area, appliance search, the ongoing repair, banner carousel, appliance grid,
+  how it works, help; a bell with unread notifications.
+- **Book a repair:** four steps with a progress bar (appliance → problem → address → confirm), current
+  location, saved addresses, code to confirm the number, a success animation.
+- **A booking:** status and timeline, live map with "About X min away" (OpenStreetMap in a web view,
+  no Google key), completion code, estimate approval with a code, technician photos, bill with online
+  payment and invoice, rating, warranty revisit, cancel with a reason, help on this booking.
+- **Help:** conversations with the office as a chat (photos too), new requests, call / WhatsApp / FAQs.
+- **Account:** details, saved addresses, notifications, policies, sign out, delete account.
+- **Motion:** Reanimated entrances, press feedback, loading placeholders, haptics; Manrope font.
+- **Updates:** test APKs check `/customer-app.json` on the site and offer a newer build.
 - **Data:** the shared `@servicepro/api-client` (generated hooks, React Query) pointed at the API
   from `apps/customer/.env` (`EXPO_PUBLIC_*`, public values only).
 - **Sign-in:** a code to the phone, or booking (a verified booking signs the customer in). The app
@@ -33,6 +40,12 @@ npx expo prebuild --platform android
 cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
 # → android/app/build/outputs/apk/release/app-release.apk (JavaScript included)
 ```
+
+On Windows the native build needs long paths on (`LongPathsEnabled`), and pnpm's long install paths
+still break it, so it is built from a flat copy (`D:\pf`, hoisted `node_modules`). Gradle needs a
+Java 17 install (`org.gradle.java.installations.paths`) and CMake 3.31 (`cmake.dir` in
+`android/local.properties`). For each test APK, raise `version` / `android.versionCode` in `app.json`
+and the same numbers in `apps/web-public/public/customer-app.json`.
 
 The local release build is signed with the template's debug key: fine for testing, not for Play.
 For the stores, use EAS Build (`npx eas-cli build`) or a release key of your own, and raise

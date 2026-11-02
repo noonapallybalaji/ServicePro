@@ -1,93 +1,125 @@
-import { session } from '@servicepro/api-client';
+import { session, useDeleteMyAccount, useGetMyAccount } from '@servicepro/api-client';
 import Constants from 'expo-constants';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
-import { AppText, Button, Card, Ionicons, type IconName } from '@/components/ui';
+import { Appear } from '@/components/motion';
+import { AppText, Button, Card, ListRow } from '@/components/ui';
 import { config } from '@/lib/config';
 import { callSupport, prettyPhone, whatsappSupport } from '@/lib/format';
+import { useServiceArea } from '@/lib/service-pincode';
 import { useCustomer } from '@/lib/session';
-import { colors, space } from '@/lib/theme';
+import { colors, radius, space } from '@/lib/theme';
 
 export default function AccountScreen() {
   const { customer } = useCustomer();
+  const account = useGetMyAccount({ query: { enabled: customer !== null } });
+  const remove = useDeleteMyAccount({ mutation: { meta: { silent: true } } });
+  const area = useServiceArea();
   const openPage = (path: string) => void WebBrowser.openBrowserAsync(`${config.siteUrl}${path}`);
+  const addresses = account.data?.addresses.length ?? 0;
+
+  function confirmDelete() {
+    Alert.alert(
+      'Delete your account?',
+      'Your profile, saved addresses and messages are removed. Bills we must keep by law stay, without your details. This cannot be undone.',
+      [
+        { text: 'Keep my account', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () =>
+            remove.mutate(undefined, {
+              onSuccess: () => session.clear(),
+              onError: () => Alert.alert("Couldn't delete it right now", 'Please try again, or call us.'),
+            }),
+        },
+      ],
+    );
+  }
 
   return (
-    <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg, paddingBottom: space.xxl }}>
-      {customer ? (
-        <Card style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <AppText variant="h2" tone="inverse">
-              {customer.fullName.slice(0, 1).toUpperCase()}
+    <ScrollView contentContainerStyle={{ paddingBottom: space.xxl }}>
+      <LinearGradient colors={[colors.navy950, colors.navy800]} style={styles.header}>
+        {customer ? (
+          <Appear style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
+            <View style={styles.avatar}>
+              <AppText variant="title" style={{ color: colors.accentText }}>
+                {customer.fullName.slice(0, 1).toUpperCase()}
+              </AppText>
+            </View>
+            <View style={{ flex: 1 }}>
+              <AppText variant="h2" tone="inverse">
+                {account.data?.fullName ?? customer.fullName}
+              </AppText>
+              <AppText variant="small" tone="inverseMuted">
+                {prettyPhone(customer.phone)}
+                {account.data?.email ? ` · ${account.data.email}` : ''}
+              </AppText>
+            </View>
+          </Appear>
+        ) : (
+          <Appear style={{ gap: space.md }}>
+            <AppText variant="title" tone="inverse">
+              Welcome to Pakka Fix
             </AppText>
-          </View>
-          <View style={{ flex: 1 }}>
-            <AppText variant="h3">{customer.fullName}</AppText>
-            <AppText variant="small" tone="secondary">
-              {prettyPhone(customer.phone)}
-            </AppText>
-          </View>
+            <AppText tone="inverseMuted">Sign in with the number you booked with to follow your repairs.</AppText>
+            <Button label="Sign in" variant="accent" onPress={() => router.push('/sign-in')} style={{ alignSelf: 'flex-start' }} />
+          </Appear>
+        )}
+      </LinearGradient>
+
+      <View style={{ padding: space.lg, gap: space.lg, marginTop: -space.lg }}>
+        {customer ? (
+          <Card style={{ paddingVertical: space.xs }}>
+            <ListRow icon="person" label="Your details" detail="Name and email" onPress={() => router.push('/account/profile')} />
+            <ListRow icon="home" label="Saved addresses" detail={addresses ? `${addresses} saved` : 'Add your home or office'} onPress={() => router.push('/account/addresses')} />
+            <ListRow icon="notifications" label="Notifications" onPress={() => router.push('/notifications')} />
+            <ListRow icon="calendar" label="My bookings" onPress={() => router.push('/bookings')} last />
+          </Card>
+        ) : null}
+
+        <Card style={{ paddingVertical: space.xs }}>
+          <ListRow icon="location" label="Service area" detail={area ? `${area.place} · ${area.pincode}` : 'Not set'} onPress={() => router.push('/location')} />
+          <ListRow icon="call" label="Call us" onPress={callSupport} />
+          <ListRow icon="logo-whatsapp" label="Chat on WhatsApp" onPress={() => whatsappSupport()} />
+          <ListRow icon="help-circle" label="Questions and answers" onPress={() => openPage('/faq')} last />
         </Card>
-      ) : (
-        <Card style={{ gap: space.md }}>
-          <AppText variant="h3">Welcome to Pakka Fix</AppText>
-          <AppText variant="small" tone="secondary">
-            Sign in with the number you booked with to follow your repairs.
-          </AppText>
-          <Button label="Sign in" onPress={() => router.push('/sign-in')} />
+
+        <Card style={{ paddingVertical: space.xs }}>
+          <ListRow icon="document-text" label="Terms" onPress={() => openPage('/terms')} />
+          <ListRow icon="shield-checkmark" label="Privacy" onPress={() => openPage('/privacy')} />
+          <ListRow icon="refresh-circle" label="Cancellation and refunds" onPress={() => openPage('/cancellation-and-refunds')} last />
         </Card>
-      )}
 
-      <Card style={{ paddingVertical: space.xs }}>
-        <Item icon="call" label="Call us" onPress={callSupport} />
-        <Item icon="logo-whatsapp" label="Chat on WhatsApp" onPress={() => whatsappSupport()} />
-        <Item icon="help-circle" label="Questions and answers" onPress={() => openPage('/faq')} />
-        <Item icon="document-text" label="Terms" onPress={() => openPage('/terms')} />
-        <Item icon="shield-checkmark" label="Privacy" onPress={() => openPage('/privacy')} />
-        <Item icon="refresh-circle" label="Cancellation and refunds" onPress={() => openPage('/cancellation-and-refunds')} last />
-      </Card>
+        {customer ? (
+          <>
+            <Button
+              label="Sign out"
+              variant="outline"
+              icon="log-out"
+              onPress={() =>
+                Alert.alert('Sign out?', 'You can sign in again with a code.', [
+                  { text: 'Stay signed in', style: 'cancel' },
+                  { text: 'Sign out', style: 'destructive', onPress: () => void session.signOut() },
+                ])
+              }
+            />
+            <Button label="Delete account" variant="ghost" onPress={confirmDelete} loading={remove.isPending} />
+          </>
+        ) : null}
 
-      {customer ? (
-        <Button
-          label="Sign out"
-          variant="outline"
-          icon="log-out"
-          onPress={() =>
-            Alert.alert('Sign out?', 'You can sign in again with a code.', [
-              { text: 'Stay signed in', style: 'cancel' },
-              { text: 'Sign out', style: 'destructive', onPress: () => void session.signOut() },
-            ])
-          }
-        />
-      ) : null}
-
-      <AppText variant="caption" tone="muted" center>
-        Pakka Fix {Constants.expoConfig?.version ?? ''}
-      </AppText>
+        <AppText variant="caption" tone="muted" center>
+          Pakka Fix {Constants.expoConfig?.version ?? ''} · Made in Hyderabad
+        </AppText>
+      </View>
     </ScrollView>
   );
 }
 
-function Item({ icon, label, onPress, last }: { icon: IconName; label: string; onPress: () => void; last?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: space.md,
-        minHeight: 52,
-        borderBottomWidth: last ? 0 : 1,
-        borderBottomColor: colors.border,
-        opacity: pressed ? 0.6 : 1,
-      })}
-    >
-      <Ionicons name={icon} size={20} color={colors.primary} />
-      <AppText style={{ flex: 1 }}>{label}</AppText>
-      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-    </Pressable>
-  );
-}
+const styles = StyleSheet.create({
+  header: { padding: space.lg, paddingTop: space.xl, paddingBottom: space.xxl, borderBottomLeftRadius: radius.sheet, borderBottomRightRadius: radius.sheet },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+});

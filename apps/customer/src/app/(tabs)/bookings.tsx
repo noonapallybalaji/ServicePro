@@ -1,17 +1,23 @@
 import { useListMyBookings, type MyBookingResponse } from '@servicepro/api-client';
 import { router } from 'expo-router';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
+import { Appear, LiveDot, PressableScale, Skeleton, tap } from '@/components/motion';
 import { SignedOut } from '@/components/signed-out';
-import { AppText, Badge, Button, Card, Ionicons, Notice } from '@/components/ui';
+import { AppText, Badge, Button, Card, EmptyState, IconCircle, Ionicons, Notice } from '@/components/ui';
 import { applianceIcon } from '@/lib/appliances';
-import { formatDate, isActive, statusOf } from '@/lib/format';
+import { formatDate, formatINR, isActive, statusOf } from '@/lib/format';
 import { useCustomer } from '@/lib/session';
-import { colors, space } from '@/lib/theme';
+import { colors, fonts, radius, space } from '@/lib/theme';
+
+type Tab = 'ongoing' | 'past';
 
 export default function BookingsScreen() {
   const { customer, status } = useCustomer();
   const bookings = useListMyBookings({ query: { enabled: customer !== null } });
+  const [tab, setTab] = useState<Tab>('ongoing');
 
   if (!customer) {
     return status === 'offline' ? (
@@ -23,44 +29,85 @@ export default function BookingsScreen() {
     );
   }
 
-  // Ongoing repairs first, then the rest, newest first.
-  const list = [...(bookings.data ?? [])].sort(
-    (a, b) => Number(isActive(b.status)) - Number(isActive(a.status)) || Date.parse(b.createdAt) - Date.parse(a.createdAt),
-  );
+  const all = [...(bookings.data ?? [])].sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  const ongoing = all.filter((b) => isActive(b.status));
+  const past = all.filter((b) => !isActive(b.status));
+  const list = tab === 'ongoing' ? ongoing : past;
 
   return (
-    <FlatList
-      data={list}
-      keyExtractor={(item) => item.id}
-      contentContainerStyle={{ padding: space.lg, gap: space.md, flexGrow: 1 }}
-      refreshControl={<RefreshControl refreshing={bookings.isRefetching} onRefresh={() => void bookings.refetch()} />}
-      renderItem={({ item }) => <BookingCard booking={item} />}
-      ListEmptyComponent={
-        bookings.isPending ? (
-          <AppText tone="muted" center>
-            Loading…
-          </AppText>
-        ) : bookings.isError ? (
-          <Notice tone="error" title="Couldn't load your bookings" action={<Button small variant="outline" label="Try again" onPress={() => void bookings.refetch()} />} />
-        ) : (
-          <View style={{ alignItems: 'center', gap: space.md, paddingTop: space.xxl }}>
-            <AppText variant="h3">No bookings yet</AppText>
-            <Button label="Book a repair" onPress={() => router.push('/book')} />
-          </View>
-        )
-      }
-    />
+    <View style={{ flex: 1 }}>
+      <Segmented value={tab} onChange={setTab} counts={{ ongoing: ongoing.length, past: past.length }} />
+      <FlatList
+        data={list}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={{ padding: space.lg, gap: space.md, flexGrow: 1 }}
+        refreshControl={<RefreshControl refreshing={bookings.isRefetching} onRefresh={() => void bookings.refetch()} />}
+        renderItem={({ item, index }) => (
+          <Appear index={index}>
+            <BookingCard booking={item} />
+          </Appear>
+        )}
+        ListEmptyComponent={
+          bookings.isPending ? (
+            <View style={{ gap: space.md }}>
+              {[0, 1, 2].map((i) => (
+                <Skeleton key={i} height={110} style={{ borderRadius: radius.card }} />
+              ))}
+            </View>
+          ) : bookings.isError ? (
+            <Notice tone="error" title="Couldn't load your bookings" action={<Button small variant="outline" label="Try again" onPress={() => void bookings.refetch()} />} />
+          ) : tab === 'ongoing' ? (
+            <EmptyState
+              icon="construct-outline"
+              title="No ongoing repairs"
+              description="Book a technician and follow every step here."
+              action={<Button label="Book a repair" icon="add" onPress={() => router.push('/book')} />}
+            />
+          ) : (
+            <EmptyState icon="time-outline" title="No past bookings yet" description="Finished and cancelled repairs show here." />
+          )
+        }
+      />
+    </View>
+  );
+}
+
+function Segmented({ value, onChange, counts }: { value: Tab; onChange: (tab: Tab) => void; counts: Record<Tab, number> }) {
+  const [width, setWidth] = useState(0);
+  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: withSpring(value === 'ongoing' ? 0 : width / 2, { damping: 18, stiffness: 220 }) }] }));
+  return (
+    <View style={styles.segmentWrap}>
+      <View style={styles.segment} onLayout={(event) => setWidth(event.nativeEvent.layout.width - 8)}>
+        <Animated.View style={[styles.thumb, { width: width / 2 }, thumb]} />
+        {(['ongoing', 'past'] as const).map((t) => (
+          <PressableScale
+            key={t}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: value === t }}
+            onPress={() => {
+              tap();
+              onChange(t);
+            }}
+            style={styles.segmentItem}
+          >
+            <AppText variant="small" style={{ fontFamily: fonts.bold, color: value === t ? colors.primary : colors.textMuted }}>
+              {t === 'ongoing' ? 'Ongoing' : 'Past'}
+              {counts[t] > 0 ? ` (${counts[t]})` : ''}
+            </AppText>
+          </PressableScale>
+        ))}
+      </View>
+    </View>
   );
 }
 
 function BookingCard({ booking }: { booking: MyBookingResponse }) {
   const status = statusOf(booking.status);
+  const active = isActive(booking.status);
   return (
-    <Card onPress={() => router.push(`/booking/${booking.id}`)} accessibilityLabel={`${booking.categoryName} repair, ${status.label}`} style={{ gap: space.sm }}>
+    <Card onPress={() => router.push(`/booking/${booking.id}`)} accessibilityLabel={`${booking.categoryName} repair, ${status.label}`} style={{ gap: space.md }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.md }}>
-        <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primarySubtle, alignItems: 'center', justifyContent: 'center' }}>
-          <Ionicons name={applianceIcon(booking.categoryCode)} size={22} color={colors.primary} />
-        </View>
+        <IconCircle name={applianceIcon(booking.categoryCode)} />
         <View style={{ flex: 1 }}>
           <AppText bold>{booking.categoryName} repair</AppText>
           <AppText variant="caption" tone="muted">
@@ -69,14 +116,22 @@ function BookingCard({ booking }: { booking: MyBookingResponse }) {
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Badge label={status.label} tone={status.tone} />
-        {booking.technicianName ? (
-          <AppText variant="caption" tone="secondary">
-            {booking.technicianName}
-          </AppText>
-        ) : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
+          {active ? <LiveDot color={colors.accent} /> : null}
+          <Badge label={status.label} tone={status.tone} />
+        </View>
+        <AppText variant="caption" tone="secondary">
+          {booking.technicianName ?? (booking.finalAmount != null ? formatINR(booking.finalAmount) : booking.locality)}
+        </AppText>
       </View>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  segmentWrap: { paddingHorizontal: space.lg, paddingTop: space.md, backgroundColor: colors.background },
+  segment: { flexDirection: 'row', padding: 4, borderRadius: radius.pill, backgroundColor: colors.sunken },
+  thumb: { position: 'absolute', top: 4, bottom: 4, left: 4, borderRadius: radius.pill, backgroundColor: colors.surface },
+  segmentItem: { flex: 1, minHeight: 40, alignItems: 'center', justifyContent: 'center' },
+});

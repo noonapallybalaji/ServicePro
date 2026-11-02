@@ -3,7 +3,7 @@
     "name": "Pakka Fix",
     "slug": "pakka-fix",
     "scheme": "pakkafix",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -13,14 +13,18 @@
     },
     "android": {
       "package": "com.pakkafix.app",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#001D3F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,7 +41,21 @@
           "resizeMode": "contain",
           "backgroundColor": "#001D3F"
         }
-      ]
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Pakka Fix uses your location to find your PIN code and to help the technician reach you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pakka Fix lets you add photos of the appliance or the problem to a help request.",
+          "cameraPermission": "Pakka Fix lets you take a photo of the appliance or the problem for a help request."
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
