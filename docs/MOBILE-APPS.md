@@ -3,8 +3,40 @@
 | App | Approach | Where |
 |---|---|---|
 | **Pakka Fix Partner** (technicians) | Capacitor: the technician web app inside a native Android / iOS shell | `apps/tech` (`android/`, `ios/`) |
-| Pakka Fix (customers) | Expo / React Native (next phase) | not started |
+| **Pakka Fix** (customers) | Expo / React Native (SDK 58, Expo Router) | `apps/customer` |
 | Admin | Stays on the web | `apps/admin` |
+
+## Pakka Fix (customers, Expo)
+
+A React Native app with the website's booking flow, built for phones:
+
+- **Screens:** Home (service area by PIN code, appliance photos, visiting charges, call / WhatsApp),
+  Book a repair (appliance, problem, saved or new address checked against the PIN codes we serve,
+  code to confirm the number), My bookings (ongoing first, pull to refresh), a booking (progress,
+  technician with call button, visit time, charges, cancel, live map on the tracking page), Account
+  (sign in / out, help, policies).
+- **Data:** the shared `@servicepro/api-client` (generated hooks, React Query) pointed at the API
+  from `apps/customer/.env` (`EXPO_PUBLIC_*`, public values only).
+- **Sign-in:** a code to the phone, or booking (a verified booking signs the customer in). The app
+  sends `X-ServicePro-Client: native` and no browser origin, so the API returns the refresh token in
+  the body; it's kept with `expo-secure-store` (Keychain / Keystore) and rotates on every refresh.
+- **Native projects** are generated (`android/`, `ios/` are not in git): change native settings in
+  `app.json`, then `pnpm prebuild`.
+
+### Build
+
+Needs Node 22+. From `apps/customer`:
+
+```bash
+pnpm start                          # Metro; open on a phone with a development build
+npx expo prebuild --platform android
+cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+# → android/app/build/outputs/apk/release/app-release.apk (JavaScript included)
+```
+
+The local release build is signed with the template's debug key: fine for testing, not for Play.
+For the stores, use EAS Build (`npx eas-cli build`) or a release key of your own, and raise
+`version` / `android.versionCode` in `app.json` for every upload.
 
 ## Pakka Fix Partner (Capacitor)
 

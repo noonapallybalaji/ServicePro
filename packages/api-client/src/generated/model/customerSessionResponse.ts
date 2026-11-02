@@ -6,9 +6,16 @@
  * OpenAPI spec version: v1
  */
 import type { CustomerSessionUser } from './customerSessionUser';
+import type { CustomerSessionResponseRefreshToken } from './customerSessionResponseRefreshToken';
+import type { CustomerSessionResponseRefreshExpiresAt } from './customerSessionResponseRefreshExpiresAt';
 
+/**
+ * RefreshToken / RefreshExpiresAt: the phone app only (browsers get an HttpOnly cookie instead).
+ */
 export interface CustomerSessionResponse {
   accessToken: string;
   expiresAt: string;
   user: CustomerSessionUser;
+  refreshToken?: CustomerSessionResponseRefreshToken;
+  refreshExpiresAt?: CustomerSessionResponseRefreshExpiresAt;
 }

@@ -10999,8 +10999,22 @@
           },
           "user": {
             "$ref": "#/components/schemas/CustomerSessionUser"
+          },
+          "refreshToken": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "refreshExpiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
-        }
+        },
+        "description": "RefreshToken / RefreshExpiresAt: the phone app only (browsers get an HttpOnly cookie instead)."
       },
       "CustomerSessionUser": {
         "required": [

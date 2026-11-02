@@ -19,6 +19,8 @@ TestResults/
 !.env.example
 # The technician phone app's build settings: public API address only, no secrets.
 !apps/tech/.env.native
+# The customer phone app's public settings (API and site address, support numbers): no secrets.
+!apps/customer/.env
 appsettings.*.local.json
 
 # Local storage (uploaded files in development)

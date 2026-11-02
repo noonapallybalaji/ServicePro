@@ -299,11 +299,21 @@ public sealed class ServiceRequestsModule : IModule
                     return result.Error!.ToProblem();
                 }
 
-                if (result.Value.Session is { } session)
+                if (result.Value.Session is not { } session)
                 {
-                    CustomerSessionCookie.Append(http.Response, session.RefreshToken, session.RefreshExpiresAt);
+                    return Results.Ok(result.Value.Response);
                 }
 
+                if (NativeApps.IsNativeApp(http.Request))
+                {
+                    // The customer app keeps the refresh token in secure storage; no cookie.
+                    return Results.Ok(result.Value.Response with
+                    {
+                        Session = result.Value.Response.Session! with { RefreshToken = session.RefreshToken, RefreshExpiresAt = session.RefreshExpiresAt },
+                    });
+                }
+
+                CustomerSessionCookie.Append(http.Response, session.RefreshToken, session.RefreshExpiresAt);
                 return Results.Ok(result.Value.Response);
             })
             .Validate<OnlineBookingRequest>()

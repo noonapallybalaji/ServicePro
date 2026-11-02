@@ -38,7 +38,9 @@ public interface IPhoneVerification
 /// <summary>Who is signed in on the customer site. Role is always "CUSTOMER".</summary>
 public sealed record CustomerSessionUser(Guid Id, string FullName, string Role, string Phone, string PreferredLanguage);
 
-public sealed record CustomerSessionResponse(string AccessToken, DateTimeOffset ExpiresAt, CustomerSessionUser User);
+/// <summary>RefreshToken / RefreshExpiresAt: the phone app only (browsers get an HttpOnly cookie instead).</summary>
+public sealed record CustomerSessionResponse(
+    string AccessToken, DateTimeOffset ExpiresAt, CustomerSessionUser User, string? RefreshToken = null, DateTimeOffset? RefreshExpiresAt = null);
 
 /// <summary>A new customer session: the response body plus the refresh token for the cookie.</summary>
 public sealed record IssuedCustomerSession(CustomerSessionResponse Response, string RefreshToken, DateTimeOffset RefreshExpiresAt);

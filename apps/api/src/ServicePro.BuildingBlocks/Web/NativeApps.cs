@@ -48,5 +48,27 @@ public static class NativeApps
     }
 }
 
+/// <summary>Reading the refresh token a request carries, wherever its platform keeps it.</summary>
+public static class RefreshTokens
+{
+    /// <summary>From the request body for the phone apps, else from the named HttpOnly cookie.</summary>
+    public static async Task<string?> ReadAsync(HttpRequest request, string cookieName, CancellationToken ct)
+    {
+        if (!NativeApps.IsNativeApp(request))
+        {
+            return request.Cookies[cookieName];
+        }
+
+        try
+        {
+            return request.HasJsonContentType() ? (await request.ReadFromJsonAsync<NativeRefreshRequest>(ct))?.RefreshToken : null;
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+    }
+}
+
 /// <summary>Body of refresh and logout requests from a native app (browsers send the cookie instead).</summary>
 public sealed record NativeRefreshRequest(string? RefreshToken);

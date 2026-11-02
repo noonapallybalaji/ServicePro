@@ -145,6 +145,8 @@ export * from './customerResponseAlternatePhone';
 export * from './customerResponseEmail';
 export * from './customerResponseNotes';
 export * from './customerSessionResponse';
+export * from './customerSessionResponseRefreshExpiresAt';
+export * from './customerSessionResponseRefreshToken';
 export * from './customerSessionUser';
 export * from './customerTicketResponse';
 export * from './customerTicketResponseServiceRequestId';

@@ -109,7 +109,7 @@ internal static class IdentityEndpoints
             .WithName("VerifyCustomerSignIn");
 
         customer.MapPost("/refresh", async (RefreshCustomerSession useCase, HttpContext http, CancellationToken ct) =>
-                IssueCustomerSession(await useCase.HandleAsync(CustomerSessionCookie.Read(http.Request), ct), http))
+                IssueCustomerSession(await useCase.HandleAsync(await RefreshTokens.ReadAsync(http.Request, CustomerSessionCookie.Name, ct), ct), http))
             .RequireRateLimiting(RateLimitPolicies.Public)
             .Produces<CustomerSessionResponse>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
@@ -117,7 +117,7 @@ internal static class IdentityEndpoints
 
         customer.MapPost("/logout", async (SignOutCustomer useCase, HttpContext http, CancellationToken ct) =>
             {
-                await useCase.HandleAsync(CustomerSessionCookie.Read(http.Request), ct);
+                await useCase.HandleAsync(await RefreshTokens.ReadAsync(http.Request, CustomerSessionCookie.Name, ct), ct);
                 CustomerSessionCookie.Delete(http.Response);
                 return Results.NoContent();
             })
@@ -137,8 +137,15 @@ internal static class IdentityEndpoints
             return result.Error.ToProblem();
         }
 
-        CustomerSessionCookie.Append(http.Response, result.Value.RefreshToken, result.Value.RefreshExpiresAt);
-        return Results.Ok(result.Value.Response);
+        var session = result.Value;
+        if (NativeApps.IsNativeApp(http.Request))
+        {
+            // The customer app keeps it in secure storage; no cookie.
+            return Results.Ok(session.Response with { RefreshToken = session.RefreshToken, RefreshExpiresAt = session.RefreshExpiresAt });
+        }
+
+        CustomerSessionCookie.Append(http.Response, session.RefreshToken, session.RefreshExpiresAt);
+        return Results.Ok(session.Response);
     }
 
     private static IResult IssueSession(SharedKernel.Results.Result<IssuedSession> result, HttpContext http)
@@ -165,22 +172,7 @@ internal static class IdentityEndpoints
     }
 
     /// <summary>The refresh token: from the request body for the phone apps, else from the cookie.</summary>
-    private static async Task<string?> RefreshTokenOf(HttpContext http, CancellationToken ct)
-    {
-        if (!NativeApps.IsNativeApp(http.Request))
-        {
-            return http.Request.Cookies[RefreshCookie];
-        }
-
-        try
-        {
-            return http.Request.HasJsonContentType() ? (await http.Request.ReadFromJsonAsync<NativeRefreshRequest>(ct))?.RefreshToken : null;
-        }
-        catch (System.Text.Json.JsonException)
-        {
-            return null;
-        }
-    }
+    private static Task<string?> RefreshTokenOf(HttpContext http, CancellationToken ct) => RefreshTokens.ReadAsync(http.Request, RefreshCookie, ct);
 
     private static CookieOptions CookieOptions(DateTimeOffset expires) => new()
     {
