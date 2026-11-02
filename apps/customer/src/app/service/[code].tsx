@@ -116,7 +116,7 @@ export default function ServiceScreen() {
 }
 
 const styles = StyleSheet.create({
-  art: { height: 180, borderRadius: radius.sheet, backgroundColor: '#eef1f6', alignItems: 'center', justifyContent: 'center' },
+  art: { height: 180, borderRadius: radius.sheet, backgroundColor: colors.tile, alignItems: 'center', justifyContent: 'center' },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginTop: space.sm, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   divider: { height: 1, backgroundColor: colors.border },
   service: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.lg },

@@ -18,7 +18,7 @@ import { PressableScale, tap } from '@/components/motion';
 import { AppText, Badge, Button, Ionicons, Notice } from '@/components/ui';
 import { formatDateTime } from '@/lib/format';
 import { TICKET_STATUS, topicOf } from '@/lib/support';
-import { colors, fonts, radius, space, type } from '@/lib/theme';
+import { colors, fonts, radius, space, type, isDark } from '@/lib/theme';
 import { pickPhotos, uploadTicketPhoto } from '@/lib/upload';
 
 /** A help conversation as a chat: our replies on the left, the customer's on the right. Refreshes every 10 seconds. */
@@ -138,6 +138,7 @@ export default function HelpConversationScreen() {
           <Ionicons name="image-outline" size={22} color={colors.primary} />
         </PressableScale>
         <TextInput
+          keyboardAppearance={isDark ? 'dark' : 'light'}
           value={draft}
           onChangeText={setDraft}
           placeholder="Write a message"

@@ -1,23 +1,51 @@
-/** The Pakka Fix palette (packages/ui/src/styles/tokens.css) and type scale, for React Native. */
-export const colors = {
+import * as SecureStore from 'expo-secure-store';
+import { Appearance } from 'react-native';
+
+/*
+ * The Pakka Fix palette (packages/ui/src/styles/tokens.css) and type scale, for React Native, in a
+ * light and a dark version. The scheme is chosen once at start-up (the customer's choice, else the
+ * phone's); changing it restarts the app (lib/appearance.ts), because styles are built at start.
+ */
+
+export type ThemePreference = 'system' | 'light' | 'dark';
+
+export const THEME_KEY = 'pakkafix.customer.theme';
+
+export const themePreference: ThemePreference = (() => {
+  try {
+    const saved = SecureStore.getItem(THEME_KEY);
+    return saved === 'light' || saved === 'dark' ? saved : 'system';
+  } catch {
+    return 'system';
+  }
+})();
+
+export const isDark = themePreference === 'dark' || (themePreference === 'system' && Appearance.getColorScheme() === 'dark');
+
+const brand = {
   navy950: '#001d3f',
   navy900: '#062447',
   navy800: '#0a2f5a',
   navy700: '#0f3d72',
+  accent: '#ff8000',
+  accentPressed: '#f07400',
+  accentText: '#1f0f00',
+};
+
+const light = {
+  ...brand,
   primary: '#154d8c',
   primaryPressed: '#0f3d72',
   primarySubtle: '#eef4fb',
   primarySubtleText: '#0f3d72',
   primaryBorder: '#b3cbe8',
-  accent: '#ff8000',
-  accentPressed: '#f07400',
-  accentText: '#1f0f00',
   accentSubtle: '#fff3e6',
   accentSubtleText: '#a34300',
   accentBorder: '#ffd2a3',
   surface: '#ffffff',
   background: '#f6f7f9',
   sunken: '#eef0f4',
+  tile: '#eef1f6',
   border: '#e3e7ed',
   borderStrong: '#b5bfcb',
   text: '#121a29',
@@ -38,6 +66,44 @@ export const colors = {
   errorBorder: '#f4c3bd',
   overlay: 'rgba(0, 29, 63, 0.55)',
 };
+
+/** Deep navy surfaces (like the reference's dark screens), lighter blues for text and icons. */
+const dark: typeof light = {
+  ...brand,
+  primary: '#3b7fd4',
+  primaryPressed: '#2f6bb8',
+  primarySubtle: '#132843',
+  primarySubtleText: '#a9cbf3',
+  primaryBorder: '#24426e',
+  accentSubtle: '#33210f',
+  accentSubtleText: '#ffb266',
+  accentBorder: '#5e3a14',
+  surface: '#162033',
+  background: '#0d1524',
+  sunken: '#1c2740',
+  tile: '#1c2740',
+  border: '#26324a',
+  borderStrong: '#3b4964',
+  text: '#eef2f8',
+  textSecondary: '#b9c3d3',
+  textMuted: '#8c98ad',
+  success: '#3fbf73',
+  successSubtle: '#10301f',
+  successText: '#86e2aa',
+  successBorder: '#1f5a38',
+  warning: '#f0b43a',
+  warningSubtle: '#33270c',
+  warningText: '#f5c96b',
+  warningBorder: '#5e4813',
+  error: '#ff6b5e',
+  errorPressed: '#e85a4e',
+  errorSubtle: '#3a1512',
+  errorText: '#ffa197',
+  errorBorder: '#6a2620',
+  overlay: 'rgba(0, 0, 0, 0.6)',
+};
+
+export const colors = isDark ? dark : light;
 
 /** Manrope, the website's typeface, loaded in the root layout. */
 export const fonts = {

@@ -67,6 +67,6 @@ export function ApplianceGrid({ categories, loading }: { categories: CategoryRes
 
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
-  tile: { backgroundColor: '#eef1f6', borderRadius: radius.sheet, padding: space.md, alignItems: 'center', justifyContent: 'space-between' },
+  tile: { backgroundColor: colors.tile, borderRadius: radius.sheet, padding: space.md, alignItems: 'center', justifyContent: 'space-between' },
   iconArt: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
 });

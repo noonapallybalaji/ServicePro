@@ -12,7 +12,7 @@ import { AppText, Badge, Button, Ionicons } from '@/components/ui';
 import { deliverPick } from '@/lib/location-pick';
 import { markWelcomed } from '@/lib/onboarding';
 import { setServiceArea } from '@/lib/service-pincode';
-import { colors, fonts, radius, shadow, space, type } from '@/lib/theme';
+import { colors, fonts, radius, shadow, space, type, isDark } from '@/lib/theme';
 
 /*
  * "Select a location": move the map under the pin, or search an area or PIN code. The address under
@@ -163,6 +163,7 @@ export default function LocationScreen() {
               Location
             </AppText>
             <TextInput
+              keyboardAppearance={isDark ? 'dark' : 'light'}
               value={query}
               onChangeText={(text) => {
                 setQuery(text);

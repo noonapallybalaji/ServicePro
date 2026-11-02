@@ -4,7 +4,7 @@ import Animated, { useAnimatedStyle, withSequence, withSpring, withTiming, useSh
 import { WebView, type WebViewMessageEvent, type WebViewProps } from 'react-native-webview';
 
 import { Ionicons } from '@/components/ui';
-import { colors } from '@/lib/theme';
+import { colors, isDark } from '@/lib/theme';
 
 /*
  * A full map to choose a place: the map moves under a fixed centre pin (OpenStreetMap via Leaflet,
@@ -15,7 +15,7 @@ import { colors } from '@/lib/theme';
 const html = (latitude: number, longitude: number) => `<!doctype html>
 <html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>html,body,#map{margin:0;height:100%;background:#eef0f4}.leaflet-control-attribution{font-size:9px}</style></head>
+<style>html,body,#map{margin:0;height:100%;background:${colors.sunken}}${isDark ? '.leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}' : ''}.leaflet-control-attribution{font-size:9px}</style></head>
 <body><div id="map"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>

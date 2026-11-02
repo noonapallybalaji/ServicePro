@@ -15,7 +15,7 @@ import { formatINR, isActive, statusOf, whatsappSupport } from '@/lib/format';
 import { useWelcomed } from '@/lib/onboarding';
 import { useServiceArea } from '@/lib/service-pincode';
 import { useCustomer } from '@/lib/session';
-import { colors, fonts, radius, shadow, space, type } from '@/lib/theme';
+import { colors, fonts, radius, shadow, space, type, isDark } from '@/lib/theme';
 
 /*
  * Home, in the style of modern service apps: a greeting with the area and the bell, a search pill,
@@ -119,6 +119,7 @@ export default function HomeScreen() {
             <View style={styles.search}>
               <Ionicons name="search" size={20} color={colors.text} />
               <TextInput
+                keyboardAppearance={isDark ? 'dark' : 'light'}
                 value={search}
                 onChangeText={setSearch}
                 placeholder="Search for ‘AC not cooling’"
@@ -366,8 +367,8 @@ const styles = StyleSheet.create({
   ongoing: { backgroundColor: colors.primary, borderRadius: radius.sheet, padding: space.lg, gap: space.sm },
   ongoingArrow: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   popular: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  popularArt: { width: 72, height: 72, borderRadius: radius.control, backgroundColor: '#eef1f6', alignItems: 'center', justifyContent: 'center' },
+  popularArt: { width: 72, height: 72, borderRadius: radius.control, backgroundColor: colors.tile, alignItems: 'center', justifyContent: 'center' },
   step: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  stepNumber: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.navy950, alignItems: 'center', justifyContent: 'center' },
+  stepNumber: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' },
   soon: { backgroundColor: colors.accent, paddingHorizontal: space.md, paddingVertical: 6, borderRadius: radius.pill },
 });

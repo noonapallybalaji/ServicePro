@@ -4,7 +4,7 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, View, type StyleProp, t
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale, tap } from '@/components/motion';
-import { colors, fonts, radius, shadow, space, type } from '@/lib/theme';
+import { colors, fonts, isDark, radius, shadow, space, type } from '@/lib/theme';
 
 /*
  * The app's building blocks, matching the website (navy primary, orange accent, Manrope, rounded
@@ -171,6 +171,7 @@ export function Input({ invalid, icon, style, ...props }: TextInputProps & { inv
     <View style={[styles.input, invalid && { borderColor: colors.error }, props.multiline && { alignItems: 'flex-start', paddingVertical: space.md }]}>
       {icon ? <Ionicons name={icon} size={19} color={colors.textMuted} style={props.multiline ? { marginTop: 2 } : undefined} /> : null}
       <TextInput
+        keyboardAppearance={isDark ? 'dark' : 'light'}
         placeholderTextColor={colors.textMuted}
         style={[type.body, { flex: 1, color: colors.text, paddingVertical: 0, minHeight: props.multiline ? 72 : undefined, textAlignVertical: props.multiline ? 'top' : 'center' }, style]}
         {...props}
@@ -262,6 +263,7 @@ export function CodeInput({ length, value, onChange }: { length: number; value: 
       value={value}
       onChangeText={(text) => onChange(text.replace(/\D/g, '').slice(0, length))}
       keyboardType="number-pad"
+      keyboardAppearance={isDark ? 'dark' : 'light'}
       textContentType="oneTimeCode"
       autoComplete="sms-otp"
       maxLength={length}

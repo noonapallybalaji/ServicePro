@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ComponentType, type Ref } from 'react
 import { View } from 'react-native';
 import { WebView, type WebViewProps } from 'react-native-webview';
 
-import { colors, radius } from '@/lib/theme';
+import { colors, isDark, radius } from '@/lib/theme';
 
 /*
  * The technician's position on a map inside the app: OpenStreetMap through Leaflet in a small web
@@ -13,7 +13,7 @@ import { colors, radius } from '@/lib/theme';
 const html = (latitude: number, longitude: number) => `<!doctype html>
 <html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>html,body,#map{margin:0;height:100%;background:#eef0f4}
+<style>html,body,#map{margin:0;height:100%;background:${colors.sunken}}${isDark ? '.leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}' : ''}
 .tech{width:38px;height:38px;border-radius:50%;background:${colors.primary};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font:700 16px sans-serif}
 .halo{position:absolute;inset:-10px;border-radius:50%;background:rgba(21,77,140,.25);animation:p 1.6s ease-out infinite}
 @keyframes p{from{transform:scale(.6);opacity:1}to{transform:scale(1.6);opacity:0}}</style></head>
