@@ -3,7 +3,7 @@
     "name": "Pakka Fix",
     "slug": "pakka-fix",
     "scheme": "pakkafix",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.pakkafix.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#001D3F",
         "foregroundImage": "./assets/android-icon-foreground.png",

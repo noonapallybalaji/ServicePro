@@ -15,6 +15,11 @@ export function setThemePreference(next: ThemePreference) {
   void reloadAppAsync('Appearance changed');
 }
 
+/** The sun / moon button on home: switch to the other look and keep it as the choice. */
+export function toggleTheme() {
+  setThemePreference(isDark ? 'light' : 'dark');
+}
+
 /** Following the phone: if its scheme changed while the app was away, restart in the new one. */
 export function followSystemScheme() {
   if (themePreference !== 'system') return;

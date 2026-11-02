@@ -10,9 +10,12 @@
 
 A React Native app with the website's booking flow, built for phones:
 
-- **First launch:** three welcome slides, then the service area (current location or PIN code).
-- **Home:** greeting, area, appliance search, the ongoing repair, banner carousel, appliance grid,
-  how it works, help; a bell with unread notifications.
+- **First launch:** three welcome slides, then the service area: the app asks for the phone's location
+  (and on Android to turn it on) and centres the map there; or search an area or PIN code.
+- **Home:** Pakka Fix logo, a light / dark button and a bell with unread notifications; area, greeting,
+  appliance search, the ongoing repair, banner carousel (the brand banner and offers), appliance grid,
+  popular repairs, how it works.
+- **Appearance:** light, dark or same as the phone (Account > Appearance, or the button on home).
 - **Book a repair:** four steps with a progress bar (appliance → problem → address → confirm), current
   location, saved addresses, code to confirm the number, a success animation.
 - **A booking:** status and timeline, live map with "About X min away" (OpenStreetMap in a web view,

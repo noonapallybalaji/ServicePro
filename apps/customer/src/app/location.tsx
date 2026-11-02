@@ -9,15 +9,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MapPicker, type MapPickerHandle } from '@/components/map-picker';
 import { PressableScale, tap } from '@/components/motion';
 import { AppText, Badge, Button, Ionicons } from '@/components/ui';
+import { explainFailure, findPhone } from '@/lib/device-location';
 import { deliverPick } from '@/lib/location-pick';
 import { markWelcomed } from '@/lib/onboarding';
-import { setServiceArea } from '@/lib/service-pincode';
+import { setServiceArea, useServiceArea } from '@/lib/service-pincode';
 import { colors, fonts, radius, shadow, space, type, isDark } from '@/lib/theme';
 
 /*
  * "Select a location": move the map under the pin, or search an area or PIN code. The address under
  * the pin is looked up as the map settles, with whether we serve it. Sets the service area, or hands
- * the point back to the booking that asked (?for=pick). First launch (?first=1) ends here.
+ * the point back to the booking that asked (?for=pick). First launch (?first=1) ends here, and
+ * starts by asking for the phone's location.
  */
 
 const HYDERABAD = { latitude: 17.385, longitude: 78.4867 };
@@ -40,6 +42,7 @@ async function searchPlaces(query: string, signal: AbortSignal): Promise<SearchR
 
 export default function LocationScreen() {
   const { first, for: purpose } = useLocalSearchParams<{ first?: string; for?: string }>();
+  const area = useServiceArea();
   const insets = useSafeAreaInsets();
   const map = useRef<MapPickerHandle>(null);
   const [center, setCenter] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -76,27 +79,30 @@ export default function LocationScreen() {
       .finally(() => id === lookup.current && setLooking(false));
   }
 
-  async function locateMe() {
-    tap();
+  /** Moves the map to the phone. `quiet` (on opening) skips the messages when it can't. */
+  async function locateMe(quiet = false) {
+    if (!quiet) tap();
     setLocating(true);
     try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) return;
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      map.current?.goTo(position.coords.latitude, position.coords.longitude);
+      const found = await findPhone((rough) => map.current?.goTo(rough.latitude, rough.longitude));
+      if (typeof found === 'object') map.current?.goTo(found.latitude, found.longitude);
+      else if (!quiet) explainFailure(found);
     } finally {
       setLocating(false);
     }
   }
 
-  // Start where the phone is, if location is already allowed (no prompt on open).
+  // Start where the phone is. On first launch, when choosing a booking address, or with no area yet,
+  // ask for location straight away; otherwise only use it if it's already allowed.
   useEffect(() => {
-    void Location.getForegroundPermissionsAsync().then(async (permission) => {
-      if (!permission.granted) return;
-      const last = await Location.getLastKnownPositionAsync();
-      if (last) map.current?.goTo(last.coords.latitude, last.coords.longitude);
+    if (first || purpose === 'pick' || !area) {
+      void locateMe(true);
+      return;
+    }
+    void Location.getForegroundPermissionsAsync().then((permission) => {
+      if (permission.granted) void locateMe(true);
     });
-  }, []);
+  }, []); // once, on opening
 
   function confirm() {
     if (!spot?.pincode || !center) return;
@@ -145,7 +151,7 @@ export default function LocationScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                 <Ionicons name="location" size={13} color="#ffffff" />
                 <AppText variant="caption" tone="inverseMuted" numberOfLines={1}>
-                  {looking ? 'Finding the address…' : spot?.pincode ? `${spot.locality ?? spot.areas[0] ?? 'Hyderabad'}, ${spot.pincode}` : 'Move the map to your home'}
+                  {locating && !spot?.pincode ? 'Finding where you are…' : looking ? 'Finding the address…' : spot?.pincode ? `${spot.locality ?? spot.areas[0] ?? 'Hyderabad'}, ${spot.pincode}` : 'Move the map to your home'}
                 </AppText>
               </View>
             </PressableScale>

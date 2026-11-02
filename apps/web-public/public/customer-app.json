@@ -1,6 +1,6 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3.0",
+  "versionCode": 5,
+  "versionName": "1.4.0",
   "url": "/downloads/pakka-fix.apk",
-  "notes": "Dark mode: follows your phone, or choose it in Account > Appearance."
+  "notes": "Pakka Fix logo and offer banners are back on home, a light / dark button, and your location found from the start."
 }

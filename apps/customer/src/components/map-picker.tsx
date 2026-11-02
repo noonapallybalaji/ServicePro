@@ -42,15 +42,31 @@ export const MapPicker = forwardRef(function MapPicker(
   const [source] = useState(() => ({ html: html(latitude, longitude) }));
   const lift = useSharedValue(0);
   const pin = useAnimatedStyle(() => ({ transform: [{ translateY: lift.get() }] }));
+  // A place asked for before the map has loaded (the phone's position on opening) waits for it.
+  const loaded = useRef(false);
+  const waiting = useRef<{ lat: number; lng: number } | null>(null);
+  const fly = (lat: number, lng: number) => view.current?.injectJavaScript(`window.goTo(${lat}, ${lng}); true;`);
 
   useImperativeHandle(ref, () => ({
-    goTo: (lat, lng) => view.current?.injectJavaScript(`window.goTo(${lat}, ${lng}); true;`),
+    goTo: (lat, lng) => {
+      if (loaded.current) fly(lat, lng);
+      else waiting.current = { lat, lng };
+    },
   }));
 
   function onMessage(event: WebViewMessageEvent) {
     try {
       const message = JSON.parse(event.nativeEvent.data) as { type: string; lat: number; lng: number };
       if (message.type === 'moving') lift.set(withTiming(-14, { duration: 150 }));
+      if (message.type === 'moved' && !loaded.current) {
+        loaded.current = true;
+        const place = waiting.current;
+        waiting.current = null;
+        if (place) {
+          fly(place.lat, place.lng);
+          return;
+        }
+      }
       if (message.type === 'moved') {
         lift.set(withSequence(withSpring(4, { damping: 6 }), withSpring(0, { damping: 10 })));
         onCenter(message.lat, message.lng);

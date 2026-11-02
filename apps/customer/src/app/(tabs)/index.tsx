@@ -1,5 +1,4 @@
 import { useGetActiveCatalog, useListMyBookings, useListMyNotifications, type MyBookingResponse } from '@servicepro/api-client';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Image, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
@@ -7,9 +6,11 @@ import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useS
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApplianceGrid } from '@/components/appliance-grid';
+import { BannerCarousel } from '@/components/banner-carousel';
 import { TAB_BAR_SPACE } from '@/components/floating-tab-bar';
-import { Appear, LiveDot, PressableScale } from '@/components/motion';
+import { Appear, LiveDot, PressableScale, tap } from '@/components/motion';
 import { AppText, Button, Card, IconCircle, Ionicons, Notice, SectionTitle } from '@/components/ui';
+import { toggleTheme } from '@/lib/appearance';
 import { applianceCutout, applianceIcon } from '@/lib/appliances';
 import { formatINR, isActive, statusOf, whatsappSupport } from '@/lib/format';
 import { useWelcomed } from '@/lib/onboarding';
@@ -18,10 +19,14 @@ import { useCustomer } from '@/lib/session';
 import { colors, fonts, radius, shadow, space, type, isDark } from '@/lib/theme';
 
 /*
- * Home, in the style of modern service apps: a greeting with the area and the bell, a search pill,
- * quick appliance chips, an offer card, the ongoing repair, appliance tiles, popular repairs and how
- * it works. The top bar gains a shadow once the page scrolls under it.
+ * Home, in the style of modern service apps: the Pakka Fix logo with light / dark and the bell, the
+ * area, a greeting and search pill, quick appliance chips, the ongoing repair, the banner carousel,
+ * appliance tiles, popular repairs and how it works. The top bar gains a shadow once the page
+ * scrolls under it.
  */
+
+const LOGO = require('../../../assets/logo.png');
+const LOGO_ON_DARK = require('../../../assets/logo-light.png');
 
 const STEPS = [
   { icon: 'calendar' as const, title: 'Book in a minute', text: 'Pick the appliance and your address.' },
@@ -63,28 +68,18 @@ export default function HomeScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <Animated.View style={[styles.topBar, { paddingTop: insets.top + space.sm }, barShadow]}>
-        <View style={styles.greetRow}>
-          <PressableScale onPress={() => router.push(customer ? '/account' : '/sign-in')} accessibilityRole="button" accessibilityLabel="Your account" style={styles.avatar}>
-            <AppText bold style={{ color: colors.accentText }}>
-              {customer ? customer.fullName.slice(0, 1).toUpperCase() : '👋'}
-            </AppText>
-          </PressableScale>
-          <PressableScale onPress={() => router.push('/location')} accessibilityRole="button" accessibilityLabel="Change service area" style={{ flex: 1 }}>
-            <AppText variant="caption" tone="muted">
-              Hello{customer ? ',' : ''}
-            </AppText>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <AppText variant="h3" numberOfLines={1} style={{ flexShrink: 1 }}>
-                {customer ? customer.fullName.split(' ')[0] : 'Welcome to Pakka Fix'}
-              </AppText>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Ionicons name="location" size={12} color={colors.accent} />
-              <AppText variant="caption" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
-                {area ? `${area.place || 'Your area'}, ${area.pincode}` : 'Set your location'}
-              </AppText>
-              <Ionicons name="chevron-down" size={12} color={colors.textSecondary} />
-            </View>
+        <View style={styles.brandRow}>
+          <Image source={isDark ? LOGO_ON_DARK : LOGO} style={styles.logo} resizeMode="contain" accessibilityRole="image" accessibilityLabel="Pakka Fix" />
+          <PressableScale
+            onPress={() => {
+              tap();
+              toggleTheme();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={styles.bell}
+          >
+            <Ionicons name={isDark ? 'sunny-outline' : 'moon-outline'} size={21} color={colors.text} />
           </PressableScale>
           <PressableScale
             onPress={() => router.push(customer ? '/notifications' : '/sign-in')}
@@ -96,6 +91,13 @@ export default function HomeScreen() {
             {unread > 0 ? <View style={styles.bellDot} /> : null}
           </PressableScale>
         </View>
+        <PressableScale onPress={() => router.push('/location')} accessibilityRole="button" accessibilityLabel="Change service area" style={styles.areaRow}>
+          <Ionicons name="location" size={16} color={colors.accent} />
+          <AppText variant="small" semibold numberOfLines={1} style={{ flexShrink: 1 }}>
+            {area ? `${area.place || 'Your area'}, ${area.pincode}` : 'Set your location'}
+          </AppText>
+          <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
+        </PressableScale>
       </Animated.View>
 
       <Animated.ScrollView
@@ -115,6 +117,9 @@ export default function HomeScreen() {
       >
         <View style={{ paddingHorizontal: space.lg, gap: space.lg }}>
           <Appear style={{ gap: space.md }}>
+            <AppText variant="small" tone="secondary" style={{ marginBottom: -space.sm }}>
+              Hello{customer ? `, ${customer.fullName.split(' ')[0]}` : ''} 👋
+            </AppText>
             <AppText variant="display">{ongoing.length > 0 ? 'Your repair is on track' : 'Fix it at home,\nthe pakka way.'}</AppText>
             <View style={styles.search}>
               <Ionicons name="search" size={20} color={colors.text} />
@@ -159,27 +164,8 @@ export default function HomeScreen() {
           {ongoing[0] ? <OngoingCard booking={ongoing[0]} more={ongoing.length - 1} /> : null}
 
           {!query ? (
-            <Appear index={1}>
-              <PressableScale onPress={() => router.push('/book')} accessibilityRole="button" scaleTo={0.98}>
-                <LinearGradient colors={['#ff9a2e', colors.accent, '#e86a00']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.offer, shadow.raised]}>
-                  <View style={{ flex: 1, gap: 6, zIndex: 1 }}>
-                    <AppText variant="title" style={{ color: '#ffffff' }}>
-                      {lowestVisit !== null ? `Visit from ${formatINR(lowestVisit)}` : 'Honest prices'}
-                    </AppText>
-                    <AppText variant="small" style={{ color: 'rgba(255,255,255,0.92)' }}>
-                      Adjusted in your final bill. Estimate before any repair.
-                    </AppText>
-                    <View style={styles.offerCta}>
-                      <AppText variant="small" tone="inverse" bold>
-                        Book now
-                      </AppText>
-                    </View>
-                  </View>
-                  <View style={styles.offerArt}>
-                    <Ionicons name="construct" size={92} color="rgba(255,255,255,0.9)" />
-                  </View>
-                </LinearGradient>
-              </PressableScale>
+            <Appear index={1} style={{ marginHorizontal: -space.lg }}>
+              <BannerCarousel lowestVisit={lowestVisit} />
             </Appear>
           ) : null}
 
@@ -343,9 +329,10 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     zIndex: 2,
   },
-  greetRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
-  avatar: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  bell: { width: 46, height: 46, borderRadius: 23, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  logo: { width: 128, height: 23, marginRight: 'auto' },
+  areaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: space.sm, alignSelf: 'flex-start', maxWidth: '100%' },
+  bell: { width: 44, height: 44, borderRadius: 23, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   bellDot: { position: 'absolute', top: 10, right: 11, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.error, borderWidth: 2, borderColor: colors.surface },
   search: {
     flexDirection: 'row',
@@ -361,9 +348,6 @@ const styles = StyleSheet.create({
   chips: { gap: space.sm, paddingHorizontal: space.lg, paddingVertical: space.lg },
   chip: { minHeight: 38, paddingHorizontal: space.lg, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.borderStrong, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipSolid: { backgroundColor: colors.primary, borderColor: colors.primary },
-  offer: { minHeight: 168, borderRadius: radius.sheet, padding: space.xl, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
-  offerCta: { alignSelf: 'flex-start', marginTop: space.sm, backgroundColor: colors.primary, paddingHorizontal: space.lg, paddingVertical: 9, borderRadius: radius.pill },
-  offerArt: { position: 'absolute', right: -6, bottom: -6, transform: [{ rotate: '-18deg' }] },
   ongoing: { backgroundColor: colors.primary, borderRadius: radius.sheet, padding: space.lg, gap: space.sm },
   ongoingArrow: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   popular: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.card, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

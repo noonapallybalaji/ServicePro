@@ -10,7 +10,6 @@ import {
   type OnlineBookingResponse,
 } from '@servicepro/api-client';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Location from 'expo-location';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { BackHandler, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -20,6 +19,7 @@ import { Appear, PressableScale, ProgressBar, SuccessMark, tap } from '@/compone
 import { AppText, BottomBar, Button, Card, Chip, CodeInput, Field, IconCircle, Input, Ionicons, Notice } from '@/components/ui';
 import { applianceIcon, appliancePhoto } from '@/lib/appliances';
 import { config } from '@/lib/config';
+import { explainFailure, findPhone } from '@/lib/device-location';
 import { formatINR, mobileDigits, prettyPhone } from '@/lib/format';
 import { pickOnMap } from '@/lib/location-pick';
 import { useServiceArea } from '@/lib/service-pincode';
@@ -119,14 +119,14 @@ export default function BookScreen() {
     setLocateError(null);
     setLocating(true);
     try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) {
-        setLocateError('Location is off for Pakka Fix. Enter the address instead.');
+      const position = await findPhone();
+      if (typeof position !== 'object') {
+        if (position === 'blocked') explainFailure(position);
+        setLocateError(position === 'off' ? "Your phone's location is off. Turn it on, or enter the address." : position === 'failed' ? "Couldn't get your location. Enter the address instead." : 'Location is off for Pakka Fix. Enter the address instead.');
         return;
       }
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const found = await locateServiceability({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-      setCoords({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+      const found = await locateServiceability(position);
+      setCoords(position);
       setAddressChoice('new');
       if (found.pincode) {
         setPincode(found.pincode);
