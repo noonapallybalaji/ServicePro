@@ -1,39 +1,27 @@
-import { Ionicons } from '@expo/vector-icons';
+import { useListMyNotifications } from '@servicepro/api-client';
 import { Tabs } from 'expo-router';
-import type { ComponentProps } from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { tap } from '@/components/motion';
-import { colors, fonts } from '@/lib/theme';
-
-type IconName = ComponentProps<typeof Ionicons>['name'];
-
-const icon =
-  (active: IconName, inactive: IconName) =>
-  ({ color, size, focused }: { color: unknown; size: number; focused: boolean }) => <Ionicons name={focused ? active : inactive} color={String(color)} size={size} />;
+import { AppHeader } from '@/components/app-header';
+import { FloatingTabBar } from '@/components/floating-tab-bar';
+import { useCustomer } from '@/lib/session';
+import { colors } from '@/lib/theme';
 
 export default function TabsLayout() {
-  const insets = useSafeAreaInsets();
+  const { customer } = useCustomer();
+  const notifications = useListMyNotifications({ take: 20 }, { query: { enabled: customer !== null, refetchInterval: 60_000 } });
   return (
     <Tabs
-      screenListeners={{ tabPress: () => tap() }}
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11 },
-        tabBarStyle: { height: 60 + insets.bottom, paddingTop: 6, borderTopColor: colors.border, backgroundColor: colors.surface },
-        headerStyle: { backgroundColor: colors.navy950 },
-        headerTintColor: '#ffffff',
-        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 17 },
-        headerShadowVisible: false,
+        header: (props) => <AppHeader {...props} />,
         sceneStyle: { backgroundColor: colors.background },
         animation: 'shift',
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', headerShown: false, tabBarIcon: icon('home', 'home-outline') }} />
-      <Tabs.Screen name="bookings" options={{ title: 'Bookings', headerTitle: 'My bookings', tabBarIcon: icon('calendar', 'calendar-outline') }} />
-      <Tabs.Screen name="help" options={{ title: 'Help', headerTitle: 'Help and support', tabBarIcon: icon('chatbubbles', 'chatbubbles-outline') }} />
-      <Tabs.Screen name="account" options={{ title: 'Account', tabBarIcon: icon('person-circle', 'person-circle-outline') }} />
+      <Tabs.Screen name="index" options={{ title: 'Home', headerShown: false, tabBarBadge: (notifications.data?.unreadCount ?? 0) > 0 ? '•' : undefined }} />
+      <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
+      <Tabs.Screen name="help" options={{ title: 'Help' }} />
+      <Tabs.Screen name="account" options={{ title: 'Account', headerShown: false }} />
     </Tabs>
   );
 }

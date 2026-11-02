@@ -19,6 +19,17 @@ const ICONS: Record<string, IconName> = {
   MICROWAVE: 'flame',
 };
 
+/** Transparent product cut-outs, for light tiles and illustrations. */
+const CUTOUTS: Record<string, ImageSourcePropType> = {
+  AC: require('../../assets/appliances/ac-cut.webp'),
+  FRIDGE: require('../../assets/appliances/fridge-cut.webp'),
+  WASHER: require('../../assets/appliances/washer-cut.webp'),
+  TV: require('../../assets/appliances/tv-cut.webp'),
+  MICROWAVE: require('../../assets/appliances/microwave-cut.webp'),
+};
+
+export const applianceCutout = (code: string): ImageSourcePropType | undefined => CUTOUTS[code];
+
 export const appliancePhoto = (code: string): ImageSourcePropType | undefined => PHOTOS[code];
 
 export const applianceIcon = (code: string): IconName => ICONS[code] ?? 'construct';

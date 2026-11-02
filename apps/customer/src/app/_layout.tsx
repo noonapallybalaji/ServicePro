@@ -6,10 +6,11 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
+import { AppHeader } from '@/components/app-header';
 import { AppUpdatePrompt } from '@/components/app-update';
 import { useWelcomed } from '@/lib/onboarding';
 import { startSession, useCustomer } from '@/lib/session';
-import { colors, fonts } from '@/lib/theme';
+import { colors } from '@/lib/theme';
 
 // Keep the splash until fonts are in and we know whether the customer is signed in.
 void SplashScreen.preventAutoHideAsync();
@@ -40,13 +41,10 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: colors.navy950 },
-          headerTintColor: '#ffffff',
-          headerTitleStyle: { fontFamily: fonts.bold, fontSize: 17 },
-          headerShadowVisible: false,
+          header: (props) => <AppHeader {...props} />,
           contentStyle: { backgroundColor: colors.background },
           animation: 'slide_from_right',
         }}
@@ -57,6 +55,7 @@ export default function RootLayout() {
         <Stack.Screen name="book" options={{ title: 'Book a repair' }} />
         <Stack.Screen name="sign-in" options={{ title: 'Sign in', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="booking/[id]" options={{ title: 'Booking' }} />
+        <Stack.Screen name="service/[code]" options={{ title: '' }} />
         <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
         <Stack.Screen name="support/new" options={{ title: 'New help request', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="support/[number]" options={{ title: 'Help' }} />

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { RefreshControl, ScrollView, View } from 'react-native';
 
+import { TAB_BAR_SPACE } from '@/components/floating-tab-bar';
 import { Appear, Skeleton } from '@/components/motion';
 import { AppText, Badge, Button, Card, IconCircle, Ionicons, ListRow, SectionTitle } from '@/components/ui';
 import { config } from '@/lib/config';
@@ -19,7 +20,7 @@ export default function HelpScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={{ padding: space.lg, gap: space.xl, paddingBottom: space.xxl }}
+      contentContainerStyle={{ padding: space.lg, gap: space.xl, paddingBottom: TAB_BAR_SPACE }}
       refreshControl={customer ? <RefreshControl refreshing={tickets.isRefetching} onRefresh={() => void tickets.refetch()} /> : undefined}
     >
       <Appear>

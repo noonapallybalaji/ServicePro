@@ -21,6 +21,7 @@ import { AppText, BottomBar, Button, Card, Chip, CodeInput, Field, IconCircle, I
 import { applianceIcon, appliancePhoto } from '@/lib/appliances';
 import { config } from '@/lib/config';
 import { formatINR, mobileDigits, prettyPhone } from '@/lib/format';
+import { pickOnMap } from '@/lib/location-pick';
 import { useServiceArea } from '@/lib/service-pincode';
 import { signInWith, useCustomer } from '@/lib/session';
 import { colors, radius, shadow, space } from '@/lib/theme';
@@ -38,7 +39,7 @@ const PINCODE = /^[1-9]\d{5}$/;
 const newRequestId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 
 export default function BookScreen() {
-  const params = useLocalSearchParams<{ category?: string }>();
+  const params = useLocalSearchParams<{ category?: string; issue?: string }>();
   const { width } = useWindowDimensions();
   const queryClient = useQueryClient();
   const catalog = useGetActiveCatalog();
@@ -49,7 +50,7 @@ export default function BookScreen() {
 
   const [step, setStep] = useState(params.category ? 1 : 0);
   const [categoryId, setCategoryId] = useState(params.category ?? '');
-  const [issueTypeId, setIssueTypeId] = useState<string | null>(null);
+  const [issueTypeId, setIssueTypeId] = useState<string | null>(params.issue ?? null);
   const [problem, setProblem] = useState('');
   const [addressChoice, setAddressChoice] = useState<string | null>(null); // a saved address id, or 'new'
   const [pincode, setPincode] = useState(area?.pincode ?? '');
@@ -360,6 +361,29 @@ export default function BookScreen() {
                       </AppText>
                     </View>
                     {coords ? <Ionicons name="checkmark-circle" size={22} color={colors.success} /> : null}
+                  </PressableScale>
+                  <PressableScale
+                    onPress={() =>
+                      pickOnMap((picked) => {
+                        setCoords({ latitude: picked.latitude, longitude: picked.longitude });
+                        setPincode(picked.pincode);
+                        setLocality(picked.locality);
+                        setAddressChoice('new');
+                      })
+                    }
+                    accessibilityRole="button"
+                    style={[styles.locateRow, shadow.card]}
+                  >
+                    <IconCircle name="map" size={40} tone="accent" />
+                    <View style={{ flex: 1 }}>
+                      <AppText bold tone="primary">
+                        Choose on the map
+                      </AppText>
+                      <AppText variant="caption" tone="muted">
+                        Drop the pin on your building
+                      </AppText>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.primary} />
                   </PressableScale>
                   {locateError ? <Notice tone="warning" title={locateError} /> : null}
                   <Field

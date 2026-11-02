@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { router } from 'expo-router';
 import { useCallback, useRef, useState } from 'react';
 import { FlatList, Image, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -47,6 +48,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient colors={[colors.navy950, colors.navy800]} style={{ flex: 1 }}>
+      <StatusBar style="light" />
       <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.top}>
           <Image source={require('../../assets/logo-light.png')} style={{ width: 120, height: 22 }} resizeMode="contain" accessibilityLabel="Pakka Fix" />

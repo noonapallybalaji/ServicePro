@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
+import { TAB_BAR_SPACE } from '@/components/floating-tab-bar';
 import { Appear, LiveDot, PressableScale, Skeleton, tap } from '@/components/motion';
 import { SignedOut } from '@/components/signed-out';
 import { AppText, Badge, Button, Card, EmptyState, IconCircle, Ionicons, Notice } from '@/components/ui';
@@ -40,7 +41,7 @@ export default function BookingsScreen() {
       <FlatList
         data={list}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: space.lg, gap: space.md, flexGrow: 1 }}
+        contentContainerStyle={{ padding: space.lg, paddingBottom: TAB_BAR_SPACE, gap: space.md, flexGrow: 1 }}
         refreshControl={<RefreshControl refreshing={bookings.isRefetching} onRefresh={() => void bookings.refetch()} />}
         renderItem={({ item, index }) => (
           <Appear index={index}>
